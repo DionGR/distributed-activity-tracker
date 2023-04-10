@@ -1,20 +1,22 @@
+package Old;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class Client2 extends Thread{
+public class Worker extends Thread{
     int a, b;
 
-    Client2(int a, int b) {
+    Worker(int a, int b) {
         this.a = a;
         this.b = b;
     }
 
     public static void main(String[] args) {
-        new Client2(10, 5).start();
-        new Client2(20, 5).start();
+        new Worker(10, 5).start();
+        new Worker(20, 5).start();
     }
 
     public void run() {

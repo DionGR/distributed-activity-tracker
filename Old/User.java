@@ -1,20 +1,20 @@
+package Old;
+
 import java.io.*;
 import java.net.*;
 
-import javax.management.RuntimeErrorException;
 
-
-public class Client1 extends Thread {
+public class User extends Thread {
     int a, b;
 
-    Client1(int a, int b) {
+    User(int a, int b) {
         this.a = a;
         this.b = b;
     }
 
     public static void main(String[] args) {
-        new Client1(10, 5).start();
-        new Client1(20, 5).start();
+        new User(10, 5).start();
+        new User(20, 5).start();
     }
 
 
@@ -44,7 +44,7 @@ public class Client1 extends Thread {
              out.flush();
 
 //            Test t2 = (Test) in.readObject();
-                System.out.println("Server to clt1>" + in.readInt());
+//            System.out.println("Server to clt1>" + in.readInt());
 //            System.out.println("System>" + t2.getA() + " " + t2.getB());
             /* Print the received result from server */
 

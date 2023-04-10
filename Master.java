@@ -1,98 +1,77 @@
-import javax.net.ssl.HandshakeCompletedEvent;
-import java.io.*;
 import java.net.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-public class Master extends Thread{
 
-    static int x = 0;
+class Master{
+    int userPort;
+    ServerSocket socketToHandle;
 
-    ServerSocket userSocket;
-    ServerSocket workerSocket;
 
-    Socket providerSocket;
+    Master(int userPort){
+        this.userPort = userPort;
+    }
 
-    void openServer() {
+    public void openServer(){
         try {
-            /* Create Server Socket */
-            x++;
-            if (x == 1) {
-                userSocket = new ServerSocket(4321, 10);
 
-                while (true) {
-                    /* Accept the connection */
-                    System.out.println("1");
-                    providerSocket = userSocket.accept();
+            ServerSocket socketToHandle = new ServerSocket(userPort, 10);
 
-                    /* Handle the request */
-                    Thread d = new ActionsForUsers(providerSocket);
-                    d.start();
-                }
-            }else if (x==2){
-                workerSocket = new ServerSocket(1234, 10);
+            while (true) {
+                /* Accept the connection */
+                Socket providerSocket = socketToHandle.accept();
 
-                while (true) {
-                    /* Accept the connection */
-                    System.out.println("2");
-                    providerSocket = workerSocket.accept();
-
-                    /* Handle the request */
-                Thread d = new ActionsForClients(providerSocket);
+                /* Handle the request */
+                Thread d = new MasterThread(providerSocket);
                 d.start();
-                }
-            }else {
-                System.err.println();
             }
+        }
+        catch(Exception ignored){
 
+            }
+        }
 
-        } catch (IOException ioException) {
+    public static void main(String[] args) {
+    }
+}
+
+class MasterThread extends Thread{
+    Socket providerSocket;
+    ObjectOutputStream out;
+    ObjectInputStream in;
+
+    MasterThread(Socket providerSocket){
+        this.providerSocket = providerSocket;
+        try {
+            this.out = new ObjectOutputStream(this.providerSocket.getOutputStream());
+            this.in = new ObjectInputStream(this.providerSocket.getInputStream());
+        } catch (IOException ioException){
             ioException.printStackTrace();
-        } finally {
+        }
+    }
+
+    public void run(){
+        try {
+            GPXParser gpx = new GPXParser(in.readObject());
+            ArrayList<Object> result = gpx.parse();
+
+
+
+
+
+
+        }catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } finally{
             try {
-                providerSocket.close();
+                in.close(); out.close();
+                this.providerSocket.close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
         }
     }
-
-    @Override
-    public void run(){
-        try{
-            openServer();
-        }catch(Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
-
-
-}
-
-class HandleRequests extends Thread{
-    ServerSocket socketToHandle;
-    Socket providerSocket;
-
-    HandleRequests(int port){
-        this.socketToHandle = new ServerSocket(port, 10);
-    }
-
-    public void run(){
-        try {
-            while (true) {
-                /* Accept the connection */
-
-                providerSocket = socketToHandle.accept();
-
-                /* Handle the request */
-                Thread d = new ActionsForUsers(providerSocket);
-                d.start();
-            }
-        }
-        catch(Exception e){
-
-
-            }
-        }
-
-
-
 }

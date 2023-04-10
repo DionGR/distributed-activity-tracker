@@ -1,13 +1,15 @@
+package Old;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class ActionsForClients extends Thread {
+public class ActionsForWorkers extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
 
-    public ActionsForClients(Socket connection) {
+    public ActionsForWorkers(Socket connection, int) {
         try {
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
