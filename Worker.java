@@ -2,7 +2,7 @@ import java.net.*;
 import java.io.*;
 
 public class Worker extends Thread{
-    private Socket requestSocket;
+    Socket requestSocket;
     private int id;
     private int port;
 
@@ -12,28 +12,22 @@ public class Worker extends Thread{
     }
 
     public void run(){
-        ObjectOutputStream out = null;
         ObjectInputStream in = null;
 
         try {
-            requestSocket = new Socket("localhost" , port);
+            requestSocket = new Socket("localhost", port);
 
             /* Create the streams to send and receive data from server */
 
-            out = new ObjectOutputStream(requestSocket.getOutputStream());
-            in = new ObjectInputStream(requestSocket.getInputStream());
+            while(true) {
+                in = new ObjectInputStream(requestSocket.getInputStream());
 
+                Chunk data = (Chunk) in.readObject();
 
-            System.out.println("Worker #" + id + " is ready to work");
-
-            int num = (int) in.readObject();
-
-            System.out.println("Worker #" + id + " received: " + num);
-
-            num = 2*id;
-
-            out.writeObject(num);
-            out.flush();
+                WorkerThread workerThread = new WorkerThread(requestSocket, data);
+                workerThread.start();
+                System.out.println(data + " assigned to worker #" + id);
+            }
 
         } catch (UnknownHostException unknownHost) {
             System.err.println("You are trying to connect to an unknown host!");
@@ -41,16 +35,43 @@ public class Worker extends Thread{
             ioException.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        } finally {
+        }finally {
             try {
                 in.close();
-                out.close();
                 requestSocket.close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
         }
 
+    }
+
+    private class WorkerThread extends Thread {
+        ObjectOutputStream out;
+        private Socket requestSocket;
+        private Chunk data;
+
+
+        WorkerThread(Socket requestSocket, Chunk data)  {
+            this.requestSocket = requestSocket;
+            this.data = data;
+        }
+
+        public void run() {
+            try {
+                this.out = new ObjectOutputStream(requestSocket.getOutputStream());
+
+                // Mapping
+                Chunk result = new Chunk(data.getUser(), data.getData() * 2, data.getId());
+
+                out.writeObject(result);
+                out.flush();
+
+                System.out.println("Worker #" + id + " sent intermediate result: " + result);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } // why do we need this finally block?????
+        }
     }
 
     public static void main(String[] args) {
