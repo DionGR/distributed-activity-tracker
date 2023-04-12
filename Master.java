@@ -57,13 +57,13 @@ class Master {
             UserHandler userHandler = new UserHandler(usersSocketToHandle);
             WorkerHandler workerHandler = new WorkerHandler(workersSocketToHandle);
             AssignData assignData = new AssignData();
-            ReceiveData receiveData = new ReceiveData();
+            //ReceiveData receiveData = new ReceiveData();
 
 
             userHandler.start();
             workerHandler.start();
             assignData.start();
-            receiveData.start();
+            //receiveData.start();
 
             while (true){
                 continue;

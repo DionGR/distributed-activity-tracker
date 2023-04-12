@@ -33,7 +33,7 @@ public class User extends Thread{
             Chunk result = (Chunk) in.readObject();
 
             /* Print the received result from server */
-            System.out.println("User #" + this.id + " Result:" + result.getData());
+            System.out.println("User #" + this.gpx + " Result:" + result.getData());
 
         } catch (UnknownHostException unknownHost) {
             System.err.println("You are trying to connect to an unknown host!");
