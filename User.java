@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 
+
 public class User extends Thread{
     int gpx;
     int id;
@@ -11,10 +12,9 @@ public class User extends Thread{
     }
 
     public void run(){
-        ObjectOutputStream out= null ;
+        ObjectOutputStream out = null ;
         ObjectInputStream in = null ;
         Socket requestSocket = null ;
-
 
         try {
             String host = "localhost";
@@ -33,7 +33,7 @@ public class User extends Thread{
             Chunk result = (Chunk) in.readObject();
 
             /* Print the received result from server */
-            System.out.println("User #" + this.gpx + " Result:" + result.getData());
+            System.out.println("User #" + this.id + " Result:" + result.getData());
 
         } catch (UnknownHostException unknownHost) {
             System.err.println("You are trying to connect to an unknown host!");
@@ -49,14 +49,13 @@ public class User extends Thread{
                 ioException.printStackTrace();
             }
         }
-
     }
 
     public static void main(String[] args) {
         new User(1, 5).start();
         new User(2, 10).start();
-//        new User(3, 15).start();
-//        new User(4, 20).start();
-//        new User(5, 25).start();
+        new User(3, 15).start();
+        new User(4, 20).start();
+        new User(5, 25).start();
     }
 }

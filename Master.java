@@ -36,10 +36,10 @@ class Master {
     private int workers;
     private int userPort, workerPort;
 
-    protected static ArrayList<UserThread> connectedUsers = new ArrayList<>();
-    protected static ArrayList<ReceiveWorkerData> connectedWorkers = new ArrayList<>();
+    protected ArrayList<UserThread> connectedUsers = new ArrayList<>();
+    protected ArrayList<ReceiveWorkerData> connectedWorkers = new ArrayList<>();
 
-    protected volatile static ArrayList<Chunk[]> dataForProcessing = new ArrayList<>();
+    protected static ArrayList<Chunk[]> dataForProcessing = new ArrayList<>();
     protected static HashMap<Long, ArrayList<Chunk>> intermediateResults = new HashMap<>();
 
     ServerSocket usersSocketToHandle, workersSocketToHandle;
@@ -57,39 +57,37 @@ class Master {
             UserHandler userHandler = new UserHandler(usersSocketToHandle);
             WorkerHandler workerHandler = new WorkerHandler(workersSocketToHandle);
             AssignData assignData = new AssignData();
-            //ReceiveData receiveData = new ReceiveData();
-
 
             userHandler.start();
             workerHandler.start();
             assignData.start();
-            //receiveData.start();
-
-            while (true){
-                continue;
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public synchronized static void addData(Chunk[] chunks){
-        Master.dataForProcessing.add(chunks);
+        synchronized (dataForProcessing) {
+            dataForProcessing.add(chunks);
+        }
     }
 
     private class AssignData extends Thread{
-
         @Override
         public void run(){
 
             int nextWorker = 0;
 
             try {
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     /* Assign data to workers using round-robin */
                     while (dataForProcessing.size() > 0) {
-                        for (Chunk c: dataForProcessing.get(0)){
+                        Chunk[] chunks;
+                        synchronized (dataForProcessing){
+                            chunks = dataForProcessing.get(0);
+                            dataForProcessing.remove(0);
+                        }
+                        for (Chunk c: chunks){
                             System.out.println("Assigning data to worker");
 
                             ObjectOutputStream out = new ObjectOutputStream(connectedWorkers.get(nextWorker).getSocket().getOutputStream());
@@ -101,7 +99,6 @@ class Master {
 
                             nextWorker = (++nextWorker) % connectedWorkers.size();
                         }
-                        dataForProcessing.remove(0);
                     }
                 }
             } catch (Exception e) {
@@ -165,7 +162,6 @@ class Master {
         }
     }
 
-
     private class ReceiveWorkerData extends Thread{
         Socket workerSocket;
         ObjectInputStream in;
@@ -191,18 +187,18 @@ class Master {
         }
 
         public synchronized void addData(Chunk data){
-            if (!intermediateResults.containsKey(data.getUser())) {
-                intermediateResults.put(data.getUser(), new ArrayList<>());
+            synchronized (intermediateResults){
+                if (!intermediateResults.containsKey(data.getUser())) {
+                    intermediateResults.put(data.getUser(), new ArrayList<>());
+                }
+                intermediateResults.get(data.getUser()).add(data);
             }
-            intermediateResults.get(data.getUser()).add(data);
         }
 
         public Socket getSocket(){
             return workerSocket;
         }
     }
-
-
 
     public static void main(String[] args) {
         Master master = new Master(4321, 1234);
