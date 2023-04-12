@@ -18,6 +18,8 @@ public class Worker extends Thread{
 
     @Override
     public void run(){
+        out = null;
+        in = null;
         try {
             requestSocket = new Socket("localhost", port);
 
@@ -25,13 +27,13 @@ public class Worker extends Thread{
             in = new ObjectInputStream(requestSocket.getInputStream());
 
 
-
             /* Create the streams to send and receive data from server */
             while(true) {
                 Chunk data = (Chunk) in.readObject();
-                System.out.println("Worker # " + id + " AAAAA ");
+
                 WorkerThread workerThread = new WorkerThread(data);
                 workerThread.start();
+
                 System.out.println("Worker #" + id + " assigned data: " + data);
             }
 
@@ -46,7 +48,7 @@ public class Worker extends Thread{
             throw new RuntimeException(e); // !!!
         }finally {
             try {
-                in.close(); out.close();
+                out.close(); in.close();
                 requestSocket.close();
                 System.err.println("Worker #" + id + " shutting down...");
             } catch (Exception e) {
@@ -58,7 +60,7 @@ public class Worker extends Thread{
     private class WorkerThread extends Thread {
         private final Chunk data;
 
-        WorkerThread(Chunk data)  {
+        WorkerThread(Chunk data){
             this.data = data;
         }
 
@@ -66,7 +68,7 @@ public class Worker extends Thread{
         public void run() {
             try {
                 // Mapping
-                Chunk result = new Chunk(data.getUser(), data.getData() * 2, data.getId());
+                Chunk result = new Chunk(data.getUser(), data.getData() * 10, data.getId());
 
                 synchronized (out) {
                     out.writeObject(result);
@@ -87,12 +89,19 @@ public class Worker extends Thread{
         Worker w2 = new Worker(2, 1234);
         Worker w3 = new Worker(3, 1234);
         Worker w4 = new Worker(4, 1234);
+        Worker w5 = new Worker(5, 1234);
 
         w1.start();
         w2.start();
         w3.start();
         w4.start();
+        w5.start();
     }
 }
+
+
+
+
+
 
 

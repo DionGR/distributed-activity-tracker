@@ -51,8 +51,8 @@ class Master {
 
     public void bootServer(){
         try {
-            usersSocketToHandle = new ServerSocket(userPort, 10);
-            workersSocketToHandle = new ServerSocket(workerPort, 10);
+            usersSocketToHandle = new ServerSocket(userPort, 5000);
+            workersSocketToHandle = new ServerSocket(workerPort, 5000);
 
             UserHandler userHandler = new UserHandler(usersSocketToHandle);
             WorkerHandler workerHandler = new WorkerHandler(workersSocketToHandle);
@@ -73,6 +73,7 @@ class Master {
     }
 
     private class AssignData extends Thread{
+
         @Override
         public void run(){
 
@@ -80,17 +81,20 @@ class Master {
 
             try {
                 while (!Thread.currentThread().isInterrupted()) {
+
                     /* Assign data to workers using round-robin */
-                    while (dataForProcessing.size() > 0) {
+                    while (dataForProcessing.size() > 0 && connectedWorkers.size() > 0) {
                         Chunk[] chunks;
+
                         synchronized (dataForProcessing){
                             chunks = dataForProcessing.get(0);
                             dataForProcessing.remove(0);
                         }
-                        for (Chunk c: chunks){
-                            System.out.println("Assigning data to worker");
 
-                            ObjectOutputStream out = new ObjectOutputStream(connectedWorkers.get(nextWorker).getSocket().getOutputStream());
+                        for (Chunk c: chunks){
+                            //ObjectOutputStream out = workerOutputStreams[nextWorker];
+                            ObjectOutputStream out = connectedWorkers.get(nextWorker).getOutputStream();
+                            System.out.println("Assigning data to worker: " + nextWorker);
 
                             out.writeObject(c);
                             out.flush();
@@ -135,6 +139,7 @@ class Master {
     }
 
     private class WorkerHandler extends Thread {
+
         private final ServerSocket workersSocketToHandle;
 
         WorkerHandler(ServerSocket workersSocketToHandle) {
@@ -165,6 +170,7 @@ class Master {
     private class ReceiveWorkerData extends Thread{
         Socket workerSocket;
         ObjectInputStream in;
+        ObjectOutputStream out;
 
         public ReceiveWorkerData(Socket workerSocket){
             this.workerSocket = workerSocket;
@@ -180,7 +186,6 @@ class Master {
                     System.out.println("Received data for user: " + data.getUser());
                     addData(data);
                 }
-
             }catch(Exception e){
                 e.printStackTrace();
             }
@@ -197,6 +202,14 @@ class Master {
 
         public Socket getSocket(){
             return workerSocket;
+        }
+
+        public ObjectInputStream getInputStream(){
+            return in;
+        }
+
+        public ObjectOutputStream getOutputStream(){
+            return out;
         }
     }
 

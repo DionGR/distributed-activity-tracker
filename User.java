@@ -43,7 +43,7 @@ public class User extends Thread{
             throw new RuntimeException(e);
         } finally {
             try {
-                in.close(); out.close();
+                out.close(); in.close();
                 requestSocket.close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
@@ -52,10 +52,8 @@ public class User extends Thread{
     }
 
     public static void main(String[] args) {
-        new User(1, 5).start();
-        new User(2, 10).start();
-        new User(3, 15).start();
-        new User(4, 20).start();
-        new User(5, 25).start();
+        for (int i = 1; i <= 1000; i++) {
+            new User(i, i).start();
+        }
     }
 }

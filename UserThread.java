@@ -25,8 +25,8 @@ public class UserThread extends Thread {
             int message = (int) in.readObject();
             System.out.println("Thread #" + this.getId() + " received: " + message);
 
-            Chunk c1 = new Chunk(this.getId(), message * 1000, 1);
-            Chunk c2 = new Chunk(this.getId(), message * 2000, 2);
+            Chunk c1 = new Chunk(this.getId(), message * 5, 1);
+            Chunk c2 = new Chunk(this.getId(), message * 10, 2);
 
             Chunk[] chunks = {c1, c2};
 
