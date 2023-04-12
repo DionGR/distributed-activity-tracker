@@ -16,6 +16,7 @@ public class Worker extends Thread{
 
         try {
             requestSocket = new Socket("localhost", port);
+            ObjectOutputStream out = new ObjectOutputStream(requestSocket.getOutputStream());
 
             /* Create the streams to send and receive data from server */
 
@@ -24,7 +25,7 @@ public class Worker extends Thread{
 
                 Chunk data = (Chunk) in.readObject();
 
-                WorkerThread workerThread = new WorkerThread(requestSocket, data);
+                WorkerThread workerThread = new WorkerThread(requestSocket, data, out);
                 workerThread.start();
                 System.out.println(data + " assigned to worker #" + id);
             }
@@ -52,14 +53,14 @@ public class Worker extends Thread{
         private Chunk data;
 
 
-        WorkerThread(Socket requestSocket, Chunk data)  {
+        WorkerThread(Socket requestSocket, Chunk data, ObjectOutputStream out)  {
             this.requestSocket = requestSocket;
             this.data = data;
+            this.out = out;
         }
 
         public void run() {
             try {
-                this.out = new ObjectOutputStream(requestSocket.getOutputStream());
 
                 // Mapping
                 Chunk result = new Chunk(data.getUser(), data.getData() * 2, data.getId());
@@ -70,7 +71,7 @@ public class Worker extends Thread{
                 System.out.println("Worker #" + id + " sent intermediate result: " + result);
             } catch (Exception e) {
                 e.printStackTrace();
-            } // why do we need this finally block?????
+            }
         }
     }
 

@@ -55,8 +55,8 @@ public class User extends Thread{
     public static void main(String[] args) {
         new User(1, 5).start();
         new User(2, 10).start();
-        new User(3, 15).start();
-        new User(4, 20).start();
-        new User(5, 25).start();
+//        new User(3, 15).start();
+//        new User(4, 20).start();
+//        new User(5, 25).start();
     }
 }

@@ -1,7 +1,6 @@
 import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 
@@ -41,7 +40,7 @@ class Master {
     protected static ArrayList<ReceiveWorkerData> connectedWorkers = new ArrayList<>();
 
     protected volatile static ArrayList<Chunk[]> dataForProcessing = new ArrayList<>();
-    protected static HashMap<Long, Chunk[]> intermediateResults = new HashMap<>();
+    protected static HashMap<Long, ArrayList<Chunk>> intermediateResults = new HashMap<>();
 
     ServerSocket usersSocketToHandle, workersSocketToHandle;
 
@@ -112,43 +111,6 @@ class Master {
         }
     }
 
-//    private class ReceiveData extends Thread{
-//
-//        @Override
-//        public void run(){
-//            try {
-//                while (!Thread.currentThread().isInterrupted()) {
-//
-//                    for (Socket workerSocket : workerSockets) {
-//                        ObjectInputStream in = new ObjectInputStream(workerSocket.getInputStream());
-//                        if (in.available() <= 0) {
-//                            continue;
-//                        }
-//                        int data = (int) in.readObject();
-//
-//                        //System.out.println("Received from worker: " + data);
-//
-//                        if (workerData.containsKey(data / 4)) {
-//                            workerData.put(data / 4, data);
-//                        } else {
-//                            workerData.put(data / 4, data);
-//                        }
-//
-//                        System.out.println("Data received from worker: " + workerData.get(data / 4));
-//
-//                        if (workerData.get(data / 4) > 0) {
-//                            System.out.println("Data is ready");
-//                        }
-//
-//                    }
-//                }
-//            }catch (Exception ignored) {
-//
-//            }
-//
-//        }
-//    }
-
     private class UserHandler extends Thread {
         private final ServerSocket usersSocketToHandle;
 
@@ -159,7 +121,7 @@ class Master {
         public void run() {
             try {
 
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
                     Socket providerSocket = usersSocketToHandle.accept();
                     System.out.println("UserHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
@@ -175,7 +137,6 @@ class Master {
         }
     }
 
-
     private class WorkerHandler extends Thread {
         private final ServerSocket workersSocketToHandle;
 
@@ -185,7 +146,7 @@ class Master {
 
         public void run() {
             try {
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
                     Socket providerSocket = workersSocketToHandle.accept();
                     System.out.println("WorkerHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
@@ -218,8 +179,9 @@ class Master {
             try {
                 in = new ObjectInputStream(workerSocket.getInputStream());
 
-                while (true) {
+                while (workerSocket.isConnected()) {
                     Chunk data = (Chunk) in.readObject();
+                    System.out.println("Received data for user: " + data.getUser());
                     addData(data);
                 }
 
@@ -229,7 +191,10 @@ class Master {
         }
 
         public synchronized void addData(Chunk data){
-            intermediateResults.get(data.getUser())[data.getId() - 1] = data;
+            if (!intermediateResults.containsKey(data.getUser())) {
+                intermediateResults.put(data.getUser(), new ArrayList<>());
+            }
+            intermediateResults.get(data.getUser()).add(data);
         }
 
         public Socket getSocket(){

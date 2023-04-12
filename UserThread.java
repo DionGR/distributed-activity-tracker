@@ -1,16 +1,20 @@
 import java.net.*;
 import java.io.*;
+import java.sql.Array;
+import java.util.ArrayList;
 
-public class UserThread extends Thread{
+public class UserThread extends Thread implements Serializable{
 
     transient Socket providerSocket;
     private final String ip;
     private final int port;
+    private boolean mapped;
 
     UserThread(Socket providerSocket) {
         this.providerSocket = providerSocket;
         this.ip = providerSocket.getInetAddress().getHostAddress();
         this.port = providerSocket.getPort();
+        this.mapped = false;
     }
 
     public void run(){
@@ -30,39 +34,30 @@ public class UserThread extends Thread{
 
             int numChunks = chunks.length;
 
-            Master.intermediateResults.put(this.getId(), new Chunk[numChunks]);
             Master.addData(chunks);
 
+            System.out.println(this.getId() + " has " + numChunks + " chunks");
 
 
             System.out.println("Waiting for data from worker...");
 
-            // Reduce
-            System.out.println("Reducing data for user...");
-            while (true){
-                int sum = 0;
-
-                // if there are no null values in the array, then we can reduce
-
-                if (Master.intermediateResults.get(this.getId())[0] != null && Master.intermediateResults.get(this.getId())[1] != null) {
-                    //System.out.println("Reducing chunk " + 1);
-                    sum += Master.intermediateResults.get(this.getId())[0].getData();
-                    sum += Master.intermediateResults.get(this.getId())[1].getData();
-                }
-
-//                for (int i = 0; i < numChunks; i++) {
-//
-//                }
-
-                Chunk finalResult = new Chunk(this.getId(), sum, -1);
-
-                out.writeObject(finalResult);
-                out.flush();
-                break;
+            // Wait for data to be mapped by worker
+            while (!mapped)
+            {
+                sleep(1000);
             }
 
-            System.out.println("Sent final result to user.");
+            // Reduce
+            System.out.println("Reducing data for user...");
+            int sum = 0;
+            sum += Master.intermediateResults.get(this.getId()).get(0).getData();
+            sum += Master.intermediateResults.get(this.getId()).get(1).getData();
+            Chunk finalResult = new Chunk(this.getId(), sum, -1);
 
+            out.writeObject(finalResult);
+            out.flush();
+
+            System.out.println("Sent final result to user.");
         } catch (Exception e) {
             e.printStackTrace();
         }finally {
@@ -74,8 +69,10 @@ public class UserThread extends Thread{
                 ioException.printStackTrace();
             }
         }
+    }
 
-
+    public void setMapped() {
+        this.mapped = true;
     }
 }
 
