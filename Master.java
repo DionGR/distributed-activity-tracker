@@ -156,10 +156,6 @@ class Master {
                     ReceiveWorkerData workerData = new ReceiveWorkerData(providerSocket);
                     connectedWorkers.add(workerData);
                     workerData.start();
-                    /* Handle the request */
-//                    ActionsForWorker d1 = new ActionsForWorker(providerSocket);
-//                    d1.start();
-                    /* Send the worker the number of workers */
                 }
             } catch (IOException ioException) {
                 ioException.printStackTrace();
@@ -174,13 +170,17 @@ class Master {
 
         public ReceiveWorkerData(Socket workerSocket){
             this.workerSocket = workerSocket;
+            try{
+                this.out = new ObjectOutputStream(workerSocket.getOutputStream());
+                this.in = new ObjectInputStream(workerSocket.getInputStream());
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
 
         @Override
         public void run(){
             try {
-                in = new ObjectInputStream(workerSocket.getInputStream());
-
                 while (workerSocket.isConnected()) {
                     Chunk data = (Chunk) in.readObject();
                     System.out.println("Received data for user: " + data.getUser());
