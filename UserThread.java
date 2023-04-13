@@ -33,46 +33,64 @@ public class UserThread extends Thread {
             GPXParser parser = new GPXParser(buffer);
             ArrayList<Waypoint> waypoints = parser.parse();
 
-            for (Waypoint w : waypoints) {
-                System.out.println("UserThread #" + this.getId() + " - " + w.toString());
+            Chunk[] chunks = new Chunk[waypoints.size()/2];
+
+            int j = 0;
+            for (int i = 0; i < waypoints.size(); i += 2) {
+
+                ArrayList<Waypoint> arr = new ArrayList<>();
+                arr.add(waypoints.get(i));
+                arr.add(waypoints.get(i+1));
+
+                chunks[j] = new Chunk(this.getId(), arr, i);
+                ++j;
+            }
+
+//            while(waypoints.size() > 0){
+//                ArrayList<Waypoint> arr = new ArrayList<>();
+//                arr.add(waypoints.get(0));
+//                waypoints.remove(0);
+//                if (waypoints.size() % 2 == 0) {
+//                    chunks[j] = new Chunk(this.getId(), arr, j);
+//                    arr.clear();
+//                }
+//                ++j;
+//            }
+
+
+            int numChunks = chunks.length;
+
+            Master.addData(chunks);
+
+            System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
+            // Wait for data to be mapped by worker
+            while (!Master.intermediateResults.containsKey(this.getId())) {
+                Thread.sleep(1000);
             }
 
 
+            System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
 
+            while (Master.intermediateResults.get(this.getId()).size() < numChunks) {
+                Thread.sleep(1000);
+            }
 
+            // Reduce
+            System.out.println("UserThread #" + this.getId() + " reducing data for user...");
 
-//            Chunk c1 = new Chunk(this.getId(), message * 5, 1);
-//            Chunk c2 = new Chunk(this.getId(), message * 10, 2);
-//
-//            Chunk[] chunks = {c1, c2};
+            int sum = 0;
 
-//            int numChunks = chunks.length;
-//
-//            Master.addData(chunks);
+            ArrayList<Chunk> chunksList = Master.intermediateResults.get(this.getId());
 
+            for (Chunk chunk: chunksList) {
+                ArrayList<Waypoint> ws = chunk.getData();
+                for (Waypoint w: ws) {
+                    sum += w.getID();
+                }
+            }
 
-//            System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
-//            // Wait for data to be mapped by worker
-//            while (!Master.intermediateResults.containsKey(this.getId())) {
-//                Thread.sleep(1000);
-//            }
-//
-//
-//            System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
-//
-//            while (Master.intermediateResults.get(this.getId()).size() < numChunks) {
-//                Thread.sleep(1000);
-//            }
-
-//            // Reduce
-//            System.out.println("UserThread #" + this.getId() + " reducing data for user...");
-//            int sum = 0;
-//            sum += Master.intermediateResults.get(this.getId()).get(0).getData();
-//            sum += Master.intermediateResults.get(this.getId()).get(1).getData();
-//            Chunk finalResult = new Chunk(this.getId(), sum, -1);
-//
-//            out.writeObject(finalResult);
-//            out.flush();
+            out.writeObject(sum);
+            out.flush();
 
             System.out.println("UserThread #" + this.getId() + " sent final result to user.");
         }catch (IOException ioException) {

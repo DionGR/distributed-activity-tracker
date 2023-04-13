@@ -1,5 +1,6 @@
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
 
 public class Worker extends Thread{
     private Socket requestSocket;
@@ -71,7 +72,17 @@ public class Worker extends Thread{
         public void run() {
             try {
                 // Mapping
-                Chunk result = new Chunk(data.getUser(), data.getData() * 10, data.getId());
+                ArrayList<Waypoint> ws = data.getData();
+
+                int res = 0;
+
+                ArrayList<Waypoint> wsNew = new ArrayList<>();
+                for (Waypoint w: ws){
+                    Waypoint wNew = new Waypoint(w);
+                    wsNew.add(wNew);
+                }
+
+                Chunk result = new Chunk(data.getUser(), wsNew, data.getId());
 
                 synchronized (out) {
                     out.writeObject(result);
