@@ -6,10 +6,10 @@ import java.util.HashMap;
 
 class Chunk implements Serializable{
     private final long user;
-    private final int data;
+    private final ArrayList<Waypoint> data;
     private final int id;
 
-    Chunk(long user, int data, int id){
+    Chunk(long user, ArrayList<Waypoint> data, int id){
         this.user = user;
         this.data = data;
         this.id = id;
@@ -19,7 +19,7 @@ class Chunk implements Serializable{
         return user;
     }
 
-    public int getData() {
+    public ArrayList<Waypoint> getData() {
         return data;
     }
 
