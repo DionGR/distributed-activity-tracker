@@ -42,8 +42,6 @@ class Master {
     protected static ArrayList<Chunk[]> dataForProcessing = new ArrayList<>();
     protected static HashMap<Long, ArrayList<Chunk>> intermediateResults = new HashMap<>();
 
-    ServerSocket usersSocketToHandle, workersSocketToHandle;
-
     Master(int userPort, int workerPort){
         this.userPort = userPort;
         this.workerPort = workerPort;
@@ -51,11 +49,8 @@ class Master {
 
     public void bootServer(){
         try {
-            usersSocketToHandle = new ServerSocket(userPort, 5000);
-            workersSocketToHandle = new ServerSocket(workerPort, 5000);
-
-            UserHandler userHandler = new UserHandler(usersSocketToHandle);
-            WorkerHandler workerHandler = new WorkerHandler(workersSocketToHandle);
+            UserHandler userHandler = new UserHandler(userPort);
+            WorkerHandler workerHandler = new WorkerHandler(workerPort);
             AssignData assignData = new AssignData();
 
             userHandler.start();
@@ -108,20 +103,19 @@ class Master {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 
     private class UserHandler extends Thread {
         private final ServerSocket usersSocketToHandle;
 
-        UserHandler(ServerSocket usersSocketToHandle) {
-            this.usersSocketToHandle = usersSocketToHandle;
+        UserHandler(int port) throws IOException {
+            this.usersSocketToHandle = new ServerSocket(port, 5000);
         }
 
+        @Override
         public void run() {
             try {
-
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
                     Socket providerSocket = usersSocketToHandle.accept();
@@ -132,8 +126,16 @@ class Master {
                     connectedUsers.add(user);
                     user.start();
                 }
+            } catch (IOException ioException) {
+                System.err.println("UserHandler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("UserHandler ERROR: " + e.getMessage());
+            } finally {
+                try {
+                    usersSocketToHandle.close();
+                } catch (IOException ioException) {
+                    System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
+                }
             }
         }
     }
@@ -142,10 +144,11 @@ class Master {
 
         private final ServerSocket workersSocketToHandle;
 
-        WorkerHandler(ServerSocket workersSocketToHandle) {
-            this.workersSocketToHandle = workersSocketToHandle;
+        WorkerHandler(int port) throws IOException {
+            this.workersSocketToHandle = new ServerSocket(port, 5000);
         }
 
+        @Override
         public void run() {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
@@ -158,38 +161,62 @@ class Master {
                     workerData.start();
                 }
             } catch (IOException ioException) {
-                ioException.printStackTrace();
+                System.err.println("WorkerHandler IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("WorkerHandler ERROR: " + e.getMessage());
+            } finally {
+                try {
+                    workersSocketToHandle.close();
+                } catch (IOException ioException) {
+                    System.err.println("WorkerHandler IOERROR while shutting down... " + ioException.getMessage());
+                }
             }
         }
     }
 
-    private class ReceiveWorkerData extends Thread{
+    private class ReceiveWorkerData extends Thread {
         Socket workerSocket;
         ObjectInputStream in;
         ObjectOutputStream out;
+        int workerPort;
 
         public ReceiveWorkerData(Socket workerSocket){
             this.workerSocket = workerSocket;
-            try{
-                this.out = new ObjectOutputStream(workerSocket.getOutputStream());
-                this.in = new ObjectInputStream(workerSocket.getInputStream());
-            }catch(Exception e){
-                e.printStackTrace();
-            }
+            this.workerPort = workerSocket.getPort();
+            System.out.println("Worker port: " + workerPort);
+            this.in = null;
+            this.out = null;
         }
 
         @Override
-        public void run(){
+        public void run() {
             try {
+                this.out = new ObjectOutputStream(workerSocket.getOutputStream());
+                this.in = new ObjectInputStream(workerSocket.getInputStream());
+
                 while (workerSocket.isConnected()) {
                     Chunk data = (Chunk) in.readObject();
                     System.out.println("Received data for user: " + data.getUser());
                     addData(data);
                 }
-            }catch(Exception e){
-                e.printStackTrace();
+
+            }catch (IOException ioException) {
+                System.err.println("Worker port: "+ workerPort + " - IOERROR: " + ioException.getMessage());
+            }catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("Worker port: "+ workerPort + " - CASTERROR: " + classNotFoundException.getMessage());
+            }catch (Exception e) {
+                System.err.println("Worker port: "+ workerPort + " - ERROR: " + e.getMessage());
+                throw new RuntimeException(); // !!!!!!!!!
+            }finally {
+                try {
+                    out.close(); in.close();
+                    workerSocket.close();
+                } catch (IOException ioException) {
+                    System.err.println("Worker port: "+ workerPort + " - IOERROR while shutting down... " + ioException.getMessage());
+                }
             }
         }
+
 
         public synchronized void addData(Chunk data){
             synchronized (intermediateResults){

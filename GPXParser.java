@@ -1,14 +1,19 @@
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 
+/* Reads the GPX file and converts it into a list of Waypoints */
+
 public class GPXParser {
-    Object input;
+    private String path;
 
-    GPXParser(Object input){
-        this.input = input;
+    public GPXParser(String path) {
+        this.path = path;
     }
 
-    public ArrayList<Object> parse(){
-        return null;
-    }
+
+
+
+
+
+
 }

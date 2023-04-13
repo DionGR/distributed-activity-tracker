@@ -22,6 +22,7 @@ public class Worker extends Thread{
         in = null;
         try {
             requestSocket = new Socket("localhost", port);
+            System.out.println("Worker #" + id + " with worker port: " + requestSocket.getLocalPort() + " connected to Master" );
 
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             in = new ObjectInputStream(requestSocket.getInputStream());
@@ -37,12 +38,14 @@ public class Worker extends Thread{
                 System.out.println("Worker #" + id + " assigned data: " + data);
             }
 
-        } catch (UnknownHostException e) {
-            System.err.println("Worker #" + id + " - UnknownHostERROR: " + e.getMessage());
+        } catch (UnknownHostException unknownHostException) {
+            System.err.println("Worker #" + id + " - UnknownHostERROR: " + unknownHostException.getMessage());
             // Retry connecting to host
-        } catch (IOException e) {
-            System.err.println("Worker #" + id + " - IOERROR: " + e.getMessage());
+        } catch (IOException ioException) {
+            System.err.println("Worker #" + id + " - IOERROR: " + ioException.getMessage());
             // Retry opening streams
+        } catch (ClassNotFoundException classNotFoundException) {
+            System.err.println("Worker #" + id + " - CASTERROR: " + classNotFoundException.getMessage());
         } catch (Exception e) {
             System.err.println("Worker #" + id + " - ERROR: " + e.getMessage());
             throw new RuntimeException(e); // !!!
@@ -51,8 +54,8 @@ public class Worker extends Thread{
                 out.close(); in.close();
                 requestSocket.close();
                 System.err.println("Worker #" + id + " shutting down...");
-            } catch (Exception e) {
-                System.err.println("Worker #" + id + " - ERROR while shutting down: " + e.getMessage());
+            } catch (IOException ioException) {
+                System.err.println("Worker #" + id + " - IOERROR while shutting down: " + ioException.getMessage());
             }
         }
     }
@@ -77,9 +80,12 @@ public class Worker extends Thread{
 
                 System.out.println("WorkerThread #" + id + " sent intermediate result: " + result);
 
-            } catch (Exception e) {
-                System.err.println("WorkerThread #" + id + " - ERROR while sending intermediate result");
-                System.err.println(e.getMessage());
+            } catch (IOException ioException) {
+                System.err.println("WorkerThread #" + id + " - IOERROR while sending intermediate result: " + ioException.getMessage());
+                throw new RuntimeException(ioException); // !!!
+            }catch (Exception e) {
+                System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
+                throw new RuntimeException(e); // !!!
             }
         }
     }

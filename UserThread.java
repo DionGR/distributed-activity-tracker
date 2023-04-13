@@ -4,7 +4,7 @@ import java.sql.Array;
 import java.util.ArrayList;
 
 public class UserThread extends Thread {
-    private Socket providerSocket;
+    private final Socket providerSocket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -23,7 +23,7 @@ public class UserThread extends Thread {
 
             // Read GPX from User
             int message = (int) in.readObject();
-            System.out.println("Thread #" + this.getId() + " received: " + message);
+            System.out.println("UserThread #" + this.getId() + " received: " + message);
 
             Chunk c1 = new Chunk(this.getId(), message * 5, 1);
             Chunk c2 = new Chunk(this.getId(), message * 10, 2);
@@ -35,21 +35,21 @@ public class UserThread extends Thread {
             Master.addData(chunks);
 
 
-            System.out.println("Thread #" + this.getId() + " waiting for data from worker...");
+            System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
             // Wait for data to be mapped by worker
             while (!Master.intermediateResults.containsKey(this.getId())) {
                 Thread.sleep(1000);
             }
 
 
-            System.out.println("Thread #" + this.getId() + " has received first chunk from worker...");
+            System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
 
             while (Master.intermediateResults.get(this.getId()).size() < numChunks) {
                 Thread.sleep(1000);
             }
 
             // Reduce
-            System.out.println("Thread #" + this.getId() + " reducing data for user...");
+            System.out.println("UserThread #" + this.getId() + " reducing data for user...");
             int sum = 0;
             sum += Master.intermediateResults.get(this.getId()).get(0).getData();
             sum += Master.intermediateResults.get(this.getId()).get(1).getData();
@@ -59,16 +59,17 @@ public class UserThread extends Thread {
             out.flush();
 
             System.out.println("UserThread #" + this.getId() + " sent final result to user.");
-
-        }catch (IOException e) {
-            System.err.println("UserThread #" + this.getId() + " - IOERROR: " + e.getMessage());
+        }catch (IOException ioException) {
+            System.err.println("UserThread #" + this.getId() + " - IOERROR: " + ioException.getMessage());
             // Retry opening streams
-        }catch (Exception e){
+        }catch (ClassNotFoundException classNotFoundException) {
+            System.err.println("UserThread #" + this.getId() + " - CASTERROR: " + classNotFoundException.getMessage());
+        } catch (Exception e){
             System.err.println("UserThread #" + this.getId() + " - ERROR: " + e.getMessage());
             throw new RuntimeException(e); // !!!
         }finally {
             try {
-                in.close(); out.close();
+                out.close(); in.close();
                 providerSocket.close();
                 System.out.println("UserThread #" + this.getId() + " shutting down...");
             } catch (IOException ioException) {

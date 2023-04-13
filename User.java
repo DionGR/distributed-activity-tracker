@@ -11,10 +11,11 @@ public class User extends Thread{
         this.gpx = gpx;
     }
 
+    @Override
     public void run(){
-        ObjectOutputStream out = null ;
-        ObjectInputStream in = null ;
-        Socket requestSocket = null ;
+        ObjectOutputStream out = null;
+        ObjectInputStream in = null;
+        Socket requestSocket = null;
 
         try {
             String host = "localhost";
@@ -33,26 +34,29 @@ public class User extends Thread{
             Chunk result = (Chunk) in.readObject();
 
             /* Print the received result from server */
-            System.out.println("User #" + this.id + " Result:" + result.getData());
+            System.out.println("User #" + this.id + " Result: " + result.getData());
 
-        } catch (UnknownHostException unknownHost) {
+        } catch (UnknownHostException unknownHostException) {
             System.err.println("You are trying to connect to an unknown host!");
         } catch (IOException ioException) {
-            ioException.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            System.err.println("User #" + this.id + " - IOERROR: " + ioException.getMessage());
+        } catch (ClassNotFoundException classNotFoundException) {
+            System.err.println("User #" + this.id + " - CASTERROR: " + classNotFoundException.getMessage());
+        } catch (Exception e) {
+            System.err.println("User #" + this.id + " - ERROR: " + e.getMessage());
         } finally {
             try {
                 out.close(); in.close();
                 requestSocket.close();
+                System.out.println("User #" + this.id + " shutting down...");
             } catch (IOException ioException) {
-                ioException.printStackTrace();
+                System.err.println("User #" + this.id + " - IOERROR while shutting down: " + ioException.getMessage());
             }
         }
     }
 
     public static void main(String[] args) {
-        for (int i = 1; i <= 1000; i++) {
+        for (int i = 1; i <= 5; i++) {
             new User(i, i).start();
         }
     }
