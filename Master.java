@@ -81,12 +81,12 @@ class Master {
                     while (dataForProcessing.size() > 0 && connectedWorkers.size() > 0) {
                         Chunk[] chunks;
 
-                        synchronized (dataForProcessing){
+                        synchronized (dataForProcessing) {
                             chunks = dataForProcessing.get(0);
                             dataForProcessing.remove(0);
                         }
 
-                        for (Chunk c: chunks){
+                        for (Chunk c : chunks) {
                             //ObjectOutputStream out = workerOutputStreams[nextWorker];
                             ObjectOutputStream out = connectedWorkers.get(nextWorker).getOutputStream();
                             System.out.println("Assigning data to worker: " + nextWorker);
@@ -100,8 +100,10 @@ class Master {
                         }
                     }
                 }
+            }catch(IOException ioException){
+                System.err.println("AssignData IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("AssignData ERROR: " + e.getMessage());
             }
         }
     }
