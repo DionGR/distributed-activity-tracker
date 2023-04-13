@@ -1,7 +1,7 @@
 import java.io.Serializable;
 import java.sql.Time;
 
-public class Waypoint{
+public class Waypoint implements Serializable{
     private final int id;
     private final double latitude;
     private final double longitude;

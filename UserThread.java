@@ -2,6 +2,7 @@ import java.net.*;
 import java.io.*;
 import java.sql.Array;
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 public class UserThread extends Thread {
     private final Socket providerSocket;
@@ -22,41 +23,56 @@ public class UserThread extends Thread {
             in = new ObjectInputStream(providerSocket.getInputStream());
 
             // Read GPX from User
-            int message = (int) in.readObject();
-            System.out.println("UserThread #" + this.getId() + " received: " + message);
+            StringBuilder buffer = (StringBuilder) in.readObject();
 
-            Chunk c1 = new Chunk(this.getId(), message * 5, 1);
-            Chunk c2 = new Chunk(this.getId(), message * 10, 2);
+            System.out.println("UserThread #" + this.getId() + " received.");
 
-            Chunk[] chunks = {c1, c2};
+            /* Convert the GPX file into a list of Waypoints */
 
-            int numChunks = chunks.length;
+            // Parse GPX
+            GPXParser parser = new GPXParser(buffer);
+            ArrayList<Waypoint> waypoints = parser.parse();
 
-            Master.addData(chunks);
-
-
-            System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
-            // Wait for data to be mapped by worker
-            while (!Master.intermediateResults.containsKey(this.getId())) {
-                Thread.sleep(1000);
+            for (Waypoint w : waypoints) {
+                System.out.println("UserThread #" + this.getId() + " - " + w.toString());
             }
 
 
-            System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
 
-            while (Master.intermediateResults.get(this.getId()).size() < numChunks) {
-                Thread.sleep(1000);
-            }
 
-            // Reduce
-            System.out.println("UserThread #" + this.getId() + " reducing data for user...");
-            int sum = 0;
-            sum += Master.intermediateResults.get(this.getId()).get(0).getData();
-            sum += Master.intermediateResults.get(this.getId()).get(1).getData();
-            Chunk finalResult = new Chunk(this.getId(), sum, -1);
 
-            out.writeObject(finalResult);
-            out.flush();
+//            Chunk c1 = new Chunk(this.getId(), message * 5, 1);
+//            Chunk c2 = new Chunk(this.getId(), message * 10, 2);
+//
+//            Chunk[] chunks = {c1, c2};
+
+//            int numChunks = chunks.length;
+//
+//            Master.addData(chunks);
+
+
+//            System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
+//            // Wait for data to be mapped by worker
+//            while (!Master.intermediateResults.containsKey(this.getId())) {
+//                Thread.sleep(1000);
+//            }
+//
+//
+//            System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
+//
+//            while (Master.intermediateResults.get(this.getId()).size() < numChunks) {
+//                Thread.sleep(1000);
+//            }
+
+//            // Reduce
+//            System.out.println("UserThread #" + this.getId() + " reducing data for user...");
+//            int sum = 0;
+//            sum += Master.intermediateResults.get(this.getId()).get(0).getData();
+//            sum += Master.intermediateResults.get(this.getId()).get(1).getData();
+//            Chunk finalResult = new Chunk(this.getId(), sum, -1);
+//
+//            out.writeObject(finalResult);
+//            out.flush();
 
             System.out.println("UserThread #" + this.getId() + " sent final result to user.");
         }catch (IOException ioException) {
