@@ -33,7 +33,7 @@ class Chunk implements Serializable{
 }
 
 class Master {
-    private int workers;
+    //private int workers;
     private int userPort, workerPort;
 
     protected ArrayList<UserThread> connectedUsers = new ArrayList<>();
@@ -197,8 +197,9 @@ class Master {
                 this.in = new ObjectInputStream(workerSocket.getInputStream());
 
                 while (workerSocket.isConnected()) {
+                    /* Waiting for intermediate result */
                     Chunk data = (Chunk) in.readObject();
-                    System.out.println("Received data for user: " + data.getUser());
+                    System.out.println("Worker port: "+ workerPort + " received data for user: " + data.getUser());
                     addData(data);
                 }
 
@@ -231,6 +232,10 @@ class Master {
 
         public Socket getSocket(){
             return workerSocket;
+        }
+
+        public int getWorkerPort(){
+            return workerPort;
         }
 
         public ObjectInputStream getInputStream(){

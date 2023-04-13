@@ -26,10 +26,11 @@ public class User extends Thread{
             out = new ObjectOutputStream(requestSocket.getOutputStream());
 
 
-            /* Write the two integers */
+            /* Write the integer */
             out.writeObject(gpx);
             out.flush();
 
+            /* Wait for result */
             in = new ObjectInputStream(requestSocket.getInputStream());
             Chunk result = (Chunk) in.readObject();
 
