@@ -64,8 +64,8 @@ public class Worker extends Thread{
     private class WorkerThread extends Thread {
         private final Chunk data;
 
-        WorkerThread(Chunk data){
-            this.data = data;
+        WorkerThread(Chunk chunk){
+            this.chunk = chunk;
         }
 
         @Override
@@ -75,6 +75,7 @@ public class Worker extends Thread{
 
 
 
+                Segment result = new Segment(chunk.getUser(), chunk.getId(), totalDistance, meanVelocity, totalElevation, totalTime);
 
                 synchronized (out) {
                     out.writeObject(result);
