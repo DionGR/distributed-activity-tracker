@@ -4,47 +4,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-class Chunk implements Serializable{
-    private final long user;
-    private final ArrayList<Waypoint> data;
-    private final int id;
-
-    Chunk(long user, ArrayList<Waypoint> data, int id){
-        this.user = user;
-        this.data = data;
-        this.id = id;
-    }
-
-    public long getUser() {
-        return user;
-    }
-
-    public ArrayList<Waypoint> getData() {
-        return data;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String toString(){
-        return "Chunk: " + data;
-    }
-}
-
 class Master {
-    //private int workers;
-    private int userPort, workerPort;
+    private final int userPort, workerPort;
 
-    protected ArrayList<UserThread> connectedUsers = new ArrayList<>();
-    protected ArrayList<ReceiveWorkerData> connectedWorkers = new ArrayList<>();
+    private final ArrayList<UserThread> connectedUsers;
+    private final ArrayList<ReceiveWorkerData> connectedWorkers;
 
-    protected static ArrayList<Chunk[]> dataForProcessing = new ArrayList<>();
-    protected static HashMap<Long, ArrayList<Chunk>> intermediateResults = new HashMap<>();
+    private final ArrayList<Chunk[]> dataForProcessing;
+    private final HashMap<Long, ArrayList<Chunk>> intermediateResults;
+
 
     Master(int userPort, int workerPort){
         this.userPort = userPort;
         this.workerPort = workerPort;
+        this.connectedUsers = new ArrayList<>();
+        this.connectedWorkers = new ArrayList<>();
+        this.dataForProcessing = new ArrayList<>();
+        this.intermediateResults = new HashMap<>();
     }
 
     public void bootServer(){
@@ -61,7 +37,7 @@ class Master {
         }
     }
 
-    public synchronized static void addData(Chunk[] chunks){
+    protected synchronized void addData(Chunk[] chunks){
         synchronized (dataForProcessing) {
             dataForProcessing.add(chunks);
         }
@@ -137,6 +113,107 @@ class Master {
                     usersSocketToHandle.close();
                 } catch (IOException ioException) {
                     System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
+                }
+            }
+        }
+    }
+
+    public class UserThread extends Thread {
+        private final Socket providerSocket;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+
+        UserThread(Socket providerSocket) {
+            this.providerSocket = providerSocket;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+
+            try {
+                out = new ObjectOutputStream(providerSocket.getOutputStream());
+                in = new ObjectInputStream(providerSocket.getInputStream());
+
+                // Read GPX from User
+                StringBuilder buffer = (StringBuilder) in.readObject();
+
+                System.out.println("UserThread #" + this.getId() + " received.");
+
+                /* Convert the GPX file into a list of Waypoints */
+
+                // Parse GPX
+                GPXParser parser = new GPXParser(buffer);
+                ArrayList<Waypoint> waypoints = parser.parse();
+
+                int numChunks = (int) ((waypoints.size() / connectedWorkers.size()) + 0.5);
+                Chunk[] chunks = new Chunk[numChunks];
+
+
+                // Split the list of waypoints into chunks
+                while(waypoints.size() > 0){
+                    int chunkSize = (int) ((waypoints.size() / numChunks) + 0.5);
+                    ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
+
+                    for (int i = 0; i < chunkSize; i++) {
+                        chunkWaypoints.add(waypoints.get(0));
+                        waypoints.remove(0);
+                    }
+
+                    chunks[--numChunks] = new Chunk(this.getId(), chunkWaypoints, waypoints.size());
+                }
+
+
+
+                addData(chunks);
+
+                System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
+                // Wait for data to be mapped by worker
+                while (!intermediateResults.containsKey(this.getId())) {
+                    Thread.sleep(1000);
+                }
+
+
+                System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
+
+                while (intermediateResults.get(this.getId()).size() < numChunks) {
+                    Thread.sleep(1000);
+                }
+
+                // Reduce
+                System.out.println("UserThread #" + this.getId() + " reducing data for user...");
+
+                int sum = 0;
+
+                ArrayList<Chunk> chunksList = intermediateResults.get(this.getId());
+
+                for (Chunk chunk: chunksList) {
+                    ArrayList<Waypoint> ws = chunk.getData();
+                    for (Waypoint w: ws) {
+                        sum += w.getID();
+                    }
+                }
+
+                out.writeObject(sum);
+                out.flush();
+
+                System.out.println("UserThread #" + this.getId() + " sent final result to user.");
+            }catch (IOException ioException) {
+                System.err.println("UserThread #" + this.getId() + " - IOERROR: " + ioException.getMessage());
+                // Retry opening streams
+            }catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("UserThread #" + this.getId() + " - CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e){
+                System.err.println("UserThread #" + this.getId() + " - ERROR: " + e.getMessage());
+                throw new RuntimeException(e); // !!!
+            }finally {
+                try {
+                    out.close(); in.close();
+                    providerSocket.close();
+                    System.out.println("UserThread #" + this.getId() + " shutting down...");
+                } catch (IOException ioException) {
+                    System.err.println("UserThread #" + this.getId() + " - IOERROR while shutting down: " + ioException.getMessage());
                 }
             }
         }

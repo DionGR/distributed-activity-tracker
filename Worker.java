@@ -72,17 +72,9 @@ public class Worker extends Thread{
         public void run() {
             try {
                 // Mapping
-                ArrayList<Waypoint> ws = data.getData();
 
-                int res = 0;
 
-                ArrayList<Waypoint> wsNew = new ArrayList<>();
-                for (Waypoint w: ws){
-                    Waypoint wNew = new Waypoint(w);
-                    wsNew.add(wNew);
-                }
 
-                Chunk result = new Chunk(data.getUser(), wsNew, data.getId());
 
                 synchronized (out) {
                     out.writeObject(result);
