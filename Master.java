@@ -205,8 +205,6 @@ class Master {
                 // Reduce
                 System.out.println("UserThread #" + this.getId() + " reducing data for user...");
 
-                int sum = 0;
-
                 ArrayList<Segment> segmentList = intermediateResults.get(this.getId());
 
                 double totalDistance = 0;
@@ -220,7 +218,11 @@ class Master {
                     totalTime += segment.getTotalTime() / 1000;     //sec
                 }
 
-                out.writeObject(sum);
+                double meanVelocity = totalDistance / ((double) totalTime /3600) ;
+
+                Segment result = new Segment(this.getId(), 0, totalDistance, meanVelocity, totalElevation, totalTime/60);
+
+                out.writeObject(result);
                 out.flush();
 
                 System.out.println("UserThread #" + this.getId() + " sent final result to user.");
@@ -300,7 +302,7 @@ class Master {
 
                 while (workerSocket.isConnected()) {
                     /* Waiting for intermediate result */
-                    Chunk data = (Chunk) in.readObject();
+                    Segment data = (Segment) in.readObject();
                     System.out.println("Worker port: "+ workerPort + " received data for user: " + data.getUser());
                     addData(data);
                 }

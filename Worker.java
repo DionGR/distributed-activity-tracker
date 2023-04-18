@@ -62,7 +62,7 @@ public class Worker extends Thread{
     }
 
     private class WorkerThread extends Thread {
-        private final Chunk data;
+        private final Chunk chunk;
 
         WorkerThread(Chunk chunk){
             this.chunk = chunk;
@@ -72,8 +72,24 @@ public class Worker extends Thread{
         public void run() {
             try {
                 // Mapping
+                ArrayList<Waypoint> waypoints = chunk.getData();
+                double totalDistance = 0;
+                double totalElevation = 0;
+                long totalTime = 0;
+                for(int i=1; i<waypoints.size(); i++) {
+                    Waypoint curr = waypoints.get(i);
+                    Waypoint prev = waypoints.get(i - 1);
 
+                    double lat1 = curr.getLatitude();
+                    double lat2 = prev.getLatitude();
+                    double lon1 = curr.getLongitude();
+                    double lon2 = prev.getLongitude();
+                    totalDistance += distance(lat1, lat2, lon1, lon2);
+                    totalElevation += Math.max(0, curr.getElevation() - prev.getElevation());
+                    totalTime += curr.getTime().getTime() - prev.getTime().getTime();
+                }
 
+                double meanVelocity = totalDistance / totalTime;  // v = delta_x / delta_t
 
                 Segment result = new Segment(chunk.getUser(), chunk.getId(), totalDistance, meanVelocity, totalElevation, totalTime);
 
