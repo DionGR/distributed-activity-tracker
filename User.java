@@ -27,7 +27,7 @@ public class User extends Thread{
 
             /* Read the GPX file from the disk */
 
-            File f = new File("D:\\Users\\Dion\\Documents\\Programming\\Java\\Distributed Activity Tracker\\data\\user-data\\route1.gpx");
+            File f = new File("D:\\Users\\Dion\\Documents\\Programming\\Java\\Distributed Activity Tracker\\data\\user-data\\route" + gpx + ".gpx");
 //            FileInputStream fis = new FileInputStream(f);
 //
 //            int data;
@@ -52,10 +52,12 @@ public class User extends Thread{
 
             /* Wait for result */
             in = new ObjectInputStream(requestSocket.getInputStream());
-            int result = (int) in.readObject();
+            Segment result = (Segment) in.readObject();
 
             /* Print the received result from server */
-            System.out.println("User #" + this.id + " Result: " + result);
+            System.out.println("User #" + this.id + " received result: " + result);
+
+
 
         } catch (UnknownHostException unknownHostException) {
             System.err.println("You are trying to connect to an unknown host!");
@@ -77,7 +79,7 @@ public class User extends Thread{
     }
 
     public static void main(String[] args) {
-        for (int i = 1; i <= 1; i++) {
+        for (int i = 1; i <= 6; i++) {
             new User(i, i).start();
         }
     }

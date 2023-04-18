@@ -11,7 +11,7 @@ class Master {
     private final ArrayList<ReceiveWorkerData> connectedWorkers;
 
     private final ArrayList<Chunk[]> dataForProcessing;
-    private final HashMap<Long, ArrayList<Chunk>> intermediateResults;
+    private final HashMap<Long, ArrayList<Segment>> intermediateResults;
 
 
     Master(int userPort, int workerPort){
@@ -147,24 +147,45 @@ class Master {
                 GPXParser parser = new GPXParser(buffer);
                 ArrayList<Waypoint> waypoints = parser.parse();
 
-                int numChunks = (int) ((waypoints.size() / connectedWorkers.size()) + 0.5);
+                int numChunks = connectedWorkers.size();
                 Chunk[] chunks = new Chunk[numChunks];
+                int chunkSize = (int) ((waypoints.size() / numChunks) + 1.5);
 
 
                 // Split the list of waypoints into chunks
-                while(waypoints.size() > 0){
-                    int chunkSize = (int) ((waypoints.size() / numChunks) + 0.5);
+                while(waypoints.size() > 1) {
                     ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
 
-                    for (int i = 0; i < chunkSize; i++) {
+                    int waysize = waypoints.size();
+
+                    for (int i = 0; i < Math.min(chunkSize, waysize); i++) {
                         chunkWaypoints.add(waypoints.get(0));
                         waypoints.remove(0);
                     }
 
+                    if(!waypoints.isEmpty())
+                        chunkWaypoints.add(waypoints.get(0));
+
                     chunks[--numChunks] = new Chunk(this.getId(), chunkWaypoints, waypoints.size());
                 }
 
+                for (Chunk c : chunks) {
+                    System.out.println("Chunk: ");
+                    System.out.println(c.toString());
+                }
 
+//                int chunkSize = (int) ((waypoints.size() / numChunks) + 1.5);
+//                ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
+//                chunkWaypoints.add(waypoints.get(0));
+//                for(int i=1; i < waypoints.size(); i++){
+//                    if( i % chunkSize == 0 ){
+//                            chunks[i / chunkSize] = new Chunk(this.getId(), chunkWaypoints, i / chunkSize);
+//                            chunkWaypoints = new ArrayList<>();
+//                            chunkWaypoints.add(waypoints.get(i-1));
+//                    }
+//                    chunkWaypoints.add(waypoints.get(i));
+//                }
+//                chunks[numChunks-1] = new Chunk(this.getId(), chunkWaypoints,  numChunks-1);
 
                 addData(chunks);
 
@@ -186,13 +207,17 @@ class Master {
 
                 int sum = 0;
 
-                ArrayList<Chunk> chunksList = intermediateResults.get(this.getId());
+                ArrayList<Segment> segmentList = intermediateResults.get(this.getId());
 
-                for (Chunk chunk: chunksList) {
-                    ArrayList<Waypoint> ws = chunk.getData();
-                    for (Waypoint w: ws) {
-                        sum += w.getID();
-                    }
+                double totalDistance = 0;
+                double totalElevation = 0;
+                long totalTime = 0;
+
+                for (Segment segment: segmentList) {
+                    // REDUCE
+                    totalDistance += segment.getTotalDistance();    //km
+                    totalElevation += segment.getTotalElevation();  //m
+                    totalTime += segment.getTotalTime() / 1000;     //sec
                 }
 
                 out.writeObject(sum);
@@ -298,7 +323,7 @@ class Master {
         }
 
 
-        public synchronized void addData(Chunk data){
+        public synchronized void addData(Segment data){
             synchronized (intermediateResults){
                 if (!intermediateResults.containsKey(data.getUser())) {
                     intermediateResults.put(data.getUser(), new ArrayList<>());
