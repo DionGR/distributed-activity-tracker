@@ -260,10 +260,11 @@ class Master {
                     }
 
                     // Add data to database
-                    database.addData(id, totalDistance, totalTime, totalElevation);
-
-                    System.err.println(database.getUserData(id));
-                    System.err.println(database.getTotalData());
+                    synchronized (database){
+                        database.addData(id, totalDistance, totalTime, totalElevation);
+                        System.err.println(database.getUserData(id));
+                        System.err.println(database.getTotalData());
+                    }
 
                     System.out.println("UserThread " + this.getId() + " for User #" + id + " sent final result to user.");
                 }catch (IOException ioException) {

@@ -9,33 +9,23 @@ public class Database {
         totalData = new Node();
     }
 
-    public synchronized void initUser(int id){
-        synchronized (userData) {
-            userData.put(id, new Node());
-        }
+    public void initUser(int id){
+        userData.put(id, new Node());
     }
 
-    public synchronized void addData(int id, double distance, double time, double elevation){
-        synchronized (totalData) {
-            userData.get(id).addData(distance, time, elevation);
-        }
-        synchronized (userData) {
-            totalData.addData(distance, time, elevation);
-        }
+    public void addData(int id, double distance, double time, double elevation){
+        userData.get(id).addData(distance, time, elevation);
+        totalData.addData(distance, time, elevation);
     }
 
     public String getUserData(int id){
         Node node;
-        synchronized (userData){
-            node = userData.get(id);
-        }
+        node = userData.get(id);
         return "User: " + id + " Average Distance: " + node.avgDistance + " Average Time: " + node.avgTime + " Average Elevation: " + node.avgElevation;
     }
 
     public String getTotalData(){
-        synchronized (totalData){
-            return "Total Average Distance: " + totalData.avgDistance + " Total Average Time: " + totalData.avgTime + " Total Average Elevation: " + totalData.avgElevation;
-        }
+        return "Total Average Distance: " + totalData.avgDistance + " Total Average Time: " + totalData.avgTime + " Total Average Elevation: " + totalData.avgElevation;
     }
 
     private class Node{
@@ -51,7 +41,7 @@ public class Database {
             submissions = 0;
         }
 
-        public synchronized void addData(double distance, double time, double elevation){
+        public void addData(double distance, double time, double elevation){
             submissions++;
             avgDistance = ((submissions-1)*avgDistance + distance)/submissions;
             avgTime = ((submissions-1)*avgTime + time)/submissions;
