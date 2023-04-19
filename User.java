@@ -37,7 +37,6 @@ public class User extends Thread{
             }
 
             /* Read the GPX file from the disk */
-
             File f = new File("D:\\Users\\Dion\\Documents\\Programming\\Java\\Distributed Activity Tracker\\data\\user-data\\route" + gpx + ".gpx");
 
             BufferedReader br = new BufferedReader(new FileReader(f));
