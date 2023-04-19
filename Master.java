@@ -147,9 +147,11 @@ class Master {
                 GPXParser parser = new GPXParser(buffer);
                 ArrayList<Waypoint> waypoints = parser.parse();
 
-                int numChunks = connectedWorkers.size();
+                int numChunks = Math.ceilDiv(waypoints.size(), 10);
+                int chunkSize = waypoints.size()/(numChunks);
+                chunkSize += 1;
+
                 Chunk[] chunks = new Chunk[numChunks];
-                int chunkSize = (int) ((waypoints.size() / numChunks) + 1.5);
 
 
                 // Split the list of waypoints into chunks
@@ -167,25 +169,13 @@ class Master {
                         chunkWaypoints.add(waypoints.get(0));
 
                     chunks[--numChunks] = new Chunk(this.getId(), chunkWaypoints, waypoints.size());
+                    System.out.println("New Chunk");
                 }
 
                 for (Chunk c : chunks) {
                     System.out.println("Chunk: ");
                     System.out.println(c.toString());
                 }
-
-//                int chunkSize = (int) ((waypoints.size() / numChunks) + 1.5);
-//                ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
-//                chunkWaypoints.add(waypoints.get(0));
-//                for(int i=1; i < waypoints.size(); i++){
-//                    if( i % chunkSize == 0 ){
-//                            chunks[i / chunkSize] = new Chunk(this.getId(), chunkWaypoints, i / chunkSize);
-//                            chunkWaypoints = new ArrayList<>();
-//                            chunkWaypoints.add(waypoints.get(i-1));
-//                    }
-//                    chunkWaypoints.add(waypoints.get(i));
-//                }
-//                chunks[numChunks-1] = new Chunk(this.getId(), chunkWaypoints,  numChunks-1);
 
                 addData(chunks);
 

@@ -28,14 +28,6 @@ public class User extends Thread{
             /* Read the GPX file from the disk */
 
             File f = new File("D:\\Users\\Dion\\Documents\\Programming\\Java\\Distributed Activity Tracker\\data\\user-data\\route" + gpx + ".gpx");
-//            FileInputStream fis = new FileInputStream(f);
-//
-//            int data;
-//            char[] buffer = new char[(int) f.length()];
-//
-//            while((data = fis.read()) != -1) {
-//                buffer[data] = (char) data;
-//            }
 
             BufferedReader br = new BufferedReader(new FileReader(f));
 
@@ -56,8 +48,6 @@ public class User extends Thread{
 
             /* Print the received result from server */
             System.out.println("User #" + this.id + " received result: " + result);
-
-
 
         } catch (UnknownHostException unknownHostException) {
             System.err.println("You are trying to connect to an unknown host!");
@@ -82,5 +72,6 @@ public class User extends Thread{
         for (int i = 1; i <= 6; i++) {
             new User(i, i).start();
         }
+//        new User(2, 2).start();
     }
 }
