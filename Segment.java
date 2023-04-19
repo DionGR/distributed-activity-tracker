@@ -1,5 +1,6 @@
 import java.io.Serializable;
 
+
 public class Segment implements Serializable {
     private final long user;
     private final int id;

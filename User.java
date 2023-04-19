@@ -24,6 +24,17 @@ public class User extends Thread{
 
             /* Create the streams to send and receive data from server */
             out = new ObjectOutputStream(requestSocket.getOutputStream());
+            in = new ObjectInputStream(requestSocket.getInputStream());
+
+            /* Send the id of the user */
+            out.writeObject(id);
+            out.flush();
+
+            /* Wait for ACK */
+            int ack = (int) in.readObject();
+            if (ack != 1){
+                throw new Exception("Master did not acknowledge connection");
+            }
 
             /* Read the GPX file from the disk */
 
@@ -37,13 +48,11 @@ public class User extends Thread{
                 buffer.append(line);
             }
 
-
-            /* Write the integer */
+            /* Write gpx */
             out.writeObject(buffer);
             out.flush();
 
             /* Wait for result */
-            in = new ObjectInputStream(requestSocket.getInputStream());
             Segment result = (Segment) in.readObject();
 
             /* Print the received result from server */
@@ -72,6 +81,5 @@ public class User extends Thread{
         for (int i = 1; i <= 6; i++) {
             new User(i, i).start();
         }
-//        new User(2, 2).start();
     }
 }

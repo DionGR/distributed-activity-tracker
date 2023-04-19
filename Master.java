@@ -7,11 +7,13 @@ import java.util.HashMap;
 class Master {
     private final int userPort, workerPort;
 
-    private final ArrayList<UserThread> connectedUsers;
+    private final ArrayList<UserBroker> connectedUsers;
     private final ArrayList<ReceiveWorkerData> connectedWorkers;
 
     private final ArrayList<Chunk[]> dataForProcessing;
     private final HashMap<Long, ArrayList<Segment>> intermediateResults;
+
+    private final Database database;
 
 
     Master(int userPort, int workerPort){
@@ -21,6 +23,7 @@ class Master {
         this.connectedWorkers = new ArrayList<>();
         this.dataForProcessing = new ArrayList<>();
         this.intermediateResults = new HashMap<>();
+        this.database = new Database();
     }
 
     public void bootServer(){
@@ -100,9 +103,9 @@ class Master {
                     System.out.println("UserHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
                     /* Handle the request */
-                    UserThread user = new UserThread(providerSocket);
-                    connectedUsers.add(user);
-                    user.start();
+                    UserBroker broker = new UserBroker(providerSocket);
+                    connectedUsers.add(broker);
+                    broker.start();
                 }
             } catch (IOException ioException) {
                 System.err.println("UserHandler IOERROR: " + ioException.getMessage());
@@ -118,12 +121,13 @@ class Master {
         }
     }
 
-    public class UserThread extends Thread {
+    public class UserBroker extends Thread {
         private final Socket providerSocket;
         private ObjectOutputStream out;
         private ObjectInputStream in;
+        private int id;
 
-        UserThread(Socket providerSocket) {
+        UserBroker(Socket providerSocket) {
             this.providerSocket = providerSocket;
             this.out = null;
             this.in = null;
@@ -136,102 +140,140 @@ class Master {
                 out = new ObjectOutputStream(providerSocket.getOutputStream());
                 in = new ObjectInputStream(providerSocket.getInputStream());
 
-                // Read GPX from User
-                StringBuilder buffer = (StringBuilder) in.readObject();
+                // User registration
+                int id = (int) in.readObject();
+                this.id = id;
+                database.initUser(id);
 
-                System.out.println("UserThread #" + this.getId() + " received.");
+                System.out.println("UserBroker for User #" + id + " started.");
+                out.writeObject(1);
 
-                /* Convert the GPX file into a list of Waypoints */
+                while(true){
+                    // Take GPX from User
+                    StringBuilder buffer = (StringBuilder) in.readObject();
 
-                // Parse GPX
-                GPXParser parser = new GPXParser(buffer);
-                ArrayList<Waypoint> waypoints = parser.parse();
+                    UserThread userThread = new UserThread(buffer);
+                    userThread.start();
 
-                int numChunks = Math.ceilDiv(waypoints.size(), 10);
-                int chunkSize = waypoints.size()/(numChunks);
-                chunkSize += 1;
-
-                Chunk[] chunks = new Chunk[numChunks];
-
-
-                // Split the list of waypoints into chunks
-                while(waypoints.size() > 1) {
-                    ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
-
-                    int waysize = waypoints.size();
-
-                    for (int i = 0; i < Math.min(chunkSize, waysize); i++) {
-                        chunkWaypoints.add(waypoints.get(0));
-                        waypoints.remove(0);
-                    }
-
-                    if(!waypoints.isEmpty())
-                        chunkWaypoints.add(waypoints.get(0));
-
-                    chunks[--numChunks] = new Chunk(this.getId(), chunkWaypoints, waypoints.size());
-                    System.out.println("New Chunk");
+                    System.out.println("UserBroker for User #" + id + " - GPX received.");
                 }
 
-                for (Chunk c : chunks) {
-                    System.out.println("Chunk: ");
-                    System.out.println(c.toString());
-                }
-
-                addData(chunks);
-
-                System.out.println("UserThread #" + this.getId() + " waiting for data from worker...");
-                // Wait for data to be mapped by worker
-                while (!intermediateResults.containsKey(this.getId())) {
-                    Thread.sleep(1000);
-                }
-
-
-                System.out.println("UserThread #" + this.getId() + " has received first chunk from worker...");
-
-                while (intermediateResults.get(this.getId()).size() < numChunks) {
-                    Thread.sleep(1000);
-                }
-
-                // Reduce
-                System.out.println("UserThread #" + this.getId() + " reducing data for user...");
-
-                ArrayList<Segment> segmentList = intermediateResults.get(this.getId());
-
-                double totalDistance = 0;
-                double totalElevation = 0;
-                long totalTime = 0;
-
-                for (Segment segment: segmentList) {
-                    // REDUCE
-                    totalDistance += segment.getTotalDistance();    //km
-                    totalElevation += segment.getTotalElevation();  //m
-                    totalTime += segment.getTotalTime() / 1000;     //sec
-                }
-
-                double meanVelocity = totalDistance / ((double) totalTime /3600) ;
-
-                Segment result = new Segment(this.getId(), 0, totalDistance, meanVelocity, totalElevation, totalTime/60);
-
-                out.writeObject(result);
-                out.flush();
-
-                System.out.println("UserThread #" + this.getId() + " sent final result to user.");
             }catch (IOException ioException) {
-                System.err.println("UserThread #" + this.getId() + " - IOERROR: " + ioException.getMessage());
+                System.err.println("UserBroker for User #" + id + " - IOERROR: " + ioException.getMessage());
                 // Retry opening streams
             }catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("UserThread #" + this.getId() + " - CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("UserBroker for User #" + id + " - CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e){
-                System.err.println("UserThread #" + this.getId() + " - ERROR: " + e.getMessage());
+                System.err.println("UserBroker for User #" + id + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
             }finally {
                 try {
                     out.close(); in.close();
                     providerSocket.close();
-                    System.out.println("UserThread #" + this.getId() + " shutting down...");
+                    System.out.println("UserBroker for User #" + id + " shutting down...");
                 } catch (IOException ioException) {
-                    System.err.println("UserThread #" + this.getId() + " - IOERROR while shutting down: " + ioException.getMessage());
+                    System.err.println("UserBroker for User #" + id + " - IOERROR while shutting down: " + ioException.getMessage());
                 }
+            }
+        }
+
+        public class UserThread extends Thread{
+            StringBuilder buffer;
+
+            public UserThread(StringBuilder buffer){
+                this.buffer = buffer;
+            }
+
+            @Override
+            public void run(){
+                try{
+                   // System.out.println("UserThread #" + this.getId() + " received.");
+
+                    /* Convert the GPX file into a list of Waypoints */
+
+                    // Parse GPX
+                    GPXParser parser = new GPXParser(buffer);
+                    ArrayList<Waypoint> waypoints = parser.parse();
+
+                    int numChunks = Math.ceilDiv(waypoints.size(), 10);
+                    int chunkSize = waypoints.size()/(numChunks) + 1;
+
+                    Chunk[] chunks = new Chunk[numChunks];
+
+
+                    // Split the list of waypoints into chunks
+                    while(waypoints.size() > 1) {
+                        ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
+
+                        int waysize = waypoints.size();
+
+                        for (int i = 0; i < Math.min(chunkSize, waysize); i++) {
+                            chunkWaypoints.add(waypoints.get(0));
+                            waypoints.remove(0);
+                        }
+
+                        if(!waypoints.isEmpty())
+                            chunkWaypoints.add(waypoints.get(0));
+
+                        chunks[--numChunks] = new Chunk(this.getId(), chunkWaypoints, waypoints.size());
+                    }
+
+
+                    addData(chunks);
+
+                    System.out.println("UserThread " + this.getId() + " for User #" + id + " waiting for data from worker...");
+                    // Wait for data to be mapped by worker
+                    while (!intermediateResults.containsKey(this.getId())) {
+                        Thread.sleep(1000);
+                    }
+
+
+                    System.out.println("UserThread " + this.getId() + " for User #" + id + " has received first chunk from worker...");
+
+                    while (intermediateResults.get(this.getId()).size() < numChunks) {
+                        Thread.sleep(1000);
+                    }
+
+                    // Reduce
+                    System.out.println("UserThread " + this.getId() + " for User #" + id + " reducing data for user...");
+
+                    ArrayList<Segment> segmentList = intermediateResults.get(this.getId());
+
+                    double totalDistance = 0;
+                    double totalElevation = 0;
+                    long totalTime = 0;
+
+                    for (Segment segment: segmentList) {
+                        // REDUCE
+                        totalDistance += segment.getTotalDistance();    //km
+                        totalElevation += segment.getTotalElevation();  //m
+                        totalTime += segment.getTotalTime() / 1000;     //sec
+                    }
+
+                    double meanVelocity = totalDistance / ((double) totalTime /3600) ;
+
+                    Segment result = new Segment(this.getId(), 0, totalDistance, meanVelocity, totalElevation, totalTime/60);
+
+                    synchronized (out){
+                        out.writeObject(result);
+                        out.flush();
+                    }
+
+                    // Add data to database
+                    database.addData(id, totalDistance, totalTime, totalElevation);
+
+                    System.err.println(database.getUserData(id));
+                    System.err.println(database.getTotalData());
+
+                    System.out.println("UserThread " + this.getId() + " for User #" + id + " sent final result to user.");
+                }catch (IOException ioException) {
+                    System.err.println("UserThread " + this.getId() + " for User #" + id + " - IOERROR: " + ioException.getMessage());
+                    // Retry opening streams
+                } catch (Exception e){
+                    System.err.println("UserThread " + this.getId() + " for User #" + id + " - ERROR: " + e.getMessage());
+                    throw new RuntimeException(e); // !!!
+                }
+
             }
         }
     }
