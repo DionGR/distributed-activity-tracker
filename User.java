@@ -20,6 +20,12 @@ public class User extends Thread{
     @Override
     public void run() {
         try {
+            for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
+                Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
+            }
+            for (File f: Objects.requireNonNull(new File(userPath + "results\\").listFiles())) {
+                Files.delete(Path.of(userPath + "results\\" + f.getName()));
+            }
             String host = "localhost";
             /* Create socket for contacting the server on port 4321 */
             requestSocket = new Socket(host, 4321);
@@ -77,10 +83,10 @@ public class User extends Thread{
                 out.close(); in.close();
                 requestSocket.close();
 
-                // mover files to unprocessed again
-                for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
-                    Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
-                }
+//                // mover files to unprocessed again
+//                for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
+//                    Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
+//                }
 
                 System.out.println("User #" + this.id + " shutting down...");
             } catch (IOException ioException) {
@@ -139,7 +145,8 @@ public class User extends Thread{
                     }
 
                     /* Write results to file */
-                    File f2 = new File(userPath + "\\user-results\\" + result.getId() + ".gpx");
+                    File f2 = new File(userPath + "\\results\\result" + result.getId() + ".gpx");
+                    f2.createNewFile();
                     BufferedWriter bw = new BufferedWriter(new FileWriter(f2));
                     bw.write(result.toString());
                     bw.close();
