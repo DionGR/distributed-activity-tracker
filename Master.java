@@ -14,9 +14,10 @@ class Master {
     private final HashMap<Long, ArrayList<Segment>> intermediateResults;
 
     private final Database database;
+    public final int NEEDED_WORKERS;
 
 
-    Master(int userPort, int workerPort){
+    Master(int userPort, int workerPort, int workers){
         this.userPort = userPort;
         this.workerPort = workerPort;
         this.connectedUsers = new ArrayList<>();
@@ -24,6 +25,7 @@ class Master {
         this.dataForProcessing = new ArrayList<>();
         this.intermediateResults = new HashMap<>();
         this.database = new Database();
+        this.NEEDED_WORKERS = workers;
     }
 
     public void bootServer(){
@@ -35,6 +37,16 @@ class Master {
             userHandler.start();
             workerHandler.start();
             scheduler.start();
+            
+            while(true){
+                if (connectedWorkers.size() == NEEDED_WORKERS && workerHandler.isAlive()) {
+                    workerHandler.interrupt();
+                } else if (connectedWorkers.size() < NEEDED_WORKERS && !workerHandler.isAlive()) {
+                    workerHandler = new WorkerHandler(workerPort);
+                    workerHandler.start();
+                }
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
