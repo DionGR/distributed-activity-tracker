@@ -20,9 +20,10 @@ public class User extends Thread{
     @Override
     public void run() {
         try {
-            for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
-                Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
+            if (id > 0){
+                throw new RuntimeException();
             }
+
             for (File f: Objects.requireNonNull(new File(userPath + "results\\").listFiles())) {
                 Files.delete(Path.of(userPath + "results\\" + f.getName()));
             }
@@ -80,14 +81,12 @@ public class User extends Thread{
             System.err.println("User #" + this.id + " - ERROR: " + e.getMessage());
         } finally {
             try {
+                for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
+                    Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
+                }
+
                 out.close(); in.close();
                 requestSocket.close();
-
-//                // mover files to unprocessed again
-//                for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
-//                    Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
-//                }
-
                 System.out.println("User #" + this.id + " shutting down...");
             } catch (IOException ioException) {
                 System.err.println("User #" + this.id + " - IOERROR while shutting down: " + ioException.getMessage());
