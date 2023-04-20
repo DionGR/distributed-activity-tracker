@@ -122,17 +122,10 @@ public class Worker extends Thread{
     }
 
     public static void main(String[] args) {
-        Worker w1 = new Worker(1, 1234);
-        Worker w2 = new Worker(2, 1234);
-        Worker w3 = new Worker(3, 1234);
-        Worker w4 = new Worker(4, 1234);
-        Worker w5 = new Worker(5, 1234);
-
-        w1.start();
-        w2.start();
-        w3.start();
-        w4.start();
-        w5.start();
+        for (int i = 1; i <= 2; i++) {
+            Worker worker = new Worker(i, 12345);
+            worker.start();
+        }
     }
 }
 

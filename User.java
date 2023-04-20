@@ -4,17 +4,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
+
+
 public class User extends Thread{
     int id;
     ObjectOutputStream out = null;
     ObjectInputStream in = null;
     Socket requestSocket = null;
     String userPath;
+    Integer counter;
 
 
     User(int id){
         this.id = id;
         this.userPath = System.getProperty("user.dir") + "\\data\\user-data\\user" + id + "\\";
+        this.counter = 0;
     }
 
     @Override
@@ -48,7 +52,6 @@ public class User extends Thread{
             ResultTaker resultTaker = new ResultTaker();
             resultTaker.start();
 
-
             /* Find all GPX files in user folder */
             File[] files = new File(userPath + "unprocessed\\").listFiles();
             while(files != null){
@@ -58,6 +61,9 @@ public class User extends Thread{
                     Files.move(Path.of(userPath + "unprocessed\\" + fileName), Path.of(userPath + "processed\\" + fileName));
 
                     File gpxFile = new File(userPath + "processed\\" + fileName);
+                    synchronized (counter){
+                        counter++;
+                    }
                     FileThread gpxThread = new FileThread(gpxFile);
                     gpxThread.start();
                 }
@@ -65,8 +71,8 @@ public class User extends Thread{
             }
 
             /* Wait for all threads to finish */
-            while (Thread.activeCount() > 0){
-                Thread.sleep(1000);
+            while (Thread.activeCount() > 1){
+                Thread.sleep(1);
             }
 
             System.out.println("User #" + this.id + " finished processing all files.");
@@ -89,8 +95,6 @@ public class User extends Thread{
             }
         }
     }
-
-
 
     private class FileThread extends Thread{
         private final File gpx;
@@ -148,6 +152,13 @@ public class User extends Thread{
 
                     /* Print the received result from server */
                     System.out.println("User #" + id + " received result: " + result);
+
+                    synchronized (counter){
+                        counter--;
+                        if (counter == 0){
+                            break;
+                        }
+                    }
                 }
             } catch (IOException ioException) {
                 System.err.println("ResultTaker for User #" + id + " - IOERROR: " + ioException.getMessage());

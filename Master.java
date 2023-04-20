@@ -143,7 +143,11 @@ class Master {
                 // User registration
                 int id = (int) in.readObject();
                 this.id = id;
-                database.initUser(id);
+
+                synchronized (database){
+                    database.initUser(id);
+                }
+
 
                 System.out.println("UserBroker for User #" + id + " started.");
                 out.writeObject(1);
@@ -254,7 +258,7 @@ class Master {
 
                     double meanVelocity = totalDistance / ((double) totalTime /3600) ;
 
-                    Segment result = new Segment(this.getId(), gpxID, totalDistance, meanVelocity, totalElevation, totalTime/60);
+                    Segment result = new Segment(id, gpxID, totalDistance, meanVelocity, totalElevation, totalTime/60);
 
                     synchronized (out){
                         out.writeObject(result);
@@ -287,6 +291,7 @@ class Master {
 
         WorkerHandler(int port) throws IOException {
             this.workersSocketToHandle = new ServerSocket(port, 5000);
+            System.err.println("Init!!");
         }
 
         @Override
