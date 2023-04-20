@@ -315,6 +315,7 @@ class Master {
 
                         Worker workerData = new Worker(providerSocket);
                         connectedWorkers.add(workerData);
+
                         workerData.start();
                 }
             } catch (IOException ioException) {
