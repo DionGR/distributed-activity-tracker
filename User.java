@@ -33,7 +33,7 @@ public class User extends Thread{
 
             String host = "localhost";
             /* Create socket for contacting the server on port 4321 */
-            requestSocket = new Socket(host, 4321);
+            requestSocket = new Socket(host, 54321);
 
             /* Create the streams to send and receive data from server */
             out = new ObjectOutputStream(requestSocket.getOutputStream());

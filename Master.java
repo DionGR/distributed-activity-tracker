@@ -311,12 +311,12 @@ class Master {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
-                    Socket providerSocket = workersSocketToHandle.accept();
-                    System.out.println("WorkerHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+                        Socket providerSocket = workersSocketToHandle.accept();
+                        System.out.println("WorkerHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
-                    ReceiveWorkerData workerData = new ReceiveWorkerData(providerSocket);
-                    connectedWorkers.add(workerData);
-                    workerData.start();
+                        ReceiveWorkerData workerData = new ReceiveWorkerData(providerSocket);
+                        connectedWorkers.add(workerData);
+                        workerData.start();
                 }
             } catch (IOException ioException) {
                 System.err.println("WorkerHandler IOERROR: " + ioException.getMessage());
@@ -404,7 +404,16 @@ class Master {
     }
 
     public static void main(String[] args) {
-        Master master = new Master(4321, 1234);
+        int workers = 2;
+
+        try {
+            workers = Integer.parseInt(args[0]);
+            workers = Math.max(2, workers);
+        }catch (Exception e){
+            System.err.println("Invalid number of workers in arguments. Using default value: 2");
+        }
+
+        Master master = new Master(54321, 12345, workers);
         master.bootServer();
     }
 }
