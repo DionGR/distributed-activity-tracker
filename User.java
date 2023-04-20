@@ -1,25 +1,27 @@
 import java.io.*;
 import java.net.*;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
 
 public class User extends Thread{
-    int gpx;
     int id;
+    ObjectOutputStream out = null;
+    ObjectInputStream in = null;
+    Socket requestSocket = null;
+    String userPath;
 
-    User(int id, int gpx){
+
+    User(int id){
         this.id = id;
-        this.gpx = gpx;
+        this.userPath = System.getProperty("user.dir") + "\\data\\user-data\\user" + id + "\\";
     }
 
     @Override
     public void run() {
-        ObjectOutputStream out = null;
-        ObjectInputStream in = null;
-        Socket requestSocket = null;
-
         try {
             String host = "localhost";
-            /* Create socket for contacting the server on port 4321*/
+            /* Create socket for contacting the server on port 4321 */
             requestSocket = new Socket(host, 4321);
 
             /* Create the streams to send and receive data from server */
@@ -36,26 +38,32 @@ public class User extends Thread{
                 throw new Exception("Master did not acknowledge connection");
             }
 
-            /* Read the GPX file from the disk */
-            File f = new File("D:\\Users\\Dion\\Documents\\Programming\\Java\\Distributed Activity Tracker\\data\\user-data\\route" + gpx + ".gpx");
+            ResultTaker resultTaker = new ResultTaker();
+            resultTaker.start();
 
-            BufferedReader br = new BufferedReader(new FileReader(f));
 
-            String line;
-            StringBuilder buffer = new StringBuilder();
-            while((line = br.readLine()) != null) {
-                buffer.append(line);
+            /* Find all GPX files in user folder */
+            File[] files = new File(userPath + "unprocessed\\").listFiles();
+            while(files != null){
+                System.out.println("Files in unprocessed: ");
+                for (File f: files){
+                    System.out.println("User #" + this.id + " - " + f.getName());
+                }
+                String fileName = files[0].getName();
+                Files.move(Path.of(userPath + "unprocessed\\" + fileName), Path.of(userPath + "processed\\" + fileName));
+
+                File gpxFile = new File(userPath + "processed\\" + fileName);
+                FileThread gpxThread = new FileThread(gpxFile);
+                gpxThread.start();
+                files = new File(userPath + "unprocessed\\").listFiles();
             }
 
-            /* Write gpx */
-            out.writeObject(buffer);
-            out.flush();
+            /* Wait for all threads to finish */
+            while (Thread.activeCount() > 0){
+                Thread.sleep(1000);
+            }
 
-            /* Wait for result */
-            Segment result = (Segment) in.readObject();
-
-            /* Print the received result from server */
-            System.out.println("User #" + this.id + " received result: " + result);
+            System.out.println("User #" + this.id + " finished processing all files.");
 
         } catch (UnknownHostException unknownHostException) {
             System.err.println("You are trying to connect to an unknown host!");
@@ -69,6 +77,12 @@ public class User extends Thread{
             try {
                 out.close(); in.close();
                 requestSocket.close();
+
+                // mover files to unprocessed again
+                for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
+                    Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
+                }
+
                 System.out.println("User #" + this.id + " shutting down...");
             } catch (IOException ioException) {
                 System.err.println("User #" + this.id + " - IOERROR while shutting down: " + ioException.getMessage());
@@ -76,9 +90,76 @@ public class User extends Thread{
         }
     }
 
-    public static void main(String[] args) {
-        for (int i = 1; i <= 6; i++) {
-            new User(i, i).start();
+
+
+    private class FileThread extends Thread{
+        private final File gpx;
+
+        public FileThread(File gpx){
+            this.gpx = gpx;
         }
+
+        @Override
+        public void run(){
+            try{
+                BufferedReader br = new BufferedReader(new FileReader(gpx));
+                String line;
+                StringBuilder buffer = new StringBuilder();
+                int routeID = Integer.parseInt(gpx.getName().replaceAll("[\\D]", ""));
+
+                buffer.append(routeID + "!");
+                while((line = br.readLine()) != null) {
+                    buffer.append(line);
+                }
+
+                /* Write gpx */
+                synchronized (out) {
+                    out.writeObject(buffer);
+                    out.flush();
+                }
+
+
+            } catch (IOException ioException) {
+                System.err.println("FileThread for User #" + id + " - IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("FileThread for User #" + id + " - ERROR: " + e.getMessage());
+            }
+        }
+    }
+
+    private class ResultTaker extends Thread{
+
+        @Override
+        public void run(){
+            try{
+                Segment result;
+
+                while (requestSocket.isConnected()){
+                    synchronized (in) {
+                         result = (Segment) in.readObject();
+                    }
+
+                    /* Write results to file */
+                    File f2 = new File(userPath + "\\user-results\\" + result.getId() + ".gpx");
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(f2));
+                    bw.write(result.toString());
+                    bw.close();
+
+                    /* Print the received result from server */
+                    System.out.println("User #" + id + " received result: " + result);
+                }
+            } catch (IOException ioException) {
+                System.err.println("ResultTaker for User #" + id + " - IOERROR: " + ioException.getMessage());
+            } catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("ResultTaker for User #" + id + " - CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e) {
+                System.err.println("ResultTaker for User #" + id + " - ERROR: " + e.getMessage());
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        for (int i = 1; i <= 3; i++)
+            new User(i).start();
     }
 }

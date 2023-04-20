@@ -30,11 +30,11 @@ class Master {
         try {
             UserHandler userHandler = new UserHandler(userPort);
             WorkerHandler workerHandler = new WorkerHandler(workerPort);
-            AssignData assignData = new AssignData();
+            Scheduler scheduler = new Scheduler();
 
             userHandler.start();
             workerHandler.start();
-            assignData.start();
+            scheduler.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,7 +46,7 @@ class Master {
         }
     }
 
-    private class AssignData extends Thread{
+    private class Scheduler extends Thread{
 
         @Override
         public void run(){
@@ -80,9 +80,9 @@ class Master {
                     }
                 }
             }catch(IOException ioException){
-                System.err.println("AssignData IOERROR: " + ioException.getMessage());
+                System.err.println("Scheduler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                System.err.println("AssignData ERROR: " + e.getMessage());
+                System.err.println("Scheduler ERROR: " + e.getMessage());
             }
         }
     }
@@ -179,6 +179,7 @@ class Master {
 
         public class UserThread extends Thread{
             StringBuilder buffer;
+            int gpxID;
 
             public UserThread(StringBuilder buffer){
                 this.buffer = buffer;
@@ -192,6 +193,7 @@ class Master {
                     /* Convert the GPX file into a list of Waypoints */
 
                     // Parse GPX
+                    gpxID = Integer.parseInt(buffer.substring(0, buffer.indexOf("!")));
                     GPXParser parser = new GPXParser(buffer);
                     ArrayList<Waypoint> waypoints = parser.parse();
 
@@ -252,7 +254,7 @@ class Master {
 
                     double meanVelocity = totalDistance / ((double) totalTime /3600) ;
 
-                    Segment result = new Segment(this.getId(), 0, totalDistance, meanVelocity, totalElevation, totalTime/60);
+                    Segment result = new Segment(this.getId(), gpxID, totalDistance, meanVelocity, totalElevation, totalTime/60);
 
                     synchronized (out){
                         out.writeObject(result);
