@@ -8,7 +8,7 @@ class Master {
     private final int userPort, workerPort;
 
     private final ArrayList<UserBroker> connectedUsers;
-    private final ArrayList<ReceiveWorkerData> connectedWorkers;
+    private final ArrayList<Worker> connectedWorkers;
 
     private final ArrayList<Chunk[]> dataForProcessing;
     private final HashMap<Long, ArrayList<Segment>> intermediateResults;
@@ -37,7 +37,7 @@ class Master {
             userHandler.start();
             workerHandler.start();
             scheduler.start();
-            
+
             while(true){
                 if (connectedWorkers.size() == NEEDED_WORKERS && workerHandler.isAlive()) {
                     workerHandler.interrupt();
@@ -78,7 +78,6 @@ class Master {
                         }
 
                         for (Chunk c : chunks) {
-                            //ObjectOutputStream out = workerOutputStreams[nextWorker];
                             ObjectOutputStream out = connectedWorkers.get(nextWorker).getOutputStream();
                             System.out.println("Assigning data to worker: " + nextWorker);
 
@@ -314,7 +313,7 @@ class Master {
                         Socket providerSocket = workersSocketToHandle.accept();
                         System.out.println("WorkerHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
-                        ReceiveWorkerData workerData = new ReceiveWorkerData(providerSocket);
+                        Worker workerData = new Worker(providerSocket);
                         connectedWorkers.add(workerData);
                         workerData.start();
                 }
@@ -332,13 +331,13 @@ class Master {
         }
     }
 
-    private class ReceiveWorkerData extends Thread {
+    private class Worker extends Thread {
         Socket workerSocket;
         ObjectInputStream in;
         ObjectOutputStream out;
         int workerPort;
 
-        public ReceiveWorkerData(Socket workerSocket){
+        public Worker(Socket workerSocket){
             this.workerSocket = workerSocket;
             this.workerPort = workerSocket.getPort();
             System.out.println("Worker port: " + workerPort);
