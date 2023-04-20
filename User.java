@@ -45,16 +45,15 @@ public class User extends Thread{
             /* Find all GPX files in user folder */
             File[] files = new File(userPath + "unprocessed\\").listFiles();
             while(files != null){
-                System.out.println("Files in unprocessed: ");
-                for (File f: files){
-                    System.out.println("User #" + this.id + " - " + f.getName());
-                }
-                String fileName = files[0].getName();
-                Files.move(Path.of(userPath + "unprocessed\\" + fileName), Path.of(userPath + "processed\\" + fileName));
 
-                File gpxFile = new File(userPath + "processed\\" + fileName);
-                FileThread gpxThread = new FileThread(gpxFile);
-                gpxThread.start();
+                for (File f: files) {
+                    String fileName = f.getName();
+                    Files.move(Path.of(userPath + "unprocessed\\" + fileName), Path.of(userPath + "processed\\" + fileName));
+
+                    File gpxFile = new File(userPath + "processed\\" + fileName);
+                    FileThread gpxThread = new FileThread(gpxFile);
+                    gpxThread.start();
+                }
                 files = new File(userPath + "unprocessed\\").listFiles();
             }
 
