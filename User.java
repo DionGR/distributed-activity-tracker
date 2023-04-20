@@ -20,13 +20,13 @@ public class User extends Thread{
     @Override
     public void run() {
         try {
-            if (id > 0){
-                throw new RuntimeException();
+            for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
+                Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
             }
-
             for (File f: Objects.requireNonNull(new File(userPath + "results\\").listFiles())) {
                 Files.delete(Path.of(userPath + "results\\" + f.getName()));
             }
+
             String host = "localhost";
             /* Create socket for contacting the server on port 4321 */
             requestSocket = new Socket(host, 4321);
@@ -81,10 +81,6 @@ public class User extends Thread{
             System.err.println("User #" + this.id + " - ERROR: " + e.getMessage());
         } finally {
             try {
-                for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
-                    Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
-                }
-
                 out.close(); in.close();
                 requestSocket.close();
                 System.out.println("User #" + this.id + " shutting down...");
