@@ -12,7 +12,6 @@ public class User extends Thread{
     ObjectInputStream in = null;
     Socket requestSocket = null;
     String userPath;
-    Integer counter;
 
 
     User(int id){
@@ -23,12 +22,17 @@ public class User extends Thread{
     @Override
     public void run() {
         try {
+            try {
+                new File(userPath + "unprocessed\\").mkdir();
+            }
+            catch (Exception e) {throw new Exception("User #" + id +" could not create \"unprocessed\" folder!"); }
+
             for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
                 Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
             }
-            for (File f: Objects.requireNonNull(new File(userPath + "results\\").listFiles())) {
-                Files.delete(Path.of(userPath + "results\\" + f.getName()));
-            }
+//            for (File f: Objects.requireNonNull(new File(userPath + "results\\").listFiles())) {
+//                Files.delete(Path.of(userPath + "results\\" + f.getName()));
+//            }
 
             String host = "localhost";
             /* Create socket for contacting the server on port 4321 */
@@ -79,10 +83,10 @@ public class User extends Thread{
 
 
                     /* Write results to file */
-                    File f2 = new File(userPath + "\\results\\result" + result.getId() + ".txt");
-                    f2.createNewFile();
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(f2));
-                    bw.write(result.toString());
+                    File f2 = new File(userPath + "\\results.txt");
+                    //f2.createNewFile();
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(f2, true));
+                    bw.append(result.toString()).append("\n");
                     bw.close();
 
                     /* Print the received result from server */
