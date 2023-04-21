@@ -242,6 +242,12 @@ class Master {
             this.in = null;
         }
 
+        protected synchronized void addDataForProcessing(Chunk[] chunks) {
+            synchronized (dataForProcessing) {
+                dataForProcessing.add(chunks);
+            }
+        }
+
         @Override
         public void run() {
 
@@ -265,11 +271,75 @@ class Master {
                 while (true) {
                     // Take GPX from User
                     StringBuilder buffer = (StringBuilder) in.readObject();
+                    System.out.println("UserBroker for User #" + userID + " - GPX received.");
 
-                    UserThread userThread = new UserThread(buffer);
-                    userThread.start();
+                    synchronized (g_gpxID){
+                        g_gpxID++;
+                        localGPXID = g_gpxID;
+                    }
 
-                    System.out.println("UserBroker for User #" + id + " - GPX received.");
+                    /* Convert the GPX file into a list of Waypoints */
+
+                    // Parse GPX
+                    //gpxID = Integer.parseInt(buffer.substring(0, buffer.indexOf("!")));
+                    GPXParser parser = new GPXParser(buffer);
+                    ArrayList<Waypoint> waypoints = parser.parse();
+
+                    int numChunks = (int) ((waypoints.size() / 10) + 0.5);
+                    int totalChunks = numChunks;
+                    int chunkSize = waypoints.size() / (numChunks) + 1;
+
+                    Chunk[] chunks = new Chunk[numChunks];
+
+                    // Split the list of waypoints into chunks
+                    while (waypoints.size() > 1) {
+                        ArrayList<Waypoint> chunkWaypoints = new ArrayList<>();
+
+                        int waypointsSize = waypoints.size();
+
+                        for (int i = 0; i < Math.min(chunkSize, waypointsSize); i++) {
+                            chunkWaypoints.add(waypoints.get(0));
+                            waypoints.remove(0);
+                        }
+
+                        if (!waypoints.isEmpty())
+                            chunkWaypoints.add(waypoints.get(0));
+
+                        chunks[--numChunks] = new Chunk(localGPXID,numChunks, totalChunks, chunkWaypoints);
+                    }
+
+                    synchronized (intermediateResults){
+                        intermediateResults.put(localGPXID, new ArrayList<>());
+                    }
+
+                    addDataForProcessing(chunks);
+
+                    System.out.println("UserBroker " + this.getId() + " for User #" + userID + " waiting for data from worker...");
+
+                    ArrayList<Segment> segments;
+                    synchronized (intermediateResults) {
+                        while (intermediateResults.get(localGPXID).size() < totalChunks) {
+                            intermediateResults.wait();
+                        }
+                        segments = intermediateResults.get(localGPXID);
+                    }
+
+                    /* Reduce the results */
+                    Segment result = reduce(localGPXID, segments);
+
+                    synchronized (out) {
+                        out.writeObject(result);
+                        out.flush();
+                    }
+
+                    // Add data to database
+                    synchronized (database) {
+                        database.addData(userID, result.getTotalDistance(), result.getTotalTime(), result.getTotalElevation());
+                        System.err.println(database.getUserData(userID));
+                        System.err.println(database.getTotalData());
+                    }
+
+                    System.out.println("UserBroker " + this.getId() + " for User #" + userID + " sent final result to user.");
                 }
             }
             catch (IOException ioException) {
