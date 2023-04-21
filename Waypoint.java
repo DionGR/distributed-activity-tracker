@@ -5,8 +5,8 @@ import java.sql.Date;
 public class Waypoint implements Serializable{
     private final int id;
     private final double latitude;
-    private final double  longitude;
-    private final double  elevation;
+    private final double longitude;
+    private final double elevation;
     private final Date date;
     private final Time time;
 
@@ -21,7 +21,7 @@ public class Waypoint implements Serializable{
 
 
     public Waypoint(Waypoint waypoint) {
-        this.id = 2*waypoint.id;
+        this.id = waypoint.id;
         this.latitude = waypoint.latitude;
         this.longitude = waypoint.longitude;
         this.elevation = waypoint.elevation;

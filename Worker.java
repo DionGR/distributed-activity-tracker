@@ -12,15 +12,12 @@ public class Worker extends Thread{
     Worker (int id, int port) {
         this.id = id;
         this.port = port;
-        this.requestSocket = null;
         this.out = null;
         this.in = null;
     }
 
     @Override
     public void run(){
-        out = null;
-        in = null;
         try {
             requestSocket = new Socket("localhost", port);
             System.out.println("Worker #" + id + " with worker port: " + requestSocket.getLocalPort() + " connected to Master" );
@@ -73,18 +70,16 @@ public class Worker extends Thread{
             try {
                 // Mapping
                 ArrayList<Waypoint> waypoints = chunk.getData();
+
                 double totalDistance = 0;
                 double totalElevation = 0;
                 long totalTime = 0;
-                for(int i=1; i<waypoints.size(); i++) {
+
+                for(int i=1; i < waypoints.size(); i++) {
                     Waypoint curr = waypoints.get(i);
                     Waypoint prev = waypoints.get(i - 1);
 
-                    double lat1 = curr.getLatitude();
-                    double lat2 = prev.getLatitude();
-                    double lon1 = curr.getLongitude();
-                    double lon2 = prev.getLongitude();
-                    totalDistance += distance(lat1, lat2, lon1, lon2);
+                    totalDistance += distance(curr.getLatitude(), prev.getLatitude(), curr.getLongitude(), prev.getLongitude());
                     totalElevation += Math.max(0, curr.getElevation() - prev.getElevation());
                     totalTime += curr.getTime().getTime() - prev.getTime().getTime();
                 }
@@ -126,7 +121,6 @@ public class Worker extends Thread{
             Worker worker = new Worker(i, 12345);
             worker.start();
         }
-
     }
 }
 

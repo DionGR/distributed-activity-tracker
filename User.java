@@ -85,9 +85,9 @@ public class User extends Thread{
                     bw.close();
 
                     /* Print the received result from server */
-                    System.out.println("User #" + id + " received result: " + result);
-                    }
-                    files = new File(userPath + "unprocessed\\").listFiles();
+                    System.out.println("User #" + id + " received result for " + result);
+                }
+                files = new File(userPath + "unprocessed\\").listFiles();
             }
 
             System.out.println("User #" + this.id + " finished processing all files.");

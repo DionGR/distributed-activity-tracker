@@ -47,10 +47,9 @@ public class Segment implements Serializable {
         return totalTime;
     }
 
-
+    @Override
     public String toString(){
-        return "GPX: " + gpxID + " User: " + id + " Total Distance: " + totalDistance + " Mean Velocity: " + meanVelocity + " Total Elevation: " + totalElevation + " Total Time: " + totalTime;
+        return String.format("GPX #%s: Total Distance: %.2f km | Total Time: %.2f min | Mean Velocity: %.2f km/h | Total Elevation: %.2f m", gpxID, totalDistance, (double) totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
     }
-
 }
 

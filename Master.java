@@ -377,12 +377,10 @@ class Master {
             for (Segment segment : segmentList) {
                 totalDistance += segment.getTotalDistance();    //km
                 totalElevation += segment.getTotalElevation();  //m
-                totalTime += segment.getTotalTime() / 1000;     //sec
+                totalTime += segment.getTotalTime();            //ms
             }
 
-            double meanVelocity = totalDistance / ((double) totalTime / 3600);
-
-            return new Segment(localGPXID, userID, 0, totalDistance, meanVelocity, totalElevation, totalTime / 60);
+            return new Segment(localGPXID, userID, 0, totalDistance, totalDistance / totalTime, totalElevation, totalTime);
         }
     }
 
