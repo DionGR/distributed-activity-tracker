@@ -18,7 +18,6 @@ public class User extends Thread{
     User(int id){
         this.id = id;
         this.userPath = System.getProperty("user.dir") + "\\data\\user-data\\user" + id + "\\";
-        this.counter = 0;
     }
 
     @Override
@@ -49,8 +48,6 @@ public class User extends Thread{
                 throw new Exception("Master did not acknowledge connection");
             }
 
-            ResultTaker resultTaker = new ResultTaker();
-            resultTaker.start();
 
             /* Find all GPX files in user folder */
             File[] files = new File(userPath + "unprocessed\\").listFiles();
@@ -61,18 +58,36 @@ public class User extends Thread{
                     Files.move(Path.of(userPath + "unprocessed\\" + fileName), Path.of(userPath + "processed\\" + fileName));
 
                     File gpxFile = new File(userPath + "processed\\" + fileName);
-                    synchronized (counter){
-                        counter++;
-                    }
-                    FileThread gpxThread = new FileThread(gpxFile);
-                    gpxThread.start();
-                }
-                files = new File(userPath + "unprocessed\\").listFiles();
-            }
 
-            /* Wait for all threads to finish */
-            while (Thread.activeCount() > 1){
-                Thread.sleep(1);
+                    BufferedReader br = new BufferedReader(new FileReader(gpxFile));
+
+                    String line;
+                    StringBuilder buffer = new StringBuilder();
+
+                    int routeID = Integer.parseInt(gpxFile.getName().replaceAll("[\\D]", ""));
+                    buffer.append(routeID + "!");
+
+                    while((line = br.readLine()) != null) {
+                        buffer.append(line);
+                    }
+
+                    /* Write gpx */
+                    out.writeObject(buffer);
+                    out.flush();
+                    Segment result = (Segment) in.readObject();
+
+
+                    /* Write results to file */
+                    File f2 = new File(userPath + "\\results\\result" + result.getId() + ".txt");
+                    f2.createNewFile();
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(f2));
+                    bw.write(result.toString());
+                    bw.close();
+
+                    /* Print the received result from server */
+                    System.out.println("User #" + id + " received result: " + result);
+                    }
+                    files = new File(userPath + "unprocessed\\").listFiles();
             }
 
             System.out.println("User #" + this.id + " finished processing all files.");
@@ -96,79 +111,6 @@ public class User extends Thread{
         }
     }
 
-    private class FileThread extends Thread{
-        private final File gpx;
-
-        public FileThread(File gpx){
-            this.gpx = gpx;
-        }
-
-        @Override
-        public void run(){
-            try{
-                BufferedReader br = new BufferedReader(new FileReader(gpx));
-                String line;
-                StringBuilder buffer = new StringBuilder();
-                int routeID = Integer.parseInt(gpx.getName().replaceAll("[\\D]", ""));
-
-                buffer.append(routeID + "!");
-                while((line = br.readLine()) != null) {
-                    buffer.append(line);
-                }
-
-                /* Write gpx */
-                synchronized (out) {
-                    out.writeObject(buffer);
-                    out.flush();
-                }
-
-
-            } catch (IOException ioException) {
-                System.err.println("FileThread for User #" + id + " - IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("FileThread for User #" + id + " - ERROR: " + e.getMessage());
-            }
-        }
-    }
-
-    private class ResultTaker extends Thread{
-
-        @Override
-        public void run(){
-            try{
-                Segment result;
-
-                while (requestSocket.isConnected()){
-                    synchronized (in) {
-                         result = (Segment) in.readObject();
-                    }
-
-                    /* Write results to file */
-                    File f2 = new File(userPath + "\\results\\result" + result.getId() + ".gpx");
-                    f2.createNewFile();
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(f2));
-                    bw.write(result.toString());
-                    bw.close();
-
-                    /* Print the received result from server */
-                    System.out.println("User #" + id + " received result: " + result);
-
-                    synchronized (counter){
-                        counter--;
-                        if (counter == 0){
-                            break;
-                        }
-                    }
-                }
-            } catch (IOException ioException) {
-                System.err.println("ResultTaker for User #" + id + " - IOERROR: " + ioException.getMessage());
-            } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("ResultTaker for User #" + id + " - CASTERROR: " + classNotFoundException.getMessage());
-            } catch (Exception e) {
-                System.err.println("ResultTaker for User #" + id + " - ERROR: " + e.getMessage());
-            }
-        }
-    }
 
     public static void main(String[] args) {
         for (int i = 1; i <= 3; i++)

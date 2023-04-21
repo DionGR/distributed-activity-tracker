@@ -2,7 +2,7 @@ import java.io.Serializable;
 
 
 public class Segment implements Serializable {
-    private final long user;
+    private final int gpxID;
     private final int id;
     private final double totalDistance;
     private final double meanVelocity;
@@ -19,8 +19,8 @@ public class Segment implements Serializable {
     }
 
 
-    public long getUser() {
-        return user;
+    public int getGPXID() {
+        return gpxID;
     }
 
     public int getId() {
@@ -44,7 +44,7 @@ public class Segment implements Serializable {
     }
 
     public String toString(){
-        return "User: " + user + " Segment: " + id + " Total Distance: " + totalDistance + " Mean Velocity: " + meanVelocity + " Total Elevation: " + totalElevation + " Total Time: " + totalTime;
+        return "GPX: " + gpxID + " User: " + id + " Total Distance: " + totalDistance + " Mean Velocity: " + meanVelocity + " Total Elevation: " + totalElevation + " Total Time: " + totalTime;
     }
 
 }
