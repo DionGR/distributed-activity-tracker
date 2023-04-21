@@ -51,7 +51,8 @@ public class User extends Thread{
 
             /* Find all GPX files in user folder */
             File[] files = new File(userPath + "unprocessed\\").listFiles();
-            while(files != null){
+            if (files == null) throw new Exception("No files to process");
+            while(files.length != 0){
 
                 for (File f: files) {
                     String fileName = f.getName();
@@ -88,6 +89,7 @@ public class User extends Thread{
                     System.out.println("User #" + id + " received result for " + result);
                 }
                 files = new File(userPath + "unprocessed\\").listFiles();
+                if (files == null) break;
             }
 
             System.out.println("User #" + this.id + " finished processing all files.");
