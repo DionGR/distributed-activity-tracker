@@ -53,6 +53,7 @@ public class Waypoint implements Serializable{
         return elevation;
     }
 
+    @Override
     public String toString(){
         return "Waypoint: " + id + " " + latitude + " " + longitude + " " + elevation;
     }
