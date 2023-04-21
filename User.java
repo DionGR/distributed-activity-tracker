@@ -24,15 +24,14 @@ public class User extends Thread{
         try {
             try {
                 new File(userPath + "unprocessed\\").mkdir();
-            }
-            catch (Exception e) {throw new Exception("User #" + id +" could not create \"unprocessed\" folder!"); }
+            } catch (Exception e) {throw new Exception("User #" + id +" could not create \"unprocessed\" folder!"); }
 
             for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
                 Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
             }
-//            for (File f: Objects.requireNonNull(new File(userPath + "results\\").listFiles())) {
-//                Files.delete(Path.of(userPath + "results\\" + f.getName()));
-//            }
+
+            Files.deleteIfExists(Path.of(userPath + "results.txt"));
+
 
             String host = "localhost";
             /* Create socket for contacting the server on port 4321 */
@@ -97,6 +96,8 @@ public class User extends Thread{
             }
 
             System.out.println("User #" + this.id + " finished processing all files.");
+
+            Files.deleteIfExists(Path.of(userPath + "unprocessed\\"));
 
         } catch (UnknownHostException unknownHostException) {
             System.err.println("You are trying to connect to an unknown host!");
