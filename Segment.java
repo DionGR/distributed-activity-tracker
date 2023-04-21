@@ -49,7 +49,7 @@ public class Segment implements Serializable {
 
     @Override
     public String toString(){
-        return String.format("GPX #%s: Total Distance: %.2f km | Total Time: %.2f min | Mean Velocity: %.2f km/h | Total Elevation: %.2f m", gpxID, totalDistance, (double) totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
+        return String.format("GPX #%s: Total Distance: %5.2f km | Total Time: %5.2f min | Mean Velocity: %5.2f km/h | Total Elevation: %5.2f m", gpxID, totalDistance, (double) totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
     }
 }
 
