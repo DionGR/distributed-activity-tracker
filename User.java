@@ -130,12 +130,12 @@ public class User extends Thread{
         long startTime = System.currentTimeMillis();
 
         // Create 12 users and wait for them to finish
-        User[] users = new User[24];
-        for (int i = 1; i < 25; i++) {
+        User[] users = new User[3];
+        for (int i = 1; i < 3; i++) {
             users[i-1] = new User(i, host, serverPort);
             users[i-1].start();
         }
-        for (int i = 1; i < 25; i++) {
+        for (int i = 1; i < 3; i++) {
             try {
                 users[i-1].join();
             } catch (InterruptedException e) {
