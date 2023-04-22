@@ -18,7 +18,7 @@ public class User {
         updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
-    public void updateUserStatistics(double distance, double time, double elevation){
+    private void updateUserStatistics(double distance, double time, double elevation){
         int submissions = getNumOfRoutes();
         avgDistance = ((submissions-1)*avgDistance + distance)/submissions;
         avgTime = ((submissions-1)*avgTime + time)/submissions;

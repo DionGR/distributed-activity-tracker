@@ -17,7 +17,8 @@ public class Database {
 
     public void addRoute(Route route, int userID){
         users.get(userID).addRoute(route);
-        totalData.updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
+        //totalData.updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
+        totalData.addRoute(route);
     }
 
 //    public String getUserData(int id){
@@ -26,11 +27,15 @@ public class Database {
 //        return "DummyUser: " + id + " Average Distance: " + userData.avgDistance + " Average Time: " + userData.avgTime + " Average Elevation: " + userData.avgElevation;
 //    }
 
+    public User getTotalData() {
+        return totalData;
+    }
+
 //    public void addRoute(int id, Route route){
 //        users.get(id).addRoute(route);
 //    }
 
-    public String getTotalData(){
+    public String totalDataToString(){
         return "Total Average Distance: " + totalData.getAvgDistance() + " Total Average Time: " + totalData.getAvgTime() + " Total Average Elevation: " + totalData.getAvgElevation();
     }
 }

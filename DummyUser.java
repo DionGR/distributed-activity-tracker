@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 
-
 public class DummyUser extends Thread{
     int id;
     String host;

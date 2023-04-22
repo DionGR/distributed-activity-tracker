@@ -278,8 +278,21 @@ class Master {
                 int localGPXID;
 
                 while (providerSocket.isConnected()){
-                    // Take GPX from DummyUser
-                    StringBuilder buffer = (StringBuilder) in.readObject();
+                    /* Take GPX from DummyUser */
+                    StringBuilder buffer = null;
+//                    if (!providerSocket.isInputShutdown())
+//                        buffer = (StringBuilder) in.readObject();
+//                    else {
+//                        System.err.println("DummyUser #" +user.getID()+" has disconnected!" );
+//                        break;
+//                    }
+                    try {
+                        buffer = (StringBuilder) in.readObject();
+                    }
+                    catch (IOException ioException){
+                        System.err.println("DummyUser #" +user.getID()+" has disconnected!" );
+                        break;
+                    }
                     System.out.println("UserBroker for User #" + userID + " - GPX received.");
 
                     synchronized (g_gpxID){
@@ -375,7 +388,7 @@ class Master {
 
         private Segment reduce(int localGPXID, ArrayList<Segment> segmentList){
             // Reduce
-            System.out.println("UserThread " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
+            System.out.println("UserBroker " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
 
 
             double totalDistance = 0;
