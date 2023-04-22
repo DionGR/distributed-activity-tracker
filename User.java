@@ -123,7 +123,7 @@ public class User extends Thread{
 
 
     public static void main(String[] args) {
-        String host = "192.168.1.52";
+        String host = "localhost";
         int serverPort = 54321;
 
         // Count time

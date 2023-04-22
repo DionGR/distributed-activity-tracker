@@ -120,7 +120,7 @@ public class Worker extends Thread{
     }
 
     public static void main(String[] args) {
-        String host = "192.168.1.52";
+        String host = "localhost";
         int serverPort = 12345;
 
         for (int i = 1; i <= 2; i++) {
