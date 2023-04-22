@@ -268,7 +268,7 @@ class Master {
 
                 int localGPXID;
 
-                while (true) {
+                while (providerSocket.isConnected()){
                     // Take GPX from User
                     StringBuilder buffer = (StringBuilder) in.readObject();
                     System.out.println("UserBroker for User #" + userID + " - GPX received.");

@@ -8,14 +8,18 @@ import java.util.Objects;
 
 public class User extends Thread{
     int id;
+    String host;
+    int serverPort;
     ObjectOutputStream out = null;
     ObjectInputStream in = null;
     Socket requestSocket = null;
     String userPath;
 
 
-    User(int id){
+    User(int id, String host, int serverPort){
         this.id = id;
+        this.host = host;
+        this.serverPort = serverPort;
         this.userPath = System.getProperty("user.dir") + "\\data\\user-data\\user" + id + "\\";
     }
 
@@ -33,9 +37,8 @@ public class User extends Thread{
             Files.deleteIfExists(Path.of(userPath + "results.txt"));
 
 
-            String host = "localhost";
-            /* Create socket for contacting the server on port 4321 */
-            requestSocket = new Socket(host, 54321);
+            /* Create socket for contacting the server on port 54321 */
+            requestSocket = new Socket(host, serverPort);
 
             /* Create the streams to send and receive data from server */
             out = new ObjectOutputStream(requestSocket.getOutputStream());
@@ -120,13 +123,16 @@ public class User extends Thread{
 
 
     public static void main(String[] args) {
+        String host = "192.168.1.52";
+        int serverPort = 54321;
+
         // Count time
         long startTime = System.currentTimeMillis();
 
         // Create 12 users and wait for them to finish
         User[] users = new User[24];
         for (int i = 1; i < 25; i++) {
-            users[i-1] = new User(i);
+            users[i-1] = new User(i, host, serverPort);
             users[i-1].start();
         }
         for (int i = 1; i < 25; i++) {

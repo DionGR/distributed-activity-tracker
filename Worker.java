@@ -7,11 +7,13 @@ public class Worker extends Thread{
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private final int id;
-    private final int port;
+    private final int serverPort;
+    private final String host;
 
-    Worker (int id, int port) {
+    Worker (int id, String host, int serverPort) {
         this.id = id;
-        this.port = port;
+        this.host = host;
+        this.serverPort = serverPort;
         this.out = null;
         this.in = null;
     }
@@ -19,7 +21,8 @@ public class Worker extends Thread{
     @Override
     public void run(){
         try {
-            requestSocket = new Socket("localhost", port);
+            requestSocket = new Socket(host, serverPort);
+
             System.out.println("Worker #" + id + " with worker port: " + requestSocket.getLocalPort() + " connected to Master" );
 
             out = new ObjectOutputStream(requestSocket.getOutputStream());
@@ -117,8 +120,11 @@ public class Worker extends Thread{
     }
 
     public static void main(String[] args) {
+        String host = "192.168.1.52";
+        int serverPort = 12345;
+
         for (int i = 1; i <= 2; i++) {
-            Worker worker = new Worker(i, 12345);
+            Worker worker = new Worker(i, host, serverPort);
             worker.start();
         }
     }
