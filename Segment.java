@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 
 
 public class Segment implements Serializable {
@@ -46,6 +47,7 @@ public class Segment implements Serializable {
     public long getTotalTime() {
         return totalTime;
     }
+
 
     @Override
     public String toString(){

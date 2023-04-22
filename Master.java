@@ -30,7 +30,7 @@ class Master {
         this.g_gpxID = 0;
     }
 
-    public void bootServer(){
+    public void bootServer() {
         try {
             UserHandler userHandler = new UserHandler(USERPORT);
             WorkerHandler workerHandler = new WorkerHandler(WORKERPORT);
@@ -40,16 +40,21 @@ class Master {
             workerHandler.start();
             scheduler.start();
 
-            while(true){
-                if (connectedWorkers.size() == NEEDED_WORKERS && workerHandler.isAlive()) {
-                    workerHandler.interrupt();
-                } else if (connectedWorkers.size() < NEEDED_WORKERS && !workerHandler.isAlive()) {
-                    workerHandler = new WorkerHandler(WORKERPORT);
-                    workerHandler.start();
+            synchronized (connectedWorkers) {
+                while (true) {
+                    if (connectedWorkers.size() == NEEDED_WORKERS && workerHandler.isAlive()) {
+                        workerHandler.interrupt();
+                        connectedWorkers.wait();
+                    } else if (connectedWorkers.size() < NEEDED_WORKERS && !workerHandler.isAlive()) {
+                        workerHandler = new WorkerHandler(WORKERPORT);
+                        workerHandler.start();
+                    }
                 }
             }
 
-        } catch (IOException e) {
+    }catch (InterruptedException e) {
+        System.err.println("Master: Interrupted while waiting for workers to connect: " + e.getMessage());
+    }catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -167,6 +172,10 @@ class Master {
                 try {
                     out.close(); in.close();
                     workerSocket.close();
+                    connectedWorkers.remove(this);
+                    synchronized (connectedWorkers){
+                        connectedWorkers.notifyAll();
+                    }
                 } catch (IOException ioException) {
                     System.err.println("Worker port: "+ workerPort + " - IOERROR while shutting down... " + ioException.getMessage());
                 }
@@ -255,7 +264,7 @@ class Master {
                 out = new ObjectOutputStream(providerSocket.getOutputStream());
                 in = new ObjectInputStream(providerSocket.getInputStream());
 
-                // User registration
+                // DummyUser registration
                 int userID = (int) in.readObject();
                 this.userID = userID;
 
@@ -269,7 +278,7 @@ class Master {
                 int localGPXID;
 
                 while (providerSocket.isConnected()){
-                    // Take GPX from User
+                    // Take GPX from DummyUser
                     StringBuilder buffer = (StringBuilder) in.readObject();
                     System.out.println("UserBroker for User #" + userID + " - GPX received.");
 
@@ -305,7 +314,7 @@ class Master {
                         if (!waypoints.isEmpty())
                             chunkWaypoints.add(waypoints.get(0));
 
-                        chunks[--numChunks] = new Chunk(localGPXID,numChunks, totalChunks, chunkWaypoints);
+                        chunks[--numChunks] = new Chunk(localGPXID, numChunks, totalChunks, chunkWaypoints);
                     }
 
                     synchronized (intermediateResults){
@@ -314,7 +323,7 @@ class Master {
 
                     addDataForProcessing(chunks);
 
-                    System.out.println("UserBroker " + this.getId() + " for User #" + userID + " waiting for data from worker...");
+                    System.out.println("UserBroker " + this.getId() + " for DummyUser #" + userID + " waiting for data from worker...");
 
                     ArrayList<Segment> segments;
                     synchronized (intermediateResults) {
@@ -327,30 +336,29 @@ class Master {
                     /* Reduce the results */
                     Segment result = reduce(localGPXID, segments);
 
+                    Route route = new Route(user.getNumOfRoutes() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
+
+                    synchronized (database) {
+                        database.addRoute(route, user.getID());
+                    }
+
                     synchronized (out) {
                         out.writeObject(result);
                         out.flush();
                     }
 
-                    // Add data to database
-                    synchronized (database) {
-                        database.addData(userID, result.getTotalDistance(), result.getTotalTime(), result.getTotalElevation());
-                        System.err.println(database.getUserData(userID));
-                        System.err.println(database.getTotalData());
-                    }
-
-                    System.out.println("UserBroker " + this.getId() + " for User #" + userID + " sent final result to user.");
+                    System.out.println("UserBroker " + this.getId() + " for DummyUser #" + userID + " sent final result to user.");
                 }
             }
             catch (IOException ioException) {
-                System.err.println("UserBroker for User #" + userID + " - IOERROR: " + ioException.getMessage());
+                System.err.println("UserBroker for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
                 // Retry opening streams
             }
             catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("UserBroker for User #" + userID + " - CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("UserBroker for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
             }
             catch (Exception e) {
-                System.err.println("UserBroker for User #" + userID + " - ERROR: " + e.getMessage());
+                System.err.println("UserBroker for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
             }
             finally {
@@ -358,16 +366,16 @@ class Master {
                     out.close();
                     in.close();
                     providerSocket.close();
-                    System.out.println("UserBroker for User #" + userID + " shutting down...");
+                    System.out.println("UserBroker for DummyUser #" + user.getID() + " shutting down...");
                 } catch (IOException ioException) {
-                    System.err.println("UserBroker for User #" + userID + " - IOERROR while shutting down: " + ioException.getMessage());
+                    System.err.println("UserBroker for DummyUser #" + user.getID() + " - IOERROR while shutting down: " + ioException.getMessage());
                 }
             }
         }
 
         private Segment reduce(int localGPXID, ArrayList<Segment> segmentList){
             // Reduce
-            System.out.println("UserThread " + this.getId() + " for User #" + userID + " reducing data for user...");
+            System.out.println("UserThread " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
 
 
             double totalDistance = 0;
@@ -380,7 +388,7 @@ class Master {
                 totalTime += segment.getTotalTime();            //ms
             }
 
-            return new Segment(localGPXID, userID, 0, totalDistance, totalDistance / totalTime, totalElevation, totalTime);
+            return new Segment(0, 0, 0, totalDistance, totalDistance / totalTime, totalElevation, totalTime);
         }
     }
 
