@@ -243,7 +243,7 @@ class Master {
         private final Socket providerSocket;
         private ObjectOutputStream out;
         private ObjectInputStream in;
-        private int userID;
+        private User user;
 
         UserBroker(Socket providerSocket) {
             this.providerSocket = providerSocket;
@@ -266,10 +266,10 @@ class Master {
 
                 // DummyUser registration
                 int userID = (int) in.readObject();
-                this.userID = userID;
+                //this.userID = userID;
 
                 synchronized (database) {
-                    database.initUser(userID);
+                    user = database.initUser(userID);
                 }
 
                 System.out.println("UserBroker for User #" + userID + " started.");
