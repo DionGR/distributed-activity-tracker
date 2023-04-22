@@ -120,7 +120,24 @@ public class User extends Thread{
 
 
     public static void main(String[] args) {
-        for (int i = 1; i <= 3; i++)
-            new User(i).start();
+        // Count time
+        long startTime = System.currentTimeMillis();
+
+        // Create 12 users and wait for them to finish
+        User[] users = new User[24];
+        for (int i = 1; i < 25; i++) {
+            users[i-1] = new User(i);
+            users[i-1].start();
+        }
+        for (int i = 1; i < 25; i++) {
+            try {
+                users[i-1].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        long endTime = System.currentTimeMillis();
+        System.err.println("Time: " + (double)(endTime - startTime)/1000 + "s");
     }
 }
