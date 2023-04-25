@@ -4,13 +4,8 @@ import java.util.ArrayList;
 
 
 public class GPXParser {
-    StringBuilder buffer;
 
-    public GPXParser(StringBuilder buffer) {
-        this.buffer = buffer;
-    }
-
-    public ArrayList<Waypoint> parse() {
+    public static ArrayList<Waypoint> parse(StringBuilder buffer) {
         ArrayList<Waypoint> waypoints = new ArrayList<>();
 
         // Remove header

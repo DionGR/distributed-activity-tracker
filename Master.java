@@ -9,6 +9,7 @@ class Master {
 
     private final ArrayList<UserBroker> connectedUsers;
     private final ArrayList<Worker> connectedWorkers;
+    private final HashMap<Integer, ArrayList<Waypoint>> segments;
 
     private final ArrayList<Chunk[]> dataForProcessing;
     private final HashMap<Integer, ArrayList<Segment>> intermediateResults;
@@ -26,38 +27,78 @@ class Master {
         this.connectedWorkers = new ArrayList<>();
         this.dataForProcessing = new ArrayList<>();
         this.intermediateResults = new HashMap<>();
+        this.segments = new HashMap<>();
         this.database = new Database();
         this.g_gpxID = 0;
     }
 
     public void bootServer() {
         try {
+            initDefaults();
             UserHandler userHandler = new UserHandler(USERPORT);
             WorkerHandler workerHandler = new WorkerHandler(WORKERPORT);
             Scheduler scheduler = new Scheduler();
 
-            userHandler.start();
             workerHandler.start();
-            scheduler.start();
 
-            synchronized (connectedWorkers) {
-                while (true) {
-                    if (connectedWorkers.size() == NEEDED_WORKERS && workerHandler.isAlive()) {
-                        workerHandler.interrupt();
-                        connectedWorkers.wait();
-                    } else if (connectedWorkers.size() < NEEDED_WORKERS && !workerHandler.isAlive()) {
-                        workerHandler = new WorkerHandler(WORKERPORT);
-                        workerHandler.start();
-                    }
+            synchronized (connectedWorkers){
+                while (connectedWorkers.size() < MIN_WORKERS){
+                    System.err.println("Master: Waiting for workers to connect...");
+                    connectedWorkers.wait();
                 }
+                System.err.println("Master: All workers connected...");
             }
 
+            userHandler.start();
+            scheduler.start();
     }catch (InterruptedException e) {
         System.err.println("Master: Interrupted while waiting for workers to connect: " + e.getMessage());
     }catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private void initDefaults(){
+        try {
+            /* Set configurations */
+            FileReader reader = new FileReader(System.getProperty("user.dir") + "\\data\\config");
+            Properties properties = new Properties();
+            properties.load(reader);
+
+
+            WORKERPORT = Integer.parseInt(properties.getProperty("workerPort"));
+            USERPORT = Integer.parseInt(properties.getProperty("userPort"));
+            MIN_WORKERS = Integer.parseInt(properties.getProperty("minWorkers"));
+
+            System.err.println("Master | Configurations loaded |");
+            System.err.println("Master | Worker PORT: " + WORKERPORT);
+            System.err.println("Master | User PORT: " + USERPORT);
+            System.err.println("Master | Min workers: " + MIN_WORKERS);
+
+
+            /* Set default segments */
+            File[] loadedSegments = new File(System.getProperty("user.dir") + "\\data\\segments\\").listFiles();
+            if (loadedSegments != null) {
+                for (int i = 0; i < loadedSegments.length; i++) {
+                    BufferedReader br = new BufferedReader(new FileReader(loadedSegments[i]));
+                    String line;
+                    StringBuilder buffer = new StringBuilder();
+                    while((line = br.readLine()) != null)
+                        buffer.append(line);
+                    segments.put(i, GPXParser.parse(buffer));
+                }
+                System.err.println("Master | Segments loaded: " + loadedSegments.length);
+            }else {
+                System.err.println("Master | Segments loaded: 0");
+            }
+        }
+        catch (IOException ioException) {
+            System.err.println("Master IOERROR: " + ioException.getMessage());
+        }catch (Exception e) {
+            System.err.println("Master ERROR: " + e.getMessage());
+        }
+    }
+
     private class WorkerHandler extends Thread {
 
         private final ServerSocket workersSocketToHandle;
@@ -75,10 +116,16 @@ class Master {
                     System.out.println("WorkerHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
                     Worker worker = new Worker(providerSocket);
-                    connectedWorkers.add(worker);
+
+                    synchronized (connectedWorkers){
+                        connectedWorkers.add(worker);
+                        if (connectedWorkers.size() >= MIN_WORKERS) connectedWorkers.notifyAll();
+                    }
 
                     worker.start();
                 }
+
+                /* TODO: Handle thread crash, worker disconnects etc */
             } catch (IOException ioException) {
                 System.err.println("WorkerHandler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
@@ -112,6 +159,8 @@ class Master {
                     connectedUsers.add(broker);
                     broker.start();
                 }
+
+                /* TODO: Handle thread crash, user disconnects etc */
             } catch (IOException ioException) {
                 System.err.println("UserHandler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
@@ -125,6 +174,53 @@ class Master {
             }
         }
     }
+    private class Scheduler extends Thread{
+
+        @Override
+        public void run(){
+
+            int nextWorker = 0;
+
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+
+
+                    /* Assign data to workers using round-robin */
+                    while (dataForProcessing.size() > 0) {
+                        Chunk[] chunks;
+
+                        synchronized (dataForProcessing) {
+                            chunks = dataForProcessing.get(0);
+                            dataForProcessing.remove(0);
+                        }
+
+                        for (Chunk c : chunks) {
+                            ObjectOutputStream out;
+
+                            synchronized (connectedWorkers) {
+                                out = connectedWorkers.get(nextWorker).getOutputStream();
+                            }
+
+                            System.out.println("Assigning data to worker: " + nextWorker);
+
+                            out.writeObject(c);
+                            out.flush();
+
+                            System.out.println("Data assigned to worker: " + c.toString());
+
+                            nextWorker = (++nextWorker) % connectedWorkers.size();
+                        }
+                    }
+                }
+                /* TODO: Handle thread crash, worker disconnects etc */
+            }catch(IOException ioException){
+                System.err.println("Scheduler IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("Scheduler ERROR: " + e.getMessage());
+            }
+        }
+    }
+
 
     private class Worker extends Thread {
         Socket workerSocket;
@@ -132,6 +228,7 @@ class Master {
         ObjectOutputStream out;
         int workerPort;
 
+        // TODO: What should we keep??????????????
         public Worker(Socket workerSocket){
             this.workerSocket = workerSocket;
             this.workerPort = workerSocket.getPort();
@@ -199,51 +296,14 @@ class Master {
         }
     }
 
-    private class Scheduler extends Thread{
 
-        @Override
-        public void run(){
-
-            int nextWorker = 0;
-
-            try {
-                while (!Thread.currentThread().isInterrupted()) {
-
-                    /* Assign data to workers using round-robin */
-                    while (dataForProcessing.size() > 0 && connectedWorkers.size() > 0) {
-                        Chunk[] chunks;
-
-                        synchronized (dataForProcessing) {
-                            chunks = dataForProcessing.get(0);
-                            dataForProcessing.remove(0);
-                        }
-
-                        for (Chunk c : chunks) {
-                            ObjectOutputStream out = connectedWorkers.get(nextWorker).getOutputStream();
-                            System.out.println("Assigning data to worker: " + nextWorker);
-
-                            out.writeObject(c);
-                            out.flush();
-
-                            System.out.println("Data assigned to worker: " + c.toString());
-
-                            nextWorker = (++nextWorker) % connectedWorkers.size();
-                        }
-                    }
-                }
-            }catch(IOException ioException){
-                System.err.println("Scheduler IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("Scheduler ERROR: " + e.getMessage());
-            }
-        }
-    }
 
     private class UserBroker extends Thread {
         private final Socket providerSocket;
         private ObjectOutputStream out;
         private ObjectInputStream in;
         private User user;
+        private int localGPXID;
 
         UserBroker(Socket providerSocket) {
             this.providerSocket = providerSocket;
@@ -272,27 +332,21 @@ class Master {
                     user = database.initUser(userID);
                 }
 
-                System.out.println("UserBroker for User #" + userID + " started.");
+                System.out.println("UserBroker for User #" + userID + " started."); // TODO: Might remove
                 out.writeObject(1);
 
-                int localGPXID;
-
                 while (providerSocket.isConnected()){
+
                     /* Take GPX from DummyUser */
-                    StringBuilder buffer = null;
-//                    if (!providerSocket.isInputShutdown())
-//                        buffer = (StringBuilder) in.readObject();
-//                    else {
-//                        System.err.println("DummyUser #" +user.getID()+" has disconnected!" );
-//                        break;
-//                    }
+                    StringBuilder buffer;
                     try {
                         buffer = (StringBuilder) in.readObject();
                     }
                     catch (IOException ioException){
-                        System.err.println("DummyUser #" +user.getID()+" has disconnected!" );
+                        System.err.println("DummyUser #" + user.getID() + " has disconnected!" );
                         break;
                     }
+
                     System.out.println("UserBroker for User #" + userID + " - GPX received.");
 
                     synchronized (g_gpxID){
@@ -303,9 +357,7 @@ class Master {
                     /* Convert the GPX file into a list of Waypoints */
 
                     // Parse GPX
-                    //gpxID = Integer.parseInt(buffer.substring(0, buffer.indexOf("!")));
-                    GPXParser parser = new GPXParser(buffer);
-                    ArrayList<Waypoint> waypoints = parser.parse();
+                    ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
 
                     int numChunks = (int) ((waypoints.size() / 10) + 0.5);
                     int totalChunks = numChunks;
@@ -349,7 +401,7 @@ class Master {
                     /* Reduce the results */
                     Segment result = reduce(localGPXID, segments);
 
-                    Route route = new Route(user.getNumOfRoutes() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
+                    Route route = new Route(user.getSubmissions() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
 
                     synchronized (database) {
                         database.addRoute(route, user.getID());
@@ -386,7 +438,7 @@ class Master {
             }
         }
 
-        private Segment reduce(int localGPXID, ArrayList<Segment> segmentList){
+        private Segment reduce(ArrayList<Segment> segmentList){
             // Reduce
             System.out.println("UserBroker " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
 
@@ -401,22 +453,13 @@ class Master {
                 totalTime += segment.getTotalTime();            //ms
             }
 
-            return new Segment(0, 0, 0, totalDistance, totalDistance / totalTime, totalElevation, totalTime);
+            return new Segment(localGPXID, segments.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
         }
     }
 
 
     public static void main(String[] args) {
-        int workers = 2;
-
-        try {
-            workers = Integer.parseInt(args[0]);
-            workers = Math.max(2, workers);
-        }catch (Exception e){
-            System.err.println("Invalid number of workers in arguments. Using default value: 2");
-        }
-
-        Master master = new Master(54321, 12345, workers);
+        Master master = new Master();
         master.bootServer();
     }
 }
