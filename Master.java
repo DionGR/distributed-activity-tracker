@@ -396,10 +396,11 @@ class Master {
                             intermediateResults.wait();
                         }
                         segments = intermediateResults.get(localGPXID);
+                       //TODO intermediateResults.remove(localGPXID);
                     }
 
                     /* Reduce the results */
-                    Segment result = reduce(localGPXID, segments);
+                    Segment result = reduce(segments);
 
                     Route route = new Route(user.getSubmissions() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
 
@@ -407,7 +408,7 @@ class Master {
                         database.addRoute(route, user.getID());
                     }
 
-                    synchronized (out) {
+                    synchronized (out) {            //TODO: 2 handlers/ports or requests in userHandler
                         out.writeObject(result);
                         out.flush();
                     }

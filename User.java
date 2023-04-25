@@ -6,6 +6,7 @@ public class User {
     private double avgTime;
     private double avgElevation;
     private final ArrayList<Route> routes;
+    private int submissions;
 
 
     public User(int id){
@@ -41,8 +42,8 @@ public class User {
         return avgElevation;
     }
 
-    public int getNumOfRoutes() {
-        return routes.size();
+    public int getSubmissions() {
+        return submissions;
     }
 
     public ArrayList<Route> getRoutes(){
