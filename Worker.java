@@ -37,6 +37,7 @@ public class Worker extends Thread{
                 workerThread.start();
 
                 System.out.println("Worker #" + id + " assigned data: " + data);
+
             }
 
         } catch (UnknownHostException unknownHostException) {
