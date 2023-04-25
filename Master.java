@@ -2,10 +2,11 @@ import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Properties;
 
 
 class Master {
-    private final int USERPORT, WORKERPORT;
+    private int USERPORT, WORKERPORT;
 
     private final ArrayList<UserBroker> connectedUsers;
     private final ArrayList<Worker> connectedWorkers;
@@ -15,14 +16,11 @@ class Master {
     private final HashMap<Integer, ArrayList<Segment>> intermediateResults;
 
     private final Database database;
-    private final int NEEDED_WORKERS;
+    private int MIN_WORKERS;
     private Integer g_gpxID;
 
 
-    Master(int USERPORT, int WORKERPORT, int NEEDED_WORKERS){
-        this.USERPORT = USERPORT;
-        this.WORKERPORT = WORKERPORT;
-        this.NEEDED_WORKERS = NEEDED_WORKERS;
+    Master(){
         this.connectedUsers = new ArrayList<>();
         this.connectedWorkers = new ArrayList<>();
         this.dataForProcessing = new ArrayList<>();
