@@ -14,7 +14,7 @@ public class Segment implements Serializable {
     public Segment(int gpxID, int id, int totalSegments, double totalDistance, double meanVelocity, double totalElevation, long totalTime){
         this.gpxID = gpxID;
         this.id = id;
-        this.totalSegments =totalSegments;
+        this.totalSegments = totalSegments;
         this.totalDistance = totalDistance;
         this.meanVelocity = meanVelocity;
         this.totalElevation = totalElevation;
