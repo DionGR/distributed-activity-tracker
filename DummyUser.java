@@ -124,7 +124,7 @@ public class DummyUser extends Thread{
     public static void main(String[] args) {
         String host = "localhost";
         int serverPort = 54321;
-        int numUsers = 25;
+        int numUsers = 24;
 
         // Count time
         long startTime = System.currentTimeMillis();

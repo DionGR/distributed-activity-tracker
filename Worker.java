@@ -67,12 +67,14 @@ public class Worker extends Thread{
     private class WorkerThread extends Thread {
         private final Socket requestSocket;
         private ObjectOutputStream out;
+        private ObjectInputStream in;
         private final Chunk chunk;
 
 
         WorkerThread(Socket requestSocket, Chunk chunk){
             this.requestSocket = requestSocket;
             this.out = null;
+            this.in = null;
             this.chunk = chunk;
         }
 
@@ -101,6 +103,8 @@ public class Worker extends Thread{
                 Segment result = new Segment(chunk.getGPXID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime);
 
                 this.out = new ObjectOutputStream(requestSocket.getOutputStream());
+                //this.in = new ObjectInputStream(requestSocket.getInputStream());
+
                 this.out.writeObject(result);
                 this.out.flush();
 

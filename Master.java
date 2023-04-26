@@ -273,7 +273,7 @@ class Master {
         @Override
         public void run() {
             try {
-                out = new ObjectOutputStream(workerSocket.getOutputStream());
+//                out = new ObjectOutputStream(workerSocket.getOutputStream());
                 in = new ObjectInputStream(workerSocket.getInputStream());
 
                 //while (workerSocket.isConnected()) {
@@ -292,7 +292,8 @@ class Master {
                 throw new RuntimeException(); // !!!!!!!!!
             }finally {
                 try {
-                    out.close(); in.close();
+//                    out.close();
+                    in.close();
                     workerSocket.close();
 //                    synchronized (connectedWorkers){
 //                        connectedWorkers.remove(this);
