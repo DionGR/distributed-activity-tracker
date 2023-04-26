@@ -9,7 +9,9 @@ class Master {
     private int USERPORT, WORKERPORT;
 
     private final ArrayList<UserBroker> connectedUsers;
-    private final ArrayList<Worker> connectedWorkers;
+    //private final ArrayList<Worker> connectedWorkers;
+    private final ArrayList<ObjectOutputStream> workerOutStreams;
+    private final ArrayList<ObjectInputStream> workerInStreams;
     private final HashMap<Integer, ArrayList<Waypoint>> segments;
 
     private final ArrayList<Chunk[]> dataForProcessing;
@@ -22,7 +24,9 @@ class Master {
 
     Master(){
         this.connectedUsers = new ArrayList<>();
-        this.connectedWorkers = new ArrayList<>();
+        //this.connectedWorkers = new ArrayList<>();
+        this.workerOutStreams = new ArrayList<>();
+        this.workerInStreams = new ArrayList<>();
         this.dataForProcessing = new ArrayList<>();
         this.intermediateResults = new HashMap<>();
         this.segments = new HashMap<>();
@@ -37,12 +41,13 @@ class Master {
             WorkerHandler workerHandler = new WorkerHandler(WORKERPORT);
             Scheduler scheduler = new Scheduler();
 
-            workerHandler.start();
+            workerConnectionHandler.start();
+            workerDataHandler.start();
 
-            synchronized (connectedWorkers){
-                while (connectedWorkers.size() < MIN_WORKERS){
+            synchronized (workerOutStreams){
+                while (workerOutStreams.size() < MIN_WORKERS){
                     System.err.println("Master: Waiting for workers to connect...");
-                    connectedWorkers.wait();
+                    workerOutStreams.wait();
                 }
                 System.err.println("Master: All workers connected...");
             }
@@ -64,12 +69,15 @@ class Master {
             properties.load(reader);
 
 
-            WORKERPORT = Integer.parseInt(properties.getProperty("workerPort"));
+            workerConnectionPort = Integer.parseInt(properties.getProperty("workerConnectionPort"));
+            workerDataPort = Integer.parseInt(properties.getProperty("workerDataPort"));
+
             USERPORT = Integer.parseInt(properties.getProperty("userPort"));
             MIN_WORKERS = Integer.parseInt(properties.getProperty("minWorkers"));
 
             System.err.println("Master | Configurations loaded |");
-            System.err.println("Master | Worker PORT: " + WORKERPORT);
+            System.err.println("Master | Worker Connection PORT: " + workerConnectionPort);
+            System.err.println("Master | Worker Data PORT: " + workerDataPort);
             System.err.println("Master | User PORT: " + USERPORT);
             System.err.println("Master | Min workers: " + MIN_WORKERS);
 
@@ -210,8 +218,8 @@ class Master {
                         for (Chunk c : chunks) {
                             ObjectOutputStream out;
 
-                            synchronized (connectedWorkers) {
-                                out = connectedWorkers.get(nextWorker).getOutputStream();
+                            synchronized (workerOutStreams) {
+                                out = workerOutStreams.get(nextWorker);
                             }
 
                             System.out.println("Assigning data to worker: " + nextWorker);
@@ -221,7 +229,7 @@ class Master {
 
                             System.out.println("Data assigned to worker: " + c.toString());
 
-                            nextWorker = (++nextWorker) % connectedWorkers.size();
+                            nextWorker = (++nextWorker) % workerOutStreams.size();
                         }
                     }
                 }

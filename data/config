@@ -1,3 +1,4 @@
-workerPort=12345
+workerConnectionPort=12345
+workerDataPort=23456
 userPort=54321
 minWorkers=2

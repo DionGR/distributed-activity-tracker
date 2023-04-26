@@ -24,7 +24,7 @@ public class Worker extends Thread{
         try {
             connectSocket = new Socket(host, serverConnectPort);
 
-            System.out.println("Worker #" + id + " with worker port: " + requestSocket.getLocalPort() + " connected to Master" );
+            System.out.println("Worker #" + id + " with worker port: " + connectSocket.getLocalPort() + " connected to Master" );
 
             out = new ObjectOutputStream(requestSocket.getOutputStream());
             in = new ObjectInputStream(requestSocket.getInputStream());
@@ -56,7 +56,7 @@ public class Worker extends Thread{
         }finally {
             try {
                 out.close(); in.close();
-                requestSocket.close();
+                connectSocket.close();
                 System.err.println("Worker #" + id + " shutting down...");
             } catch (IOException ioException) {
                 System.err.println("Worker #" + id + " - IOERROR while shutting down: " + ioException.getMessage());
@@ -76,6 +76,7 @@ public class Worker extends Thread{
 
         @Override
         public void run() {
+
             try {
                 // Mapping
                 ArrayList<Waypoint> waypoints = chunk.getData();
@@ -127,10 +128,11 @@ public class Worker extends Thread{
 
     public static void main(String[] args) {
         String host = "localhost";
-        int serverPort = 12345;
+        int serverConnectPort = 12345;
+        int serverRequestPort = 23456;
 
         for (int i = 1; i <= 2; i++) {
-            Worker worker = new Worker(i, host, serverPort);
+            Worker worker = new Worker(i, host, serverConnectPort, serverRequestPort);
             worker.start();
         }
     }
