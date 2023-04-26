@@ -3,25 +3,26 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class Worker extends Thread{
-    private Socket requestSocket;
+    private Socket connectSocket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private final int id;
-    private final int serverPort;
-    private final String host;
+    private final int serverConnectPort, serverRequestPort;
 
-    Worker (int id, String host, int serverPort) {
-        this.id = id;
+
+    Worker (int id, String host, int serverConnectPort, int serverRequestPort) {
+        this.serverConnectPort = serverConnectPort;
+        this.serverRequestPort = serverRequestPort;
         this.host = host;
-        this.serverPort = serverPort;
         this.out = null;
         this.in = null;
+        this.id = id;
     }
 
     @Override
     public void run(){
         try {
-            requestSocket = new Socket(host, serverPort);
+            connectSocket = new Socket(host, serverConnectPort);
 
             System.out.println("Worker #" + id + " with worker port: " + requestSocket.getLocalPort() + " connected to Master" );
 
@@ -32,8 +33,9 @@ public class Worker extends Thread{
             /* Create the streams to send and receive data from server */
             while(true) {
                 Chunk data = (Chunk) in.readObject();
+                Socket requestSocket = new Socket(host, serverRequestPort);
 
-                WorkerThread workerThread = new WorkerThread(data);
+                WorkerThread workerThread = new WorkerThread(requestSocket, data);
                 workerThread.start();
 
                 System.out.println("Worker #" + id + " assigned data: " + data);
@@ -65,7 +67,10 @@ public class Worker extends Thread{
     private class WorkerThread extends Thread {
         private final Chunk chunk;
 
-        WorkerThread(Chunk chunk){
+
+        WorkerThread(Socket requestSocket, Chunk chunk){
+            this.requestSocket = requestSocket;
+            this.out = null;
             this.chunk = chunk;
         }
 

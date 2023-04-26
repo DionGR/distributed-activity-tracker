@@ -113,14 +113,29 @@ class Master {
                     Socket providerSocket = workersSocketToHandle.accept();
                     System.out.println("WorkerHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
-                    Worker worker = new Worker(providerSocket);
+                    if (workersSocketToHandle.getLocalPort() == workerConnectionPort){
+                        ObjectOutputStream out = new ObjectOutputStream(providerSocket.getOutputStream());
+                        synchronized (workerOutStreams) {
+                            workerOutStreams.add(out);
+                            if (workerOutStreams.size() >= MIN_WORKERS) workerOutStreams.notifyAll();
+                        }
 
-                    synchronized (connectedWorkers){
-                        connectedWorkers.add(worker);
-                        if (connectedWorkers.size() >= MIN_WORKERS) connectedWorkers.notifyAll();
+                    }else if (workersSocketToHandle.getLocalPort() == workerDataPort){
+//                        ObjectOutputStream out = new ObjectOutputStream(providerSocket.getOutputStream());
+//                        ObjectInputStream in = new ObjectInputStream(providerSocket.getInputStream());
+//                        synchronized (workerInStreams) {
+//                            workerInStreams.add(in);
+//                        }
+                        Worker worker = new Worker(providerSocket);
+                        worker.start();
                     }
 
-                    worker.start();
+//                    synchronized (connectedWorkers){
+//                        connectedWorkers.add(worker);
+//                        if (connectedWorkers.size() >= MIN_WORKERS) connectedWorkers.notifyAll();
+//                    }
+
+
                 }
 
                 /* TODO: Handle thread crash, worker disconnects etc */
@@ -249,12 +264,12 @@ class Master {
                 this.out = new ObjectOutputStream(workerSocket.getOutputStream());
                 this.in = new ObjectInputStream(workerSocket.getInputStream());
 
-                while (workerSocket.isConnected()) {
+                //while (workerSocket.isConnected()) {
                     /* Waiting for intermediate result */
                     Segment data = (Segment) in.readObject();
                     System.out.println("Worker port: "+ workerPort + " received data for GPX: " + data.getGPXID());
                     addIntermediateResults(data);
-                }
+                //}
 
             }catch (IOException ioException) {
                 System.err.println("Worker port: "+ workerPort + " - IOERROR: " + ioException.getMessage());
@@ -267,10 +282,10 @@ class Master {
                 try {
                     out.close(); in.close();
                     workerSocket.close();
-                    connectedWorkers.remove(this);
-                    synchronized (connectedWorkers){
-                        connectedWorkers.notifyAll();
-                    }
+//                    synchronized (connectedWorkers){
+//                        connectedWorkers.remove(this);
+//                        connectedWorkers.notifyAll();  //!!!! lathos logikh
+//                  }
                 } catch (IOException ioException) {
                     System.err.println("Worker port: "+ workerPort + " - IOERROR while shutting down... " + ioException.getMessage());
                 }
