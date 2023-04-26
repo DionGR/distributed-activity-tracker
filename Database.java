@@ -1,5 +1,7 @@
 import java.util.HashMap;
 
+
+
 public class Database {
     private final HashMap<Integer, User> users;
     private final User totalData;
@@ -19,8 +21,6 @@ public class Database {
         users.get(userID).addRoute(route);
         totalData.updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
-
-
 
     public User getTotalData() {
         return totalData;

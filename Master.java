@@ -6,7 +6,10 @@ import java.util.Properties;
 
 
 class Master {
-    private int USERPORT, WORKERPORT;
+    private int MIN_WORKERS;
+    private int userGPXPort, userStatisticsPort, workerConnectionPort, workerDataPort;
+
+    private int USERPORT; // TODELETE
 
     private final ArrayList<UserBroker> connectedUsers;
     //private final ArrayList<Worker> connectedWorkers;
@@ -18,7 +21,6 @@ class Master {
     private final HashMap<Integer, ArrayList<Segment>> intermediateResults;
 
     private final Database database;
-    private int MIN_WORKERS;
     private Integer g_gpxID;
 
 
@@ -37,8 +39,9 @@ class Master {
     public void bootServer() {
         try {
             initDefaults();
-            UserHandler userHandler = new UserHandler(USERPORT);
-            WorkerHandler workerHandler = new WorkerHandler(WORKERPORT);
+            UserHandler userHandler = new UserHandler(USERPORT); // TODO: Statistics/GPX Handlers
+            WorkerHandler workerConnectionHandler = new WorkerHandler(workerConnectionPort);
+            WorkerHandler workerDataHandler = new WorkerHandler(workerDataPort);
             Scheduler scheduler = new Scheduler();
 
             workerConnectionHandler.start();
@@ -160,6 +163,7 @@ class Master {
             }
         }
     }
+
     private class UserHandler extends Thread {
         private final ServerSocket usersSocketToHandle;
 
@@ -269,8 +273,8 @@ class Master {
         @Override
         public void run() {
             try {
-                this.out = new ObjectOutputStream(workerSocket.getOutputStream());
-                this.in = new ObjectInputStream(workerSocket.getInputStream());
+                out = new ObjectOutputStream(workerSocket.getOutputStream());
+                in = new ObjectInputStream(workerSocket.getInputStream());
 
                 //while (workerSocket.isConnected()) {
                     /* Waiting for intermediate result */
@@ -316,7 +320,6 @@ class Master {
             return out;
         }
     }
-
 
 
     private class UserBroker extends Thread {

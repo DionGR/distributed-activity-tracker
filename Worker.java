@@ -6,6 +6,7 @@ public class Worker extends Thread{
     private Socket connectSocket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private final String host;
     private final int id;
     private final int serverConnectPort, serverRequestPort;
 
@@ -26,9 +27,8 @@ public class Worker extends Thread{
 
             System.out.println("Worker #" + id + " with worker port: " + connectSocket.getLocalPort() + " connected to Master" );
 
-            out = new ObjectOutputStream(requestSocket.getOutputStream());
-            in = new ObjectInputStream(requestSocket.getInputStream());
-
+            out = new ObjectOutputStream(connectSocket.getOutputStream());
+            in = new ObjectInputStream(connectSocket.getInputStream());
 
             /* Create the streams to send and receive data from server */
             while(true) {
@@ -65,6 +65,8 @@ public class Worker extends Thread{
     }
 
     private class WorkerThread extends Thread {
+        private final Socket requestSocket;
+        private ObjectOutputStream out;
         private final Chunk chunk;
 
 
@@ -98,10 +100,9 @@ public class Worker extends Thread{
 
                 Segment result = new Segment(chunk.getGPXID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime);
 
-                synchronized (out) {
-                    out.writeObject(result);
-                    out.flush();
-                }
+                this.out = new ObjectOutputStream(requestSocket.getOutputStream());
+                this.out.writeObject(result);
+                this.out.flush();
 
                 System.out.println("WorkerThread #" + id + " sent intermediate result: " + result);
 
@@ -111,6 +112,13 @@ public class Worker extends Thread{
             }catch (Exception e) {
                 System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
+            }finally{
+                try {
+                    this.out.close();
+                    requestSocket.close();
+                } catch (IOException ioException) {
+                    System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage());
+                }
             }
         }
 
@@ -122,6 +130,7 @@ public class Worker extends Thread{
                     Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
                             Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
             double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
             return R * c;
         }
     }
