@@ -113,12 +113,12 @@ public class Worker extends Thread{
                 System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
             }finally{
-                try {
-                    this.out.close();
-                    requestSocket.close();
-                } catch (IOException ioException) {
-                    System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage());
-                }
+//                try {
+////                    this.out.close();
+////                    requestSocket.close();
+//                } catch (IOException ioException) {
+//                    System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage());
+//                }
             }
         }
 

@@ -110,13 +110,13 @@ public class DummyUser extends Thread{
         } catch (Exception e) {
             System.err.println("DummyUser #" + this.id + " - ERROR: " + e.getMessage());
         } finally {
-            try {
-                out.close(); in.close();
-                requestSocket.close();
-                System.out.println("DummyUser #" + this.id + " shutting down...");
-            } catch (IOException ioException) {
-                System.err.println("DummyUser #" + this.id + " - IOERROR while shutting down: " + ioException.getMessage());
-            }
+//            try {
+////                out.close(); in.close();
+////                requestSocket.close();
+//                System.out.println("DummyUser #" + this.id + " shutting down...");
+//            } catch (IOException ioException) {
+//                System.err.println("DummyUser #" + this.id + " - IOERROR while shutting down: " + ioException.getMessage());
+//            }
         }
     }
 
@@ -124,17 +124,18 @@ public class DummyUser extends Thread{
     public static void main(String[] args) {
         String host = "localhost";
         int serverPort = 54321;
+        int numUsers = 25;
 
         // Count time
         long startTime = System.currentTimeMillis();
 
         // Create 12 dummyUsers and wait for them to finish
-        DummyUser[] dummyUsers = new DummyUser[3];
-        for (int i = 1; i <= 3; i++) {
+        DummyUser[] dummyUsers = new DummyUser[numUsers];
+        for (int i = 1; i <= numUsers; i++) {
             dummyUsers[i-1] = new DummyUser(i, host, serverPort);
             dummyUsers[i-1].start();
         }
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= numUsers; i++) {
             try {
                 dummyUsers[i-1].join();
             } catch (InterruptedException e) {
