@@ -1,113 +1,53 @@
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Scanner;
 
 
 public class DummyUser extends Thread{
+    String host, userPath;
     int id;
-    String host;
-    int serverPort;
-    ObjectOutputStream out = null;
-    ObjectInputStream in = null;
-    Socket requestSocket = null;
-    String userPath;
+    int gpxServerPort, statsServerPort;
 
 
-    DummyUser(int id, String host, int serverPort){
+    DummyUser(int id, String host, int gpxServerPort, int statsServerPort){
         this.id = id;
         this.host = host;
-        this.serverPort = serverPort;
+        this.gpxServerPort = gpxServerPort;
+        this.statsServerPort = statsServerPort;
         this.userPath = System.getProperty("user.dir") + "\\data\\user-data\\user" + id + "\\";
     }
 
     @Override
     public void run() {
         try {
-            try {
-                new File(userPath + "unprocessed\\").mkdir();
-            } catch (Exception e) {throw new Exception("DummyUser #" + id +" could not create \"unprocessed\" folder!"); }
+            initFolders();
+            int option = 0;
 
-            for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
-                Files.move(Path.of(userPath + "processed\\" + f.getName()), Path.of(userPath + "unprocessed\\" + f.getName()));
-            }
+            while (option != 3) {
+                System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Receive Statistics, 3.Exit\n\t-> ");
+                option = new Scanner(System.in).nextInt();
+                System.out.println();
 
-            Files.deleteIfExists(Path.of(userPath + "results.txt"));
-
-
-            /* Create socket for contacting the server on port 54321 */
-            requestSocket = new Socket(host, serverPort);
-
-            /* Create the streams to send and receive data from server */
-            out = new ObjectOutputStream(requestSocket.getOutputStream());
-            in = new ObjectInputStream(requestSocket.getInputStream());
-
-            /* Send the id of the user */
-            out.writeObject(id);
-            out.flush();
-
-            /* Wait for ACK */
-            int ack = (int) in.readObject();
-            if (ack != 1){
-                throw new Exception("Master did not acknowledge connection");
-            }
-
-
-            /* Find all GPX files in user folder */
-            File[] files = new File(userPath + "unprocessed\\").listFiles();
-            if (files == null) throw new Exception("No files to process");
-            while(files.length != 0){
-
-                for (File f: files) {
-                    String fileName = f.getName();
-                    Files.move(Path.of(userPath + "unprocessed\\" + fileName), Path.of(userPath + "processed\\" + fileName));
-
-                    File gpxFile = new File(userPath + "processed\\" + fileName);
-
-                    BufferedReader br = new BufferedReader(new FileReader(gpxFile));
-
-                    String line;
-                    StringBuilder buffer = new StringBuilder();
-
-                    int routeID = Integer.parseInt(gpxFile.getName().replaceAll("[\\D]", ""));
-                    buffer.append(routeID + "!");
-
-                    while((line = br.readLine()) != null) {
-                        buffer.append(line);
+                switch (option) {
+                    case 1: {
+                        new gpxThread().start();
+                        break;
                     }
-
-                    /* Write gpx */
-                    out.writeObject(buffer);
-                    out.flush();
-                    Segment result = (Segment) in.readObject();
-
-
-                    /* Write results to file */
-                    File f2 = new File(userPath + "\\results.txt");
-                    //f2.createNewFile();
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(f2, true));
-                    bw.append(result.toString()).append("\n");
-                    bw.close();
-
-                    /* Print the received result from server */
-                    System.out.println("DummyUser #" + id + " received result for " + result);
+                    case 2: {
+                        new StatisticsThread().start();
+                        break;
+                    }
+                    case 3: {
+                        System.out.println("DummyUser #" + id + " shutting down...");
+                        break;
+                    }
                 }
-                files = new File(userPath + "unprocessed\\").listFiles();
-                if (files == null) break;
             }
-
-            System.out.println("DummyUser #" + this.id + " finished processing all files.");
-
-            Files.deleteIfExists(Path.of(userPath + "unprocessed\\"));
-
-        } catch (UnknownHostException unknownHostException) {
-            System.err.println("You are trying to connect to an unknown host!");
-        } catch (IOException ioException) {
-            System.err.println("DummyUser #" + this.id + " - IOERROR: " + ioException.getMessage());
-        } catch (ClassNotFoundException classNotFoundException) {
-            System.err.println("DummyUser #" + this.id + " - CASTERROR: " + classNotFoundException.getMessage());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("DummyUser #" + this.id + " - ERROR: " + e.getMessage());
         } finally {
 //            try {
@@ -118,6 +58,159 @@ public class DummyUser extends Thread{
 //                System.err.println("DummyUser #" + this.id + " - IOERROR while shutting down: " + ioException.getMessage());
 //            }
         }
+    }
+
+    private class gpxThread extends Thread {
+        private Socket gpxSocket;
+        ObjectOutputStream out;
+        ObjectInputStream in;
+
+        gpxThread() {
+            this.gpxSocket = null;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run() {
+            try {
+                /* Create socket for contacting the server on port 54321 */
+                gpxSocket = new Socket(host, gpxServerPort);
+
+                /* Create the streams to send and receive data to/from the server */
+                out = new ObjectOutputStream(gpxSocket.getOutputStream());
+                in = new ObjectInputStream(gpxSocket.getInputStream());
+
+                /* Send the ID of the user to the server */
+                out.writeObject(id);
+                out.flush();
+
+                /* Find all available GPX files in the unprocessed folder */
+                File[] files = new File(userPath + "unprocessed\\").listFiles();
+                if (files == null) throw new Exception("No files to process");
+
+                /* Print all the available GPX files and let the user pick one */
+                for (int i = 0; i < files.length; i++)
+                    System.out.println("File #" + i+1 +": " + files[i].getName());
+
+                System.out.println("Enter the file # to process: ");
+                int fileID = new Scanner(System.in).nextInt() - 1;
+                String fileName = files[fileID].getName();
+
+
+                /* Send the file to the server */
+                Files.move(Paths.get(userPath + "unprocessed\\" + fileName), Paths.get(userPath + "processed\\" + fileName));
+                File gpxFile = new File(userPath + "processed\\" + fileName);
+                BufferedReader br = new BufferedReader(new FileReader(gpxFile));
+                String line;
+                StringBuilder buffer = new StringBuilder();
+
+                int routeID = Integer.parseInt(gpxFile.getName().replaceAll("[\\D]", ""));
+                buffer.append(routeID).append("!");
+
+                while((line = br.readLine()) != null) {
+                    buffer.append(line);
+                }
+
+                /* Write gpx */
+                out.writeObject(buffer);
+                out.flush();
+
+                /* Wait and receive result */
+                Segment result = (Segment) in.readObject();
+
+                /* Write results to file */
+                File f2 = new File(userPath + "\\results.txt");
+                BufferedWriter bw = new BufferedWriter(new FileWriter(f2, true));
+                bw.append(result.toString()).append("\n");
+                bw.close();
+
+                /* Print the received result from server */
+                System.out.println("DummyUser #" + id + " received GPX result for " + result);
+
+
+//                Files.deleteIfExists(Paths.get(userPath + "unprocessed\\"));
+            }catch (UnknownHostException unknownHostException) {
+                System.err.println("DummyUser #" + id + " - GPXThread: you are trying to connect to an unknown host!");
+            } catch (IOException ioException) {
+                System.err.println("DummyUser #" + id + " - GPXThread IOERROR: " + ioException.getMessage());
+            } catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("DummyUser #" + id + " - GPXThread CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e) {
+                System.err.println("DummyUser #" + id + " - GPXThread ERROR: " + e.getMessage());
+            }finally {
+                try {
+                    in.close(); out.close();
+                    gpxSocket.close();
+                } catch (IOException e) {
+                    System.err.println("DummyUser #" + id + " - GPXThread IOERROR while finishing GPX request: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private class StatisticsThread extends Thread{
+        private Socket statsSocket;
+        ObjectOutputStream out;
+        ObjectInputStream in;
+
+        StatisticsThread() {
+            this.statsSocket = null;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+            try {
+                /* Create socket for contacting the server on port ____ */
+                statsSocket = new Socket(host, statsServerPort);
+
+                /* Create the streams to send and receive data from server */
+                ObjectOutputStream out = new ObjectOutputStream(statsSocket.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(statsSocket.getInputStream());
+
+                /* Send the id of the user */
+                out.writeObject(id);
+                out.flush();
+
+                /* Request statistics */
+                Statistics statistics = (Statistics) in.readObject();
+
+                /* Print received statistics from server */
+                System.out.println("DummyUser #" + id + " received statistics: " + statistics);
+
+            }catch (UnknownHostException unknownHostException) {
+                System.err.println("DummyUser #" + id + " - StatisticsThread: you are trying to connect to an unknown host!");
+            } catch (IOException ioException) {
+                System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR: " + ioException.getMessage());
+            } catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("DummyUser #" + id + " - StatisticsThread CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e) {
+                System.err.println("DummyUser #" + id + " - StatisticsThread ERROR: " + e.getMessage());
+            }finally {
+                try {
+                    out.close(); in.close();
+                    statsSocket.close();
+                } catch (IOException e) {
+                    System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while finishing Statistics request: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private void initFolders() throws Exception{
+        try {
+            new File(userPath + "unprocessed\\").mkdir();
+        } catch (Exception e) {
+            throw new Exception("Could not create \"unprocessed\" folder!");
+        }
+
+        for (File f: Objects.requireNonNull(new File(userPath + "processed\\").listFiles())) {
+            Files.move(Paths.get(userPath + "processed\\" + f.getName()), Paths.get(userPath + "unprocessed\\" + f.getName()));
+        }
+
+        Files.deleteIfExists(Paths.get(userPath + "results.txt"));
     }
 
 
