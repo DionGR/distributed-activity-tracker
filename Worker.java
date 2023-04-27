@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class Worker extends Thread{
     private Socket connectSocket;
-    private ObjectOutputStream out;
     private ObjectInputStream in;
     private final String host;
     private final int id;
@@ -15,7 +14,6 @@ public class Worker extends Thread{
         this.serverConnectPort = serverConnectPort;
         this.serverRequestPort = serverRequestPort;
         this.host = host;
-        this.out = null;
         this.in = null;
         this.id = id;
     }
@@ -39,7 +37,6 @@ public class Worker extends Thread{
                 workerThread.start();
 
                 System.out.println("Worker #" + id + " assigned data: " + data);
-
             }
 
         } catch (UnknownHostException unknownHostException) {
@@ -55,7 +52,7 @@ public class Worker extends Thread{
             throw new RuntimeException(e); // !!!
         }finally {
             try {
-                out.close(); in.close();
+                in.close();
                 connectSocket.close();
                 System.err.println("Worker #" + id + " shutting down...");
             } catch (IOException ioException) {
@@ -67,14 +64,12 @@ public class Worker extends Thread{
     private class WorkerThread extends Thread {
         private final Socket requestSocket;
         private ObjectOutputStream out;
-        private ObjectInputStream in;
         private final Chunk chunk;
 
 
         WorkerThread(Socket requestSocket, Chunk chunk){
             this.requestSocket = requestSocket;
             this.out = null;
-            this.in = null;
             this.chunk = chunk;
         }
 
@@ -82,6 +77,8 @@ public class Worker extends Thread{
         public void run() {
 
             try {
+                this.out = new ObjectOutputStream(requestSocket.getOutputStream());
+
                 // Mapping
                 ArrayList<Waypoint> waypoints = chunk.getData();
 
@@ -89,7 +86,7 @@ public class Worker extends Thread{
                 double totalElevation = 0;
                 long totalTime = 0;
 
-                for(int i=1; i < waypoints.size(); i++) {
+                for(int i = 1; i < waypoints.size(); i++) {
                     Waypoint curr = waypoints.get(i);
                     Waypoint prev = waypoints.get(i - 1);
 
@@ -102,14 +99,10 @@ public class Worker extends Thread{
 
                 Segment result = new Segment(chunk.getGPXID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime);
 
-                this.out = new ObjectOutputStream(requestSocket.getOutputStream());
-                //this.in = new ObjectInputStream(requestSocket.getInputStream());
-
                 this.out.writeObject(result);
                 this.out.flush();
 
                 System.out.println("WorkerThread #" + id + " sent intermediate result: " + result);
-
             } catch (IOException ioException) {
                 System.err.println("WorkerThread #" + id + " - IOERROR while sending intermediate result: " + ioException.getMessage());
                 throw new RuntimeException(ioException); // !!!
@@ -117,12 +110,12 @@ public class Worker extends Thread{
                 System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
             }finally{
-//                try {
-////                    this.out.close();
-////                    requestSocket.close();
-//                } catch (IOException ioException) {
-//                    System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage());
-//                }
+                try {
+                    this.out.close();
+                    requestSocket.close();
+                } catch (IOException ioException) {
+                    System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage());
+                }
             }
         }
 
