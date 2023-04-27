@@ -25,7 +25,6 @@ public class Worker extends Thread{
 
             System.out.println("Worker #" + id + " with worker port: " + connectSocket.getLocalPort() + " connected to Master" );
 
-            out = new ObjectOutputStream(connectSocket.getOutputStream());
             in = new ObjectInputStream(connectSocket.getInputStream());
 
             /* Create the streams to send and receive data from server */

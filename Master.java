@@ -239,7 +239,6 @@ class Master {
     private class Worker extends Thread {
         Socket workerSocket;
         ObjectInputStream in;
-        ObjectOutputStream out;
         int workerPort;
 
         // TODO: What should we keep??????????????
@@ -248,7 +247,6 @@ class Master {
             this.workerPort = workerSocket.getPort();
             System.out.println("Worker port: " + workerPort); // TODO: replace ports with something unique
             this.in = null;
-            this.out = null;
         }
 
         public void addIntermediateResults(Segment data){
