@@ -9,8 +9,6 @@ class Master {
     private int MIN_WORKERS;
     private int userGPXPort, userStatisticsPort, workerConnectionPort, workerDataPort;
 
-    private int USERPORT; // TODELETE
-
     private final ArrayList<UserGPXBroker> connectedUsers;
     //private final ArrayList<Worker> connectedWorkers;
     private final ArrayList<ObjectOutputStream> workerOutStreams;
@@ -41,6 +39,8 @@ class Master {
             initDefaults();
             WorkerHandler workerConnectionHandler = new WorkerHandler(workerConnectionPort);
             WorkerHandler workerDataHandler = new WorkerHandler(workerDataPort);
+            UserHandler userGPXHandler = new UserHandler(userGPXPort); // TODO: Statistics/GPX Handlers
+            UserHandler userStatisticsHandler = new UserHandler(userStatisticsPort);
             Scheduler scheduler = new Scheduler();
 
             workerConnectionHandler.start();
@@ -75,14 +75,17 @@ class Master {
             workerConnectionPort = Integer.parseInt(properties.getProperty("workerConnectionPort"));
             workerDataPort = Integer.parseInt(properties.getProperty("workerDataPort"));
 
-            USERPORT = Integer.parseInt(properties.getProperty("userPort"));
+            userGPXPort = Integer.parseInt(properties.getProperty("userGPXPort"));
+            userStatisticsPort = Integer.parseInt(properties.getProperty("userStatisticsPort"));
+
             MIN_WORKERS = Integer.parseInt(properties.getProperty("minWorkers"));
 
             System.err.println("Master | Configurations loaded |");
             System.err.println("Master | Worker Connection PORT: " + workerConnectionPort);
             System.err.println("Master | Worker Data PORT: " + workerDataPort);
-            System.err.println("Master | User PORT: " + USERPORT);
             System.err.println("Master | Min workers: " + MIN_WORKERS);
+            System.err.println("Master | User GPX PORT: " + userGPXPort);
+            System.err.println("Master | User Statistics PORT: " + userStatisticsPort);
 
 
             /* Set default segments */
@@ -188,29 +191,25 @@ class Master {
         @Override
         public void run() {
             try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    /* Accept the connection */
-                    Socket providerSocket = usersSocketToHandle.accept();
-                    System.out.println("UserHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+                if (usersSocketToHandle.getLocalPort() == userGPXPort)
+                    userGPXHandler();
+                else if (usersSocketToHandle.getLocalPort() == userStatisticsPort)
+                    userStatisticsHandler();
 
-                    /* Handle the request */
-                    UserBroker broker = new UserBroker(providerSocket);
-                    connectedUsers.add(broker);
-                    broker.start();
-                }
 
                 /* TODO: Handle thread crash, user disconnects etc */
-            } catch (IOException ioException) {
-                System.err.println("UserHandler IOERROR: " + ioException.getMessage());
+//            } catch (IOException ioException) {
+//                System.err.println("UserHandler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
                 System.err.println("UserHandler ERROR: " + e.getMessage());
-            } finally {
-                try {
-                    usersSocketToHandle.close();
-                } catch (IOException ioException) {
-                    System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
-                }
             }
+//            } finally {
+//                try {
+//                    usersSocketToHandle.close();
+//                } catch (IOException ioException) {
+//                    System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
+//                }
+//            }
         }
 
         private void userGPXHandler(){
@@ -498,8 +497,8 @@ class Master {
             }
             finally {
                 try {
-                    out.close();
                     in.close();
+                    out.close();
                     providerSocket.close();
                     System.out.println("UserGPXBroker for DummyUser #" + user.getID() + " shutting down...");
                 } catch (IOException ioException) {

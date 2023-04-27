@@ -1,7 +1,6 @@
 import java.util.HashMap;
 
 
-
 public class Database {
     private final HashMap<Integer, User> users;
     private final User totalData;

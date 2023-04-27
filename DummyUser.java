@@ -216,8 +216,10 @@ public class DummyUser extends Thread{
 
     public static void main(String[] args) {
         String host = "localhost";
-        int serverPort = 54321;
-        int numUsers = 24;
+        int gpxServerPort = 54321;
+        int statsServerPort = 65432;
+
+        int numUsers = 1;
 
         // Count time
         long startTime = System.currentTimeMillis();
@@ -225,7 +227,7 @@ public class DummyUser extends Thread{
         // Create 12 dummyUsers and wait for them to finish
         DummyUser[] dummyUsers = new DummyUser[numUsers];
         for (int i = 1; i <= numUsers; i++) {
-            dummyUsers[i-1] = new DummyUser(i, host, serverPort);
+            dummyUsers[i-1] = new DummyUser(i, host, gpxServerPort, statsServerPort);
             dummyUsers[i-1].start();
         }
         for (int i = 1; i <= numUsers; i++) {
