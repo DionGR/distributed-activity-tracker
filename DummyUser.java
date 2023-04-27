@@ -11,6 +11,7 @@ public class DummyUser extends Thread{
     int id;
     int gpxServerPort, statsServerPort;
 
+    Scanner input = new Scanner(System.in);
 
     DummyUser(int id, String host, int gpxServerPort, int statsServerPort){
         this.id = id;
@@ -26,9 +27,9 @@ public class DummyUser extends Thread{
             initFolders();
             int option = 0;
 
-            while (option != 3) {
+//            while (option != 3) {
                 System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Receive Statistics, 3.Exit\n\t-> ");
-                option = new Scanner(System.in).nextInt();
+                option = input.nextInt();
                 System.out.println();
 
                 switch (option) {
@@ -45,7 +46,7 @@ public class DummyUser extends Thread{
                         break;
                     }
                 }
-            }
+//            }
         }
         catch (Exception e) {
             System.err.println("DummyUser #" + this.id + " - ERROR: " + e.getMessage());
@@ -74,6 +75,7 @@ public class DummyUser extends Thread{
         @Override
         public void run() {
             try {
+                Scanner input = new Scanner(System.in);
                 /* Create socket for contacting the server on port 54321 */
                 gpxSocket = new Socket(host, gpxServerPort);
 
@@ -91,12 +93,11 @@ public class DummyUser extends Thread{
 
                 /* Print all the available GPX files and let the user pick one */
                 for (int i = 0; i < files.length; i++)
-                    System.out.println("File #" + i+1 +": " + files[i].getName());
+                    System.out.println("File #" + (i+1) +": " + files[i].getName());
 
-                System.out.println("Enter the file # to process: ");
-                int fileID = new Scanner(System.in).nextInt() - 1;
+                System.out.print("Enter the file # to process: ");
+                int fileID = input.nextInt() - 1;
                 String fileName = files[fileID].getName();
-
 
                 /* Send the file to the server */
                 Files.move(Paths.get(userPath + "unprocessed\\" + fileName), Paths.get(userPath + "processed\\" + fileName));
@@ -142,6 +143,12 @@ public class DummyUser extends Thread{
                 try {
                     in.close(); out.close();
                     gpxSocket.close();
+
+                    for (File f: Objects.requireNonNull(new File(userPath + "unprocessed\\").listFiles())) {
+                        Files.move(Paths.get(userPath + "unprocessed\\" + f.getName()), Paths.get(userPath + "processed\\" + f.getName()));
+                    }
+
+                    Files.deleteIfExists(Paths.get(userPath + "unprocessed\\"));
                 } catch (IOException e) {
                     System.err.println("DummyUser #" + id + " - GPXThread IOERROR while finishing GPX request: " + e.getMessage());
                 }
