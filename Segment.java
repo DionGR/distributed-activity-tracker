@@ -4,14 +4,16 @@ import java.util.ArrayList;
 
 public class Segment implements Serializable {
     private final int gpxID;
+    private final int segmentID;
     private final int totalSegments;
     private final double totalDistance;
     private final double meanVelocity;
     private final double totalElevation;
     private final long totalTime;
 
-    public Segment(int gpxID, int totalSegments, double totalDistance, double meanVelocity, double totalElevation, long totalTime){
+    public Segment(int gpxID, int segmentID, int totalSegments, double totalDistance, double meanVelocity, double totalElevation, long totalTime){
         this.gpxID = gpxID;
+        this.segmentID = segmentID;
         this.totalSegments = totalSegments;
         this.totalDistance = totalDistance;
         this.meanVelocity = meanVelocity;
@@ -22,6 +24,8 @@ public class Segment implements Serializable {
     public int getGPXID() {
         return gpxID;
     }
+
+    public int getSegmentID() { return segmentID; }
 
     public int getTotalSegments() { return totalSegments; }
 

@@ -536,7 +536,7 @@ class Master {
                 totalTime += segment.getTotalTime();            //ms
             }
 
-            return new Segment(localGPXID, chunkedGPXs.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
+            return new Segment(localGPXID, 0, chunkedGPXs.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
         }
 
         private class SegmentFinder extends Thread {
