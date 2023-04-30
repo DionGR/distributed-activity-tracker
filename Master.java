@@ -1,8 +1,9 @@
+import java.lang.reflect.Array;
 import java.net.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
+import java.util.*;
+
+import static java.util.Collections.indexOfSubList;
 
 
 class Master {
@@ -326,7 +327,7 @@ class Master {
         public void addIntermediateResults(Segment data){
             synchronized (intermediateResults){
                 intermediateResults.get(data.getGPXID()).add(data);
-                if (intermediateResults.get(data.getGPXID()).size() == data.getTotalSegments())
+                if ((intermediateResults.get(data.getGPXID()).size() == data.getTotalSegments()) || data.getSegmentID() < 0)
                     intermediateResults.notifyAll();
             }
         }
@@ -376,6 +377,7 @@ class Master {
         private ObjectInputStream in;
         private User user;
         private int localGPXID, totalChunks;
+        private ArrayList<Waypoint> waypoints;
 
         UserGPXBroker(Socket providerSocket) {
             this.providerSocket = providerSocket;
@@ -414,7 +416,7 @@ class Master {
 
                 System.out.println("UserGPXBroker for User #" + userID + " - GPX received.");
 
-                synchronized (g_gpxID){
+                synchronized (g_gpxID) {
                     g_gpxID++;
                     localGPXID = g_gpxID;
                 }
@@ -422,10 +424,10 @@ class Master {
                 /* Convert the GPX file into a list of Waypoints */
 
                 // Parse GPX
-                ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
+                waypoints = GPXParser.parse(buffer);
 
                 /* Find segments */
-                new SegmentFinder(waypoints).start();
+                new SegmentFinder().start();
 
 
                 /* Split waypoints into chunks */
@@ -452,7 +454,7 @@ class Master {
                     chunks[--numChunks] = new Chunk(localGPXID, numChunks, totalChunks, chunkWaypoints);
                 }
 
-                synchronized (intermediateResults){
+                synchronized (intermediateResults) {
                     intermediateResults.put(localGPXID, new ArrayList<>());
                 }
 
@@ -462,11 +464,22 @@ class Master {
 
                 ArrayList<Segment> chunkedGPXs;
                 synchronized (intermediateResults) {
-                    while (intermediateResults.get(localGPXID).size() < totalChunks) {
+                    while (intermediateResults.get(localGPXID).size() < totalChunks + segments.size()) {
                         intermediateResults.wait();
                     }
                     chunkedGPXs = intermediateResults.get(localGPXID);
-                   //TODO intermediateResults.remove(localGPXID);
+                    //TODO intermediateResults.remove(localGPXID);
+                }
+
+                /* Get intermediate results */
+                ArrayList<Segment> returnedSegments = new ArrayList<>();
+                ArrayList<Segment> returnedChunks  = new ArrayList<>();
+                for(Segment c: chunkedGPXs){
+                    if(c.getSegmentID() < 0){
+                        returnedSegments.add(c);
+                    }else{
+                        returnedChunks.add(c);
+                    }
                 }
 
                 /* Reduce the results */
@@ -477,27 +490,25 @@ class Master {
                 synchronized (database) {
                     database.addRoute(route, user.getID());
                 }
-
+                for (Segment s: returnedSegments) {
+                    System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + userID + " received segment #" + s.getSegmentID() + " from worker.");
+                }
 //                synchronized (out) {            //TODO: 2 handlers/ports or requests in userHandler
-                    out.writeObject(result);
-                    out.flush();
+                out.writeObject(result);
+                out.flush();
 //                }
 
                 System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + userID + " sent final result to user.");
 
-            }
-            catch (IOException ioException) {
+            } catch (IOException ioException) {
                 System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
                 // Retry opening streams
-            }
-            catch (ClassNotFoundException classNotFoundException) {
+            } catch (ClassNotFoundException classNotFoundException) {
                 System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
-            }
-            finally {
+            } finally {
                 try {
                     in.close();
                     out.close();
@@ -509,7 +520,7 @@ class Master {
             }
         }
 
-        private Segment reduce(ArrayList<Segment> chunkedGPXs){
+        private Segment reduce(ArrayList<Segment> chunkedGPXs) {
             // Reduce
             System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
 
@@ -528,65 +539,41 @@ class Master {
         }
 
         private class SegmentFinder extends Thread {
-            ArrayList<Waypoint> waypoints;
-
-            public SegmentFinder(ArrayList<Waypoint> waypoints) {
-                this.waypoints = waypoints;
-            }
-
             @Override
             public void run() {
+                try{
+                    ArrayList<Waypoint> wps = new ArrayList<>(waypoints);
+                    ArrayList<Chunk> chunks = new ArrayList<>();
+                    int y = 0;
 
-                //Chunk[] chunks = new Chunk[this.segments.size()];
-//                ArrayList<Chunk> chunks1 = new ArrayList<>();
-
-                //System.out.println(segments.get(0).stream().allMatch(waypoints::contains));
-
-
-
-
-                for(int i=0; i<segments.size(); i++) {
-                    ArrayList<Waypoint> segment = segments.get(i);
-
-                    ArrayList<Integer> indexes = new ArrayList<>();
-                    for(Waypoint w: segment) {
-                        int index = waypoints.indexOf(w);
-                        if(index != -1){
-                            indexes.add(index);
-                        }else
-                            break;
+                    for (int i = 0; i < segments.size(); i++){
+                        ArrayList<Waypoint> segment = segments.get(i);
+                        int segmentStartIndex = indexOfSubList(wps, segment);
+                        if (segmentStartIndex != -1) {
+                            ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
+                            if (foundSegment.equals(segment)) {
+                                System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
+                                chunks.add(new Chunk(localGPXID, -i-1, totalChunks, foundSegment));
+                            }else {
+                                y -= 1;
+                            }
+                        }else{
+                            y -= 1; //!!!!!!!!!!!!
+                        }
                     }
 
-                    indexes.sort(null);
-
-                    for(int j=0; i<indexes.size(); i++){
-
-
-                    }
+                    Chunk[] foundSegments = new Chunk[chunks.size()];
+                    chunks.toArray(foundSegments);
+                    addDataForProcessing(foundSegments);
+                    totalChunks += y;
+                }catch (Exception e){
+                    System.err.println("SegmentFinder for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
                 }
-//                System.out.println("Looking for Segments!");
-//                boolean containsSegment = segments.get(0).stream().anyMatch(waypoints::contains);
-//                System.out.println("Faliro Segment Found: " + containsSegment);
-
-//                { //LOOP
-//                    // find subarrays
-//
-//                    ArrayList<Waypoint> foundSegment;
-//                    Chunk segmentChunk = new Chunk(0, -1, 0, foundSegment);
-//                    totalChunks -= this.segments.size();
-//                    chunks1.add(segmentChunk);
-//                }
-
-//                Chunk[] chunks2 = new Chunk[chunks1.size()];
-//                int index = 0;
-//                for(Chunk c: chunks1){
-//                    chunks2[++index] = c;
-//                }
-//                addDataForProcessing(chunks2);
             }
         }
-    }
 
+
+    }
     private class UserStatisticsBroker extends Thread{
         private final Socket providerSocket;
         private ObjectOutputStream out;
