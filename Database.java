@@ -47,6 +47,21 @@ public class Database {
 //        usersSubmitted = 0;
     }
 
+    public void initSegment(int id, ArrayList<Waypoint> waypoints) {
+        segments.add(new Segment(id, waypoints));
+    }
+
+    public synchronized void updateSegmentStats(User user, IntermediateChunk intermediateChunk) {
+        Segment segment = segments.get(intermediateChunk.getGPXID()); //segment identifier (index in arraylist)!!!!!!!!
+        segment.updateLeaderboard(user, intermediateChunk);
+
+        //TODO: Update segment statistics and leaderboard (see reduce in Master - UserGPXBroker)
+        //TODO: How to wrap statistics? Statistics object??
+
+        //segment.updateLeaderboard(user, );
+    }
+
+
     public User initUser(int id){
         if (users.containsKey(id)) return users.get(id);
         users.put(id, new User(id));

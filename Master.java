@@ -98,7 +98,8 @@ class Master {
                     StringBuilder buffer = new StringBuilder();
                     while((line = br.readLine()) != null)
                         buffer.append(line);
-                    segments.put(i, GPXParser.parse(buffer));
+//                    segments.put(i, GPXParser.parse(buffer));
+                    database.initSegment(i, GPXParser.parse(buffer));
                 }
                 System.err.println("Master | Segments loaded: " + loadedSegments.length);
             }else {
