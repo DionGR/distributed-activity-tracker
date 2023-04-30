@@ -234,8 +234,8 @@ public class DummyUser extends Thread{
 
     public static void main(String[] args) {
         String host = "localhost";
-        int gpxServerPort = 54321;
-        int statsServerPort = 65432;
+        int gpxServerPort = 54322;
+        int statsServerPort = 54325;
 
         int numUsers = 1;
 

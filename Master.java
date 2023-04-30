@@ -556,6 +556,7 @@ class Master {
                 out.writeObject(user.getStatistics());
                 out.writeObject(totalData);
                 out.flush();
+
             }catch (IOException ioException) {
                     System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
                     // Retry opening streams

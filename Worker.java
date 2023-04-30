@@ -133,8 +133,8 @@ public class Worker extends Thread{
 
     public static void main(String[] args) {
         String host = "localhost";
-        int serverConnectPort = 12345;
-        int serverRequestPort = 23456;
+        int serverConnectPort = 13325;
+        int serverRequestPort = 23436;
 
         for (int i = 1; i <= 2; i++) {
             Worker worker = new Worker(i, host, serverConnectPort, serverRequestPort);

@@ -39,11 +39,11 @@ public class Statistics implements Serializable {
     public double getAvgDistance() { return totalDistance / submissions; }
 
     public double getAvgTime(){
-        return avgTime;
+        return totalTime / submissions;
     }
 
     public double getAvgElevation(){
-        return avgElevation;
+        return totalElevation / submissions;
     }
 
     public double getTotalDistance(){
@@ -58,17 +58,7 @@ public class Statistics implements Serializable {
         return totalElevation;
     }
 
-    public double getMeanTotalDistance(){
-        return meanTotalDistance;
-    }
-
-    public double getMeanTotalTime(){
-        return meanTotalTime;
-    }
-
-    public double getMeanTotalElevation(){
-        return meanTotalElevation;
-    }
+    public int getSubmissions() { return submissions; }
 
     @Override
     public String toString(){
