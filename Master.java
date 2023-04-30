@@ -470,7 +470,7 @@ class Master {
                 /* Reduce the results */
                 Segment result = reduce(segments);
 
-                Route route = new Route(user.getSubmissions() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
+                Route route = new Route(user.getStatistics().getSubmissions() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
 
                 synchronized (database) {
                     database.addRoute(route, user.getID());

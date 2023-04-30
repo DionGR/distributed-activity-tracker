@@ -7,23 +7,28 @@ public class Statistics implements Serializable {
     //private double generalAvgDistance, generalAvgTime, generalAvgElevation;
     public final double meanTotalDistance, meanTotalTime, meanTotalElevation;
 
-    public Statistics(double avgDistance, double avgTime, double avgElevation,
-                      double totalDistance, double totalTime, double totalElevation,
-                      double meanTotalDistance, double meanTotalTime, double meanTotalElevation){
-        this.avgDistance = avgDistance;
-        this.avgTime = avgTime;
-        this.avgElevation = avgElevation;
-        this.totalDistance = totalDistance;
-        this.totalTime = totalTime;
-        this.totalElevation = totalElevation;
-        this.meanTotalDistance = meanTotalDistance;
-        this.meanTotalTime = meanTotalTime;
-        this.meanTotalElevation = meanTotalElevation;
+//    public Statistics(double avgDistance, double avgTime, double avgElevation,
+//                      double totalDistance, double totalTime, double totalElevation){
+//        this.avgDistance = avgDistance;
+//        this.avgTime = avgTime;
+//        this.avgElevation = avgElevation;
+//        this.totalDistance = totalDistance;
+//        this.totalTime = totalTime;
+//        this.totalElevation = totalElevation;
+//    }
+
+    public void update(boolean flag, double distance, double time, double elevation){
+        if(flag)
+            submissions++;
+        totalDistance += distance;
+        totalTime += time;
+        totalElevation += elevation;
+//        avgDistance = ((submissions - 1)*avgDistance + distance)/submissions;
+//        avgTime = ((submissions - 1)*avgTime + time)/submissions;
+//        avgElevation = ((submissions - 1)*avgElevation + elevation)/submissions;
     }
     
-public double getAvgDistance(){
-        return avgDistance;
-    }
+    public double getAvgDistance() { return totalDistance / submissions; }
 
     public double getAvgTime(){
         return avgTime;

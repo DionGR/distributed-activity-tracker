@@ -197,7 +197,8 @@ public class DummyUser extends Thread{
                 System.err.println("DummyUser #" + id + " - StatisticsThread ERROR: " + e.getMessage());
             }finally {
                 try {
-                    out.close(); in.close();
+//                    out.close();
+//                    in.close();
                     statsSocket.close();
                 } catch (IOException e) {
                     System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while finishing Statistics request: " + e.getMessage());

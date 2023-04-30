@@ -1,5 +1,5 @@
-workerConnectionPort=12345
-workerDataPort=23456
-userGPXPort=54321
-userStatisticsPort=65432
+workerConnectionPort=13325
+workerDataPort=23436
+userGPXPort=54322
+userStatisticsPort=54325
 minWorkers=2
