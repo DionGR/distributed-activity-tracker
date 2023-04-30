@@ -639,6 +639,7 @@ class Master {
         }
     }
 
+
     public static void main(String[] args) {
         Master master = new Master();
         master.bootServer();
