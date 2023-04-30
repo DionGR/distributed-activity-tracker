@@ -182,10 +182,20 @@ public class DummyUser extends Thread{
                 out.flush();
 
                 /* Request statistics */
-                Statistics statistics = (Statistics) in.readObject();
+                Statistics userStatistics = (Statistics) in.readObject();
+                Statistics totalStatistics = (Statistics) in.readObject();
 
-                /* Print received statistics from server */
-                System.out.println("DummyUser #" + id + " received statistics: " + statistics);
+
+                double timeDiff = userStatistics.getTotalTime() * 100 / totalStatistics.getAvgTime() - 100;
+                double distDiff = userStatistics.getTotalDistance() * 100 / totalStatistics.getAvgDistance() - 100;
+                double eleDiff = userStatistics.getTotalElevation() * 100 / totalStatistics.getAvgElevation() - 100;
+
+                /* GUI - Print received statistics from server */
+                System.out.println("DummyUser #" + id + " received statistics: " + userStatistics);
+                System.out.println("DummyUser #" + id + " received total statistics: " + totalStatistics);
+                System.out.println("DummyUser #" + id + " compared to all users: Time Difference " + timeDiff + "%" + " Distance Difference: " + distDiff + "%" + " Elevation Difference: " + eleDiff + "%");
+                System.out.println("Average Time: "+totalStatistics.getAvgTime() + "| Average Distance: "+totalStatistics.getAvgDistance() + " | Average Eelevation "+totalStatistics.getAvgElevation());
+                System.out.println();
 
             }catch (UnknownHostException unknownHostException) {
                 System.err.println("DummyUser #" + id + " - StatisticsThread: you are trying to connect to an unknown host!");

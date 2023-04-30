@@ -311,7 +311,6 @@ class Master {
         }
     }
 
-
     private class Worker extends Thread {
         Socket workerSocket;
         ObjectInputStream in;
@@ -546,7 +545,7 @@ class Master {
 
                 // DummyUser registration
                 int userID = (int) in.readObject();
-                User totalData;
+                Statistics totalData;
 
 
                 synchronized (database) {
@@ -554,12 +553,8 @@ class Master {
                     totalData = database.getTotalData();
                 }
 
-                if (user.getSubmissions() == 0) {
-                    out.writeObject(new Statistics(0, 0, 0, 0, 0, 0, totalData.getAvgDistance(), totalData.getAvgTime(), totalData.getAvgElevation()));
-                }else{
-                    out.writeObject(new Statistics(user.getAvgDistance(), user.getAvgTime(), user.getAvgElevation(), user.getTotalDistance(), user.getTotalTime(), user.getTotalElevation(), totalData.getAvgDistance(), totalData.getAvgTime(), totalData.getAvgElevation()));
-                }
-
+                out.writeObject(user.getStatistics());
+                out.writeObject(totalData);
                 out.flush();
             }catch (IOException ioException) {
                     System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
