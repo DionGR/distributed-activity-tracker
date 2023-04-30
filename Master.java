@@ -260,7 +260,6 @@ class Master {
                     System.err.println("UserStatisticsHandler IOERROR while shutting down... " + ioException.getMessage());
                 }
             }
-
         }
     }
 
@@ -371,18 +370,18 @@ class Master {
         }
     }
 
-
     private class UserGPXBroker extends Thread {
         private final Socket providerSocket;
         private ObjectOutputStream out;
         private ObjectInputStream in;
         private User user;
-        private int localGPXID;
+        private int localGPXID, totalChunks;
 
         UserGPXBroker(Socket providerSocket) {
             this.providerSocket = providerSocket;
             this.out = null;
             this.in = null;
+            this.totalChunks = 0;
         }
 
         protected synchronized void addDataForProcessing(Chunk[] chunks) {
@@ -398,17 +397,16 @@ class Master {
                 out = new ObjectOutputStream(providerSocket.getOutputStream());
                 in = new ObjectInputStream(providerSocket.getInputStream());
 
-                // DummyUser registration
+                /* DummyUser registration */
                 int userID = (int) in.readObject();
-                //this.userID = userID;
+
 
                 synchronized (database) {
                     user = database.initUser(userID);
                 }
 
                 System.out.println("UserGPXBroker for User #" + userID + " started."); // TODO: Might remove
-//                out.writeObject(1);
-//                out.flush();
+
 
                 /* Take GPX from DummyUser */
                 StringBuilder buffer;
@@ -426,9 +424,14 @@ class Master {
                 // Parse GPX
                 ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
 
+                /* Find segments */
+                new SegmentFinder(waypoints).start();
+
+
+                /* Split waypoints into chunks */
                 int numChunks = (int) ((waypoints.size() / 10) + 0.5);
-                int totalChunks = numChunks;
                 int chunkSize = waypoints.size() / (numChunks) + 1;
+                totalChunks = numChunks;
 
                 Chunk[] chunks = new Chunk[numChunks];
 
@@ -457,17 +460,17 @@ class Master {
 
                 System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + userID + " waiting for data from worker...");
 
-                ArrayList<Segment> segments;
+                ArrayList<Segment> chunkedGPXs;
                 synchronized (intermediateResults) {
                     while (intermediateResults.get(localGPXID).size() < totalChunks) {
                         intermediateResults.wait();
                     }
-                    segments = intermediateResults.get(localGPXID);
+                    chunkedGPXs = intermediateResults.get(localGPXID);
                    //TODO intermediateResults.remove(localGPXID);
                 }
 
                 /* Reduce the results */
-                Segment result = reduce(segments);
+                Segment result = reduce(chunkedGPXs);
 
                 Route route = new Route(user.getStatistics().getSubmissions() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
 
@@ -506,7 +509,7 @@ class Master {
             }
         }
 
-        private Segment reduce(ArrayList<Segment> segmentList){
+        private Segment reduce(ArrayList<Segment> chunkedGPXs){
             // Reduce
             System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
 
@@ -515,13 +518,72 @@ class Master {
             double totalElevation = 0;
             long totalTime = 0;
 
-            for (Segment segment : segmentList) {
+            for (Segment segment : chunkedGPXs) {
                 totalDistance += segment.getTotalDistance();    //km
                 totalElevation += segment.getTotalElevation();  //m
                 totalTime += segment.getTotalTime();            //ms
             }
 
-            return new Segment(localGPXID, segments.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
+            return new Segment(localGPXID, chunkedGPXs.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
+        }
+
+        private class SegmentFinder extends Thread {
+            ArrayList<Waypoint> waypoints;
+
+            public SegmentFinder(ArrayList<Waypoint> waypoints) {
+                this.waypoints = waypoints;
+            }
+
+            @Override
+            public void run() {
+
+                //Chunk[] chunks = new Chunk[this.segments.size()];
+//                ArrayList<Chunk> chunks1 = new ArrayList<>();
+
+                //System.out.println(segments.get(0).stream().allMatch(waypoints::contains));
+
+
+
+
+                for(int i=0; i<segments.size(); i++) {
+                    ArrayList<Waypoint> segment = segments.get(i);
+
+                    ArrayList<Integer> indexes = new ArrayList<>();
+                    for(Waypoint w: segment) {
+                        int index = waypoints.indexOf(w);
+                        if(index != -1){
+                            indexes.add(index);
+                        }else
+                            break;
+                    }
+
+                    indexes.sort(null);
+
+                    for(int j=0; i<indexes.size(); i++){
+
+
+                    }
+                }
+//                System.out.println("Looking for Segments!");
+//                boolean containsSegment = segments.get(0).stream().anyMatch(waypoints::contains);
+//                System.out.println("Faliro Segment Found: " + containsSegment);
+
+//                { //LOOP
+//                    // find subarrays
+//
+//                    ArrayList<Waypoint> foundSegment;
+//                    Chunk segmentChunk = new Chunk(0, -1, 0, foundSegment);
+//                    totalChunks -= this.segments.size();
+//                    chunks1.add(segmentChunk);
+//                }
+
+//                Chunk[] chunks2 = new Chunk[chunks1.size()];
+//                int index = 0;
+//                for(Chunk c: chunks1){
+//                    chunks2[++index] = c;
+//                }
+//                addDataForProcessing(chunks2);
+            }
         }
     }
 

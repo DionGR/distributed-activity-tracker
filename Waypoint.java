@@ -2,7 +2,7 @@ import java.io.Serializable;
 import java.sql.Time;
 import java.sql.Date;
 
-public class Waypoint implements Serializable{
+public class Waypoint implements Serializable {
     private final int id;
     private final double latitude;
     private final double longitude;
@@ -51,6 +51,33 @@ public class Waypoint implements Serializable{
 
     public double  getElevation() {
         return elevation;
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        if (obj == null) return false;
+        if (!(obj instanceof Waypoint)) return false;
+        if (obj == this) return true;
+        Waypoint waypoint = (Waypoint) obj;
+        System.out.println(distance(this.latitude, waypoint.latitude, this.longitude, waypoint.longitude));
+        return distance(this.latitude, waypoint.latitude, this.longitude, waypoint.longitude) < 0.005;
+    }
+
+    @Override
+    public int hashCode(){
+        return (int) (latitude + longitude);
+    }
+
+    private double distance(double lat1, double lat2, double lon1, double lon2) {
+        final int R = 6371;
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return Math.abs(R * c);
     }
 
     @Override
