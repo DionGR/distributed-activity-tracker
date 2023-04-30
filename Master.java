@@ -16,6 +16,7 @@ class Master {
     private final ArrayList<ObjectInputStream> workerInStreams;
     private final HashMap<Integer, ArrayList<Waypoint>> segments;
 
+
     private final ArrayList<Chunk[]> dataForProcessing;
     private final HashMap<Integer, ArrayList<Segment>> intermediateResults;
 
@@ -484,8 +485,7 @@ class Master {
                 }
 
                 /* Reduce the results */
-                //Segment result = reduce(chunkedGPXs);
-                Segment result = reduce(returnedChunks);
+                IntermediateChunk result = reduce();
 
                 Route route = new Route(user.getStatistics().getSubmissions() + 1, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
 
@@ -522,7 +522,7 @@ class Master {
             }
         }
 
-        private Segment reduce(ArrayList<Segment> chunkedGPXs) {
+        private IntermediateChunk reduce() {
             // Reduce
             System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " reducing data for user...");
 
@@ -531,13 +531,18 @@ class Master {
             double totalElevation = 0;
             long totalTime = 0;
 
-            for (Segment segment : chunkedGPXs) {
-                totalDistance += segment.getTotalDistance();    //km
-                totalElevation += segment.getTotalElevation();  //m
-                totalTime += segment.getTotalTime();            //ms
+            for (IntermediateChunk intermediateChunk : intermediateResults) {
+                if(intermediateChunk.getSegmentID() < 0){
+                    database.updateSegmentStats(user, intermediateChunk); //segment identifier (index in arraylist)
+                }
+                else {
+                    totalDistance += intermediateChunk.getTotalDistance();    //km
+                    totalElevation += intermediateChunk.getTotalElevation();  //m
+                    totalTime += intermediateChunk.getTotalTime();            //ms
+                }
             }
 
-            return new Segment(localGPXID, 0, chunkedGPXs.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
+            return new IntermediateChunk(localGPXID, 0, intermediateResults.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
         }
 
         private class SegmentFinder extends Thread {

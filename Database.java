@@ -102,8 +102,46 @@ public class Database {
             return totalData;
     }
 
-//    public String totalDataToString(){
-//        return "Total Average Distance: " + totalData.getAvgDistance() + " Total Average Time: " + totalData.getAvgTime() + " Total Average Elevation: " + totalData.getAvgElevation();
-//    }
+    private class Segment {
+        private final int segmentID;
+        private final ArrayList<Waypoint> waypoints;
+        private final HashMap<User, Statistics> leaderboard;
+
+        public Segment(int segmentID, ArrayList<Waypoint> waypoints) {
+            this.segmentID = segmentID;
+            this.waypoints = waypoints;
+            this.leaderboard = new HashMap<>();
+        }
+
+        /* Set Getters */
+        public int getSegmentID() {
+            return segmentID;
+        }
+
+        public ArrayList<Waypoint> getWaypoints() {
+            return waypoints;
+        }
+
+        public HashMap<User, Statistics> getLeaderboard() {
+            return leaderboard;
+        }
+
+        public void addLeaderboard(User user, Statistics statistics) {
+            leaderboard.put(user, statistics);
+        }
+
+        public void removeLeaderboard(User user) {
+            leaderboard.remove(user);
+        }
+
+        public void updateLeaderboard(User user, IntermediateChunk intermediateChunk) {
+
+            if(!leaderboard.containsKey(user)){
+                leaderboard.put(user, new Statistics());
+            }
+
+            //leaderboard.replace(user, statistics);
+        }
+    }
 }
 
