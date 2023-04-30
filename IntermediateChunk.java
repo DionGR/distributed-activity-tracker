@@ -1,8 +1,7 @@
 import java.io.Serializable;
-import java.util.ArrayList;
 
 
-public class Segment implements Serializable {
+public class IntermediateChunk implements Serializable {
     private final int gpxID;
     private final int segmentID;
     private final int totalSegments;
@@ -11,7 +10,7 @@ public class Segment implements Serializable {
     private final double totalElevation;
     private final long totalTime;
 
-    public Segment(int gpxID, int segmentID, int totalSegments, double totalDistance, double meanVelocity, double totalElevation, long totalTime){
+    public IntermediateChunk(int gpxID, int segmentID, int totalSegments, double totalDistance, double meanVelocity, double totalElevation, long totalTime){
         this.gpxID = gpxID;
         this.segmentID = segmentID;
         this.totalSegments = totalSegments;

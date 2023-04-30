@@ -118,7 +118,7 @@ public class DummyUser extends Thread{
                 out.flush();
 
                 /* Wait and receive result */
-                Segment result = (Segment) in.readObject();
+                IntermediateChunk result = (IntermediateChunk) in.readObject();
 
                 /* Write results to file */
                 File f2 = new File(userPath + "\\results.txt");

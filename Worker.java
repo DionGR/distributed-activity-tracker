@@ -96,7 +96,7 @@ public class Worker extends Thread{
 
                 double meanVelocity = totalDistance / totalTime;  // v = delta_x / delta_t
 
-                Segment result = new Segment(chunk.getGPXID(), chunk.getChunkID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime);
+                IntermediateChunk result = new IntermediateChunk(chunk.getGPXID(), chunk.getChunkID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime);
 
                 this.out.writeObject(result);
                 this.out.flush();
