@@ -248,7 +248,7 @@ public class DummyUser extends Thread{
             Properties properties = new Properties();
             properties.load(cfgReader);
 
-            this.host = "localhost";
+            this.host = properties.getProperty("host");
             this.gpxRequestPort = Integer.parseInt(properties.getProperty("gpxRequestPort"));
             this.statsRequestPort = Integer.parseInt(properties.getProperty("statsRequestPort"));
         }catch (Exception e){
