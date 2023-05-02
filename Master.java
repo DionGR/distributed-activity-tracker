@@ -68,7 +68,7 @@ class Master {
     private void initDefaults(){
         try {
             /* Set configurations */
-            FileReader reader = new FileReader(System.getProperty("user.dir") + "\\data\\config");
+            FileReader reader = new FileReader(System.getProperty("user.dir") + "\\data\\server-data\\serverCFG");
             Properties properties = new Properties();
             properties.load(reader);
 
@@ -90,7 +90,7 @@ class Master {
 
 
             /* Set default segments */
-            File[] loadedSegments = new File(System.getProperty("user.dir") + "\\data\\segments\\").listFiles();
+            File[] loadedSegments = new File(System.getProperty("user.dir") + "\\data\\server-data\\segments\\").listFiles();
             if (loadedSegments != null) {
                 for (int i = 0; i < loadedSegments.length; i++) {
                     BufferedReader br = new BufferedReader(new FileReader(loadedSegments[i]));
