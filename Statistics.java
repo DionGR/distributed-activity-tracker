@@ -48,6 +48,5 @@ public class Statistics implements Serializable {
     public String toString(){
         return String.format("Total Distance: %5.2f km | Total Time: %5.2f min | Mean Velocity: %5.2f km/h | Total Elevation: %5.2f m", totalDistance, (double) totalTime/1000/60, totalDistance*1000*60*60 / totalTime, totalElevation);
     }
-
 }
 

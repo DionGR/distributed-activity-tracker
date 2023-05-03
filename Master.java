@@ -451,7 +451,7 @@ class Master {
                 System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
                 System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
-                throw new RuntimeException(e); // !!!
+                //throw new RuntimeException(e); // !!!
             } finally {
                 try {
                     in.close();

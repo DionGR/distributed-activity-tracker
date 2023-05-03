@@ -225,8 +225,7 @@ public class DummyUser extends Thread{
                 /* GUI - Print received statistics from server */
                 System.out.println("DummyUser #" + id + " received statistics: " + userStatistics);
                 System.out.println("DummyUser #" + id + " received total statistics: " + totalStatistics);
-                System.out.println("DummyUser #" + id + " compared to all users: Time Difference " + timeDiff + "%" + " Distance Difference: " + distDiff + "%" + " Elevation Difference: " + eleDiff + "%");
-                System.out.println("Average Time: "+totalStatistics.getAvgTime() + "| Average Distance: "+totalStatistics.getAvgDistance() + " | Average Eelevation "+totalStatistics.getAvgElevation());
+                System.out.println("DummyUser #" + id + " compared to all users: Time Difference " + String.format("%.2f", timeDiff) + "%" + " | Distance Difference: " + String.format("%.2f", distDiff) + "%" + " | Elevation Difference: " + String.format("%.2f", eleDiff) + "%");
                 System.out.println();
 
             }catch (UnknownHostException unknownHostException) {

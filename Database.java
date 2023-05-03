@@ -24,7 +24,6 @@ public class Database {
 
         //TODO: Update segment statistics and leaderboard (see reduce in Master - UserGPXBroker)
         //TODO: How to wrap statistics? Statistics object??
-
         //segment.updateLeaderboard(user, );
     }
 
