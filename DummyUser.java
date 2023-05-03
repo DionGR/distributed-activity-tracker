@@ -11,6 +11,9 @@ public class DummyUser extends Thread{
     String host, userPath;
     int id;
     int gpxRequestPort, statsRequestPort;
+    boolean autorun;
+    boolean autorunNoMoreGPX = false;
+    boolean finishAutorun = false;
 
     DummyUser(int id){
         this.id = id;
@@ -23,16 +26,27 @@ public class DummyUser extends Thread{
             /* Ask whether new or existing user */
             login();
 
-            System.out.println(this.host + " " + this.gpxRequestPort + " " + this.statsRequestPort);
-
             /* Start the main menu */
             int option;
             do {
+
                 /* Let the user choose what he wants to do */
                 do{
+                    // TODO: Remove this when frontend is ready
+                    if (autorun && !autorunNoMoreGPX) {
+                        option = 1;
+                        break;
+                    }else if (autorun && autorunNoMoreGPX && !finishAutorun) {
+                        option = 2;
+                        break;
+                    } else if (finishAutorun) {
+                        option = 3;
+                        break;
+                    }
                     System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Receive Statistics, 3.Exit\n\t-> ");
                     option = getInput();
                 }while(option < 1 || option > 3);
+
 
                 /* Start the thread for the chosen option */
                 // TODO: Remove joins when frontend is ready
@@ -41,12 +55,18 @@ public class DummyUser extends Thread{
                         gpxThread gt = new gpxThread();
                         gt.start();
                         gt.join();
+                        //  TODO: Remove this when frontend is ready
+                        if (autorun && autorunNoMoreGPX)
+                            option = 2;
                         break;
                     }
                     case 2: {
                         StatisticsThread st = new StatisticsThread();
                         st.start();
                         st.join();
+                        //  TODO: Remove this when frontend is ready
+                        if (autorun && autorunNoMoreGPX)
+                            finishAutorun = true;
                         break;
                     } case 3: {
                         break;
@@ -80,6 +100,7 @@ public class DummyUser extends Thread{
                 File[] unprocessedFiles = new File(userPath + "unprocessed\\").listFiles();
                 if (unprocessedFiles == null || unprocessedFiles.length == 0) {
                     System.out.println("DummyUser #" + id + " - GPXThread: no unprocessed GPX files found!\n");
+                    autorunNoMoreGPX = true; // TODO: Remove this when frontend is ready
                     return;
                 }
 
@@ -94,18 +115,23 @@ public class DummyUser extends Thread{
                 out.writeObject(id);
                 out.flush();
 
+                // TODO: Remove if else when frontend is ready
+                String fileName;
+                if (!autorun) {
+                    /* Print all the available GPX files and let the user pick one */
+                    for (int i = 0; i < unprocessedFiles.length; i++)
+                        System.out.println("File #" + (i + 1) + ": " + unprocessedFiles[i].getName());
+                    System.out.println();
 
-                /* Print all the available GPX files and let the user pick one */
-                for (int i = 0; i < unprocessedFiles.length; i++)
-                    System.out.println("File #" + (i+1) +": " + unprocessedFiles[i].getName());
-                System.out.println();
-
-                int fileID = -1;
-                do {
-                    System.out.print("Enter the file # to process: ");
-                    fileID = getInput();
-                }while(fileID < 0 || fileID > unprocessedFiles.length);
-                String fileName = unprocessedFiles[fileID - 1].getName();
+                    int fileID = -1;
+                    do {
+                        System.out.print("Enter the file # to process: ");
+                        fileID = getInput();
+                    } while (fileID < 0 || fileID > unprocessedFiles.length);
+                    fileName = unprocessedFiles[fileID - 1].getName();
+                } else{
+                    fileName = unprocessedFiles[0].getName();
+                }
 
                 /* Read the file */
 
@@ -224,9 +250,25 @@ public class DummyUser extends Thread{
 
     private void login(){
         try {
+            // TODO: Move this under after autorun is removed
+            /* Read the host and port from the config file */
+            FileReader cfgReader = new FileReader(System.getProperty("user.dir") + "\\data\\user-data\\userCFG");
+            Properties properties = new Properties();
+            properties.load(cfgReader);
+
+            this.host = properties.getProperty("host");
+            this.gpxRequestPort = Integer.parseInt(properties.getProperty("gpxRequestPort"));
+            this.statsRequestPort = Integer.parseInt(properties.getProperty("statsRequestPort"));
+            this.autorun = Boolean.parseBoolean(properties.getProperty("autorun"));
+
             /* Ask if new or existing user */
             int answer;
             do {
+                // TODO: Remove this when frontend is ready
+                if (autorun){
+                    answer = 1;
+                    break;
+                }
                 System.out.print("DummyUser #" + id + ": 1.New User, 2.Existing User\n\t-> ");
                 answer = getInput();
             } while (answer != 1 && answer != 2);
@@ -242,20 +284,10 @@ public class DummyUser extends Thread{
                     break;
                 }
             }
-
-            /* Read the host and port from the config file */
-            FileReader cfgReader = new FileReader(System.getProperty("user.dir") + "\\data\\user-data\\userCFG");
-            Properties properties = new Properties();
-            properties.load(cfgReader);
-
-            this.host = properties.getProperty("host");
-            this.gpxRequestPort = Integer.parseInt(properties.getProperty("gpxRequestPort"));
-            this.statsRequestPort = Integer.parseInt(properties.getProperty("statsRequestPort"));
         }catch (Exception e){
             System.err.println("DummyUser #" + id + " - login ERROR: " + e.getMessage());
         }
     }
-
     private void initDefaults() {
         try {
             /* Delete results file if it exists */
@@ -280,7 +312,6 @@ public class DummyUser extends Thread{
             System.err.println("DummyUser #" + id + " - initDefaults ERROR: " + e.getMessage());
         }
     }
-
     private int getInput(){
         Scanner input = new Scanner(System.in);
 
@@ -297,14 +328,18 @@ public class DummyUser extends Thread{
     }
 
     public static void main(String[] args) {
-        int numUsers = 1;
+        int numUsers = 3;
 
+        long startTime = System.currentTimeMillis();
+
+        /* Create and start all users */
         DummyUser[] dummyUsers = new DummyUser[numUsers];
         for (int i = 1; i <= numUsers; i++) {
             dummyUsers[i-1] = new DummyUser(i);
             dummyUsers[i-1].start();
         }
 
+        /* Wait for all users to finish */
         for (int i = 1; i <= numUsers; i++) {
             try {
                 dummyUsers[i-1].join();
@@ -312,5 +347,8 @@ public class DummyUser extends Thread{
                 e.printStackTrace();
             }
         }
+
+        long endTime = System.currentTimeMillis();
+        System.err.println("Total time: " + (double) (endTime - startTime) / 1000 + " seconds");
     }
 }

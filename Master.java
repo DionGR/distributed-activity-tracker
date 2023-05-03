@@ -37,41 +37,44 @@ class Master {
 
     public void bootServer() {
         try {
+            /* Initialize server */
             initDefaults();
+            Scheduler scheduler = new Scheduler();
             WorkerHandler workerConnectionHandler = new WorkerHandler(workerConnectionPort);
             WorkerHandler workerDataHandler = new WorkerHandler(workerDataPort);
-            UserHandler userGPXHandler = new UserHandler(userGPXPort); // TODO: Statistics/GPX Handlers
+            UserHandler userGPXHandler = new UserHandler(userGPXPort);
             UserHandler userStatisticsHandler = new UserHandler(userStatisticsPort);
-            Scheduler scheduler = new Scheduler();
 
             workerConnectionHandler.start();
             workerDataHandler.start();
 
+            /* Wait for workers to connect */
             synchronized (workerOutStreams){
                 while (workerOutStreams.size() < MIN_WORKERS){
-                    System.err.println("Master: Waiting for workers to connect...");
+                    System.err.println("Master | Waiting for workers to connect...");
                     workerOutStreams.wait();
                 }
-                System.err.println("Master: All workers connected...");
+                System.err.println("Master | All workers connected!");
             }
 
+            /* Start scheduler and user handlers */
+            scheduler.start();
             userGPXHandler.start();
             userStatisticsHandler.start();
-            scheduler.start();
-    }catch (InterruptedException e) {
-        System.err.println("Master: Interrupted while waiting for workers to connect: " + e.getMessage());
-    }catch (IOException e) {
-            e.printStackTrace();
+        }catch (InterruptedException interruptedException) {
+            System.err.println("Master - bootServer - InterruptedERROR while booting: " + interruptedException.getMessage());
+        }catch (Exception e) {
+            System.err.println("Master - bootServer - ERROR while booting: " + e.getMessage());
         }
     }
 
-    private void initDefaults(){
+    private void initDefaults() {
+        FileReader reader = null;
         try {
             /* Set configurations */
-            FileReader reader = new FileReader(System.getProperty("user.dir") + "\\data\\server-data\\serverCFG");
+            reader = new FileReader(System.getProperty("user.dir") + "\\data\\server-data\\serverCFG");
             Properties properties = new Properties();
             properties.load(reader);
-
 
             workerConnectionPort = Integer.parseInt(properties.getProperty("workerConnectionPort"));
             workerDataPort = Integer.parseInt(properties.getProperty("workerDataPort"));
@@ -81,12 +84,12 @@ class Master {
 
             MIN_WORKERS = Integer.parseInt(properties.getProperty("minWorkers"));
 
-            System.err.println("Master | Configurations loaded |");
-            System.err.println("Master | Worker Connection PORT: " + workerConnectionPort);
-            System.err.println("Master | Worker Data PORT: " + workerDataPort);
-            System.err.println("Master | Min workers: " + MIN_WORKERS);
-            System.err.println("Master | User GPX PORT: " + userGPXPort);
-            System.err.println("Master | User Statistics PORT: " + userStatisticsPort);
+            System.err.println("Master | Initializing Configuration |");
+            System.err.println("Master | [VALUE] Min. workers: " + MIN_WORKERS);
+            System.err.println("Master | [PORT] Worker Connection: " + workerConnectionPort);
+            System.err.println("Master | [PORT] Worker Data: " + workerDataPort);
+            System.err.println("Master | [PORT] User GPX: " + userGPXPort);
+            System.err.println("Master | [PORT] User Statistics: " + userStatisticsPort);
 
 
             /* Set default segments */
@@ -100,166 +103,26 @@ class Master {
                         buffer.append(line);
 //                    segments.put(i, GPXParser.parse(buffer));
                     database.initSegment(i, GPXParser.parse(buffer));
+                    br.close();
                 }
-                System.err.println("Master | Segments loaded: " + loadedSegments.length);
+                System.err.println("Master | [DATA] Segments: " + loadedSegments.length);
             }else {
-                System.err.println("Master | Segments loaded: 0");
+                System.err.println("Master | [DATA] Segments: 0");
             }
+
+            System.err.println("Master | Initialization complete |");
         }
         catch (IOException ioException) {
-            System.err.println("Master IOERROR: " + ioException.getMessage());
+            System.err.println("Master - initDefaults - IOERROR while initializing defaults: " + ioException.getMessage());
+            throw new RuntimeException("initDefaults - IOERROR: " + ioException.getMessage());
         }catch (Exception e) {
-            System.err.println("Master ERROR: " + e.getMessage());
-        }
-    }
-
-    private class WorkerHandler extends Thread {
-
-        private final ServerSocket workersSocketToHandle;
-
-        WorkerHandler(int port) throws IOException {
-            this.workersSocketToHandle = new ServerSocket(port, 5000);
-        }
-
-        @Override
-        public void run() {
+            System.err.println("Master - initDefaults - ERROR while initializing defaults: " + e.getMessage());
+            throw new RuntimeException("initDefaults - ERROR: " + e.getMessage());
+        }finally{
             try{
-                if (workersSocketToHandle.getLocalPort() == workerConnectionPort)
-                    workerConnectionHandler();
-                else if (workersSocketToHandle.getLocalPort() == workerDataPort)
-                    workerDataHandler();
-            } catch (Exception e) {
-                System.err.println("WorkerHandler ERROR: " + e.getMessage());
-            }
-        }
-
-        public void workerConnectionHandler() {
-            try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    Socket providerSocket = workersSocketToHandle.accept();
-                    System.out.println("WorkerConnectionHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
-
-                    ObjectOutputStream out = new ObjectOutputStream(providerSocket.getOutputStream());
-                    synchronized (workerOutStreams) {
-                        workerOutStreams.add(out);
-                        if (workerOutStreams.size() >= MIN_WORKERS) workerOutStreams.notifyAll();
-                    }
-                }
-
-            } catch (IOException ioException) {
-                System.err.println("WorkerConnectionHandler IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("WorkerConnectionHandler ERROR: " + e.getMessage());
-            }finally {
-                try {
-                    for (ObjectOutputStream out: workerOutStreams)
-                        out.close();
-                    workersSocketToHandle.close();
-                } catch (IOException ioException) {
-                    System.err.println("WorkerConnectionHandler IOERROR while shutting down... " + ioException.getMessage());
-                }
-            }
-        }
-
-        public void workerDataHandler() {
-            try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    Socket providerSocket = workersSocketToHandle.accept();
-                    System.out.println("WorkerDataHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
-
-                    new Worker(providerSocket).start();
-                }
-            } catch (IOException ioException) {
-                System.err.println("WorkerDataHandler IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("WorkerDataHandler ERROR: " + e.getMessage());
-            } finally {
-                try {
-                    workersSocketToHandle.close();
-                } catch (IOException ioException) {
-                    System.err.println("WorkerDataHandler IOERROR while shutting down... " + ioException.getMessage());
-                }
-            }
-        }
-    }
-
-    private class UserHandler extends Thread {
-        private final ServerSocket usersSocketToHandle;
-
-        UserHandler(int port) throws IOException {
-            this.usersSocketToHandle = new ServerSocket(port, 5000);
-        }
-
-        @Override
-        public void run() {
-            try {
-                if (usersSocketToHandle.getLocalPort() == userGPXPort)
-                    userGPXHandler();
-                else if (usersSocketToHandle.getLocalPort() == userStatisticsPort)
-                    userStatisticsHandler();
-
-
-                /* TODO: Handle thread crash, user disconnects etc */
-//            } catch (IOException ioException) {
-//                System.err.println("UserHandler IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("UserHandler ERROR: " + e.getMessage());
-            }
-//            } finally {
-//                try {
-//                    usersSocketToHandle.close();
-//                } catch (IOException ioException) {
-//                    System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
-//                }
-//            }
-        }
-
-        private void userGPXHandler(){
-            try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    /* Accept the connection */
-                    Socket providerSocket = usersSocketToHandle.accept();
-                    System.out.println("UserGPXHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
-
-                    /* Handle the request */
-                    UserGPXBroker broker = new UserGPXBroker(providerSocket);
-                    broker.start();
-                }
-            } catch (IOException ioException) {
-                System.err.println("UserGPXHandler IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("UserGPXHandler ERROR: " + e.getMessage());
-            } finally {
-                try {
-                    usersSocketToHandle.close();
-                } catch (IOException ioException) {
-                    System.err.println("UserGPXHandler IOERROR while shutting down... " + ioException.getMessage());
-                }
-            }
-        }
-
-        private void userStatisticsHandler() {
-            try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    /* Accept the connection */
-                    Socket providerSocket = usersSocketToHandle.accept();
-                    System.out.println("UserStatisticsHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
-
-                    /* Handle the request */
-                    UserStatisticsBroker broker = new UserStatisticsBroker(providerSocket);
-//                    connectedUsers.add(broker);
-                    broker.start();
-                }
-            } catch (IOException ioException) {
-                System.err.println("UserStatisticsHandler IOERROR: " + ioException.getMessage());
-            } catch (Exception e) {
-                System.err.println("UserStatisticsHandler ERROR: " + e.getMessage());
-            }finally {
-                try {
-                    usersSocketToHandle.close();
-                } catch (IOException ioException) {
-                    System.err.println("UserStatisticsHandler IOERROR while shutting down... " + ioException.getMessage());
-                }
+                reader.close();
+            }catch (IOException e) {
+                System.err.println("Master - initDefaults - IOERROR while closing reader: " + e.getMessage());
             }
         }
     }
@@ -273,8 +136,6 @@ class Master {
 
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-
-
                     /* Assign data to workers using round-robin */
                     while (dataForProcessing.size() > 0) {
                         Chunk[] chunks;
@@ -307,72 +168,156 @@ class Master {
                 System.err.println("Scheduler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
                 System.err.println("Scheduler ERROR: " + e.getMessage());
+            } finally {
+                System.err.println("Scheduler - Shutting down...");
             }
         }
     }
+    private class WorkerHandler extends Thread {
+        private final int port;
+        private ServerSocket serverSocket;
 
-    private class Worker extends Thread {
-        Socket workerSocket;
-        ObjectInputStream in;
-        int workerPort;
-
-        // TODO: What should we keep??????????????
-        public Worker(Socket workerSocket){
-            this.workerSocket = workerSocket;
-            this.workerPort = workerSocket.getPort();
-            System.out.println("Worker port: " + workerPort); // TODO: replace ports with something unique
-            this.in = null;
+        WorkerHandler(int port) {
+            this.port = port;
         }
 
-        public void addIntermediateResults(IntermediateChunk data){
-//            synchronized (intermediateResults){
-//                intermediateResults.get(data.getGPXID()).add(data);
-//                if ((intermediateResults.get(data.getGPXID()).size() >= data.getTotalSegments()))
-//                    intermediateResults.notifyAll();
-//            }
-            synchronized (activeGPXUsers){
-                activeGPXUsers.get(data.getGPXID()).addIntermediateResult(data);
+        @Override
+        public void run() {
+            try{
+                serverSocket = new ServerSocket(port, 100);
+
+                if (serverSocket.getLocalPort() == workerConnectionPort)
+                    workerConnectionHandler();
+                else if (serverSocket.getLocalPort() == workerDataPort)
+                    workerDataHandler();
+
+            } catch (IOException ioException) {
+                System.err.println("WorkerHandler IOERROR: " + ioException.getMessage());
+                throw new RuntimeException("WorkerHandler IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("WorkerHandler ERROR: " + e.getMessage());
+                throw new RuntimeException("WorkerHandler ERROR: " + e.getMessage());
+            } finally {
+                try {
+                    System.err.println("WorkerHandler - Shutting down...");
+                    serverSocket.close();
+                } catch (IOException ioException) {
+                    System.err.println("WorkerHandler - IOERROR while shutting down: " + ioException.getMessage());
+                }
             }
+        }
+
+        public void workerConnectionHandler() {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    Socket providerSocket = serverSocket.accept();
+                    System.out.println("WorkerConnectionHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+
+                    ObjectOutputStream out = new ObjectOutputStream(providerSocket.getOutputStream());
+
+                    synchronized (workerOutStreams) {
+                        workerOutStreams.add(out);
+                        if (workerOutStreams.size() >= MIN_WORKERS) workerOutStreams.notifyAll();
+                    }
+                }
+
+            } catch (IOException ioException) {
+                System.err.println("WorkerConnectionHandler - IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("WorkerConnectionHandler - ERROR: " + e.getMessage());
+            }finally {
+                try {
+                    for (ObjectOutputStream out: workerOutStreams) out.close();
+                } catch (IOException ioException) {
+                    System.err.println("WorkerConnectionHandler - IOERROR while shutting down... " + ioException.getMessage());
+                }
+            }
+        }
+
+        public void workerDataHandler() {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    Socket providerSocket = serverSocket.accept();
+                    System.out.println("WorkerDataHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+                    new Worker(providerSocket).start();
+                }
+            } catch (IOException ioException) {
+                System.err.println("WorkerHandler - workerDataHandler - IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("WorkerHandler - workerDataHandler - ERROR: " + e.getMessage());
+            }
+        }
+    }
+    private class UserHandler extends Thread {
+        private final int port;
+        private ServerSocket usersSocketToHandle;
+
+        UserHandler(int port) {
+            this.port = port;
         }
 
         @Override
         public void run() {
             try {
-                in = new ObjectInputStream(workerSocket.getInputStream());
+                usersSocketToHandle = new ServerSocket(port, 1000);
+                if (usersSocketToHandle.getLocalPort() == userGPXPort)
+                    userGPXHandler();
+                else if (usersSocketToHandle.getLocalPort() == userStatisticsPort)
+                    userStatisticsHandler();
 
-                IntermediateChunk data = (IntermediateChunk) in.readObject();
-                System.out.println("Worker port: "+ workerPort + " received data for GPX: " + data.getGPXID());
-                addIntermediateResults(data);
 
-            }catch (IOException ioException) {
-                System.err.println("Worker port: "+ workerPort + " - IOERROR: " + ioException.getMessage());
-            }catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Worker port: "+ workerPort + " - CASTERROR: " + classNotFoundException.getMessage());
-            }catch (Exception e) {
-                System.err.println("Worker port: "+ workerPort + " - ERROR: " + e.getMessage());
-                e.printStackTrace();
-            }finally {
+            /* TODO: Handle thread crash, user disconnects etc */
+            } catch (Exception e) {
+                System.err.println("UserHandler ERROR: " + e.getMessage());
+                throw new RuntimeException("UserHandler ERROR: " + e.getMessage());
+            } finally {
                 try {
-                    in.close();
-                    workerSocket.close();
+                    System.err.println("UserHandler - Shutting down...");
+                    usersSocketToHandle.close();
                 } catch (IOException ioException) {
-                    System.err.println("Worker port: "+ workerPort + " - IOERROR while shutting down... " + ioException.getMessage());
+                    System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
                 }
             }
         }
 
-        public Socket getSocket(){
-            return workerSocket;
+        private void userGPXHandler(){
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    /* Accept the connection */
+                    Socket providerSocket = usersSocketToHandle.accept();
+                    System.out.println("UserGPXHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+
+                    /* Handle the request */
+                    UserGPXBroker broker = new UserGPXBroker(providerSocket);
+                    broker.start();
+                }
+            } catch (IOException ioException) {
+                System.err.println("UserGPXHandler IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("UserGPXHandler ERROR: " + e.getMessage());
+            }
         }
 
-        public int getWorkerPort(){
-            return workerPort;
-        }
+        private void userStatisticsHandler() {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    /* Accept the connection */
+                    Socket providerSocket = usersSocketToHandle.accept();
+                    System.out.println("UserStatisticsHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
-        public ObjectInputStream getInputStream(){
-            return in;
+                    /* Handle the request */
+                    UserStatisticsBroker broker = new UserStatisticsBroker(providerSocket);
+//                    connectedUsers.add(broker);
+                    broker.start();
+                }
+            } catch (IOException ioException) {
+                System.err.println("UserStatisticsHandler IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("UserStatisticsHandler ERROR: " + e.getMessage());
+            }
         }
     }
+
 
     private class UserGPXBroker extends Thread {
         private final Socket providerSocket;
@@ -588,7 +533,6 @@ class Master {
         }
     }
 
-
     private class UserStatisticsBroker extends Thread{
         private final Socket providerSocket;
         private ObjectOutputStream out;
@@ -638,6 +582,70 @@ class Master {
                     System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR while shutting down: " + ioException.getMessage());
                 }
             }
+        }
+    }
+
+
+    private class Worker extends Thread {
+        Socket workerSocket;
+        ObjectInputStream in;
+        int workerPort;
+
+        // TODO: What should we keep??????????????
+        public Worker(Socket workerSocket){
+            this.workerSocket = workerSocket;
+            this.workerPort = workerSocket.getPort();
+            System.out.println("Worker port: " + workerPort); // TODO: replace ports with something unique
+            this.in = null;
+        }
+
+        public void addIntermediateResults(IntermediateChunk data){
+//            synchronized (intermediateResults){
+//                intermediateResults.get(data.getGPXID()).add(data);
+//                if ((intermediateResults.get(data.getGPXID()).size() >= data.getTotalSegments()))
+//                    intermediateResults.notifyAll();
+//            }
+            synchronized (activeGPXUsers){
+                activeGPXUsers.get(data.getGPXID()).addIntermediateResult(data);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                in = new ObjectInputStream(workerSocket.getInputStream());
+
+                IntermediateChunk data = (IntermediateChunk) in.readObject();
+                System.out.println("Worker port: "+ workerPort + " received data for GPX: " + data.getGPXID());
+                addIntermediateResults(data);
+
+            }catch (IOException ioException) {
+                System.err.println("Worker port: "+ workerPort + " - IOERROR: " + ioException.getMessage());
+            }catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("Worker port: "+ workerPort + " - CASTERROR: " + classNotFoundException.getMessage());
+            }catch (Exception e) {
+                System.err.println("Worker port: "+ workerPort + " - ERROR: " + e.getMessage());
+                e.printStackTrace();
+            }finally {
+                try {
+                    in.close();
+                    workerSocket.close();
+                } catch (IOException ioException) {
+                    System.err.println("Worker port: "+ workerPort + " - IOERROR while shutting down... " + ioException.getMessage());
+                }
+            }
+        }
+
+        public Socket getSocket(){
+            return workerSocket;
+        }
+
+        public int getWorkerPort(){
+            return workerPort;
+        }
+
+        public ObjectInputStream getInputStream(){
+            return in;
         }
     }
 

@@ -1,1 +1,3 @@
 GPX #0: Total Distance:  2.80 km | Total Time: 18.35 min | Mean Velocity:  9.14 km/h | Total Elevation:  8.62 m
+GPX #0: Total Distance:  5.16 km | Total Time: 20.93 min | Mean Velocity: 14.80 km/h | Total Elevation: 56.03 m
+GPX #0: Total Distance:  5.14 km | Total Time: 16.60 min | Mean Velocity: 18.60 km/h | Total Elevation: 55.19 m
