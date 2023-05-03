@@ -22,7 +22,6 @@ class Master {
 
     private final Database database;
 
-
     Master(){
         this.connectedUsers = new ArrayList<>();
         //this.connectedWorkers = new ArrayList<>();
@@ -59,6 +58,7 @@ class Master {
 
             /* Start scheduler and user handlers */
             scheduler.start();
+
             userGPXHandler.start();
             userStatisticsHandler.start();
         }catch (InterruptedException interruptedException) {

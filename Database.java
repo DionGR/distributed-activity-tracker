@@ -7,7 +7,6 @@ public class Database {
     private final ArrayList<Segment> segments;
     private Statistics totalData;
 
-
     public Database(){
         users = new HashMap<>();
         segments = new ArrayList<>();
