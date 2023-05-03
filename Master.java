@@ -13,7 +13,6 @@ class Master {
     //private final ArrayList<Worker> connectedWorkers;
     private final ArrayList<ObjectOutputStream> workerOutStreams;
     private final ArrayList<ObjectInputStream> workerInStreams;
-    private final HashMap<Integer, ArrayList<Waypoint>> segments;
 
 
     private final ArrayList<Chunk[]> dataForProcessing;
@@ -29,7 +28,6 @@ class Master {
         this.workerInStreams = new ArrayList<>();
         this.dataForProcessing = new ArrayList<>();
         //this.intermediateResults = new HashMap<>();
-        this.segments = new HashMap<>();
         this.activeGPXUsers = new HashMap<>();
         this.database = new Database();
     }
@@ -58,7 +56,6 @@ class Master {
 
             /* Start scheduler and user handlers */
             scheduler.start();
-
             userGPXHandler.start();
             userStatisticsHandler.start();
         }catch (InterruptedException interruptedException) {
@@ -91,24 +88,6 @@ class Master {
             System.err.println("Master | [PORT] User GPX: " + userGPXPort);
             System.err.println("Master | [PORT] User Statistics: " + userStatisticsPort);
 
-
-            /* Set default segments */
-            File[] loadedSegments = new File(System.getProperty("user.dir") + "\\data\\server-data\\segments\\").listFiles();
-            if (loadedSegments != null) {
-                for (int i = 0; i < loadedSegments.length; i++) {
-                    BufferedReader br = new BufferedReader(new FileReader(loadedSegments[i]));
-                    String line;
-                    StringBuilder buffer = new StringBuilder();
-                    while((line = br.readLine()) != null)
-                        buffer.append(line);
-//                    segments.put(i, GPXParser.parse(buffer));
-                    database.initSegment(i, GPXParser.parse(buffer));
-                    br.close();
-                }
-                System.err.println("Master | [DATA] Segments: " + loadedSegments.length);
-            }else {
-                System.err.println("Master | [DATA] Segments: 0");
-            }
 
             System.err.println("Master | Initialization complete |");
         }
@@ -376,14 +355,10 @@ class Master {
                 // Parse GPX
                 waypoints = GPXParser.parse(buffer);
 
-                /* Find segments */
-                new SegmentFinder().start();
-
-
                 /* Split waypoints into chunks */
                 int numChunks = (int) ((waypoints.size() / 10) + 0.5);
                 int chunkSize = waypoints.size() / (numChunks) + 1;
-                totalChunks = numChunks + segments.size();
+                totalChunks = numChunks;
 
                 Chunk[] chunks = new Chunk[numChunks];
 
@@ -404,31 +379,15 @@ class Master {
                     chunks[--numChunks] = new Chunk(userID, numChunks, totalChunks, chunkWaypoints);
                 }
 
-//                synchronized (intermediateResults) {
-//                    intermediateResults.put(localGPXID, new ArrayList<>());
-//                }
-
                 addDataForProcessing(chunks);
 
                 System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + userID + " waiting for data from worker...");
 
-                ArrayList<IntermediateChunk> chunkedGPXs;
                 synchronized (intermediateResults) {
                     while (intermediateResults.size() < totalChunks) {
                         intermediateResults.wait();
                     }
                 }
-
-                /* Get intermediate results */
-//                ArrayList<IntermediateChunk> returnedSegments = new ArrayList<>();
-//                ArrayList<IntermediateChunk> returnedChunks  = new ArrayList<>();
-//                for(IntermediateChunk c: intermediateResults){
-//                    if(c.getSegmentID() < 0){
-//                        returnedSegments.add(c);
-//                    }else{
-//                        returnedChunks.add(c);
-//                    }
-//                }
 
                 /* Reduce the results */
                 IntermediateChunk result = reduce();
@@ -485,51 +444,12 @@ class Master {
             long totalTime = 0;
 
             for (IntermediateChunk intermediateChunk : intermediateResults) {
-                if(intermediateChunk.getSegmentID() < 0){
-                    database.updateSegmentStats(user, intermediateChunk); //segment identifier (index in arraylist)
-                }
-                else {
-                    totalDistance += intermediateChunk.getTotalDistance();    //km
-                    totalElevation += intermediateChunk.getTotalElevation();  //m
-                    totalTime += intermediateChunk.getTotalTime();            //ms
-                }
+                totalDistance += intermediateChunk.getTotalDistance();    //km
+                totalElevation += intermediateChunk.getTotalElevation();  //m
+                totalTime += intermediateChunk.getTotalTime();            //ms
             }
 
             return new IntermediateChunk(localGPXID, 0, intermediateResults.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime);
-        }
-
-        private class SegmentFinder extends Thread {
-            @Override
-            public void run() {
-                try{
-                    ArrayList<Waypoint> wps = new ArrayList<>(waypoints);
-                    ArrayList<Chunk> chunks = new ArrayList<>();
-                    int y = 0;
-
-                    for (int i = 0; i < segments.size(); i++){
-                        ArrayList<Waypoint> segment = segments.get(i);
-                        int segmentStartIndex = indexOfSubList(wps, segment);
-                        if (segmentStartIndex != -1) {
-                            ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
-                            if (foundSegment.equals(segment)) {
-                                System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
-                                chunks.add(new Chunk(i, -i-1, totalChunks, foundSegment));
-                            }else {
-                                y -= 1;
-                            }
-                        } else {
-                            y -= 1; //!!!!!!!!!!!!
-                        }
-                    }
-
-                    Chunk[] foundSegments = new Chunk[chunks.size()];
-                    chunks.toArray(foundSegments);
-                    addDataForProcessing(foundSegments);
-                    totalChunks += y;
-                }catch (Exception e){
-                    System.err.println("SegmentFinder for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
-                }
-            }
         }
     }
 
@@ -600,11 +520,6 @@ class Master {
         }
 
         public void addIntermediateResults(IntermediateChunk data){
-//            synchronized (intermediateResults){
-//                intermediateResults.get(data.getGPXID()).add(data);
-//                if ((intermediateResults.get(data.getGPXID()).size() >= data.getTotalSegments()))
-//                    intermediateResults.notifyAll();
-//            }
             synchronized (activeGPXUsers){
                 activeGPXUsers.get(data.getGPXID()).addIntermediateResult(data);
             }
