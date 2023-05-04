@@ -187,10 +187,9 @@ class Master {
                 for (ObjectOutputStream out: workerConnectionOuts)
                     try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's connection output stream: " + ioException.getMessage()); }
                 for (Socket socket: workerConnectionSockets)
-                    try { if (socket != null) socket.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's connection socket: " + ioException.getMessage()); }
+                    try { if (socket != null) socket.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's workerConnectionSocket: " + ioException.getMessage()); }
             }
         }
-
         public void workerInDataHandler() {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
@@ -237,11 +236,11 @@ class Master {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
-                    Socket providerSocket = userServerSocket.accept();
-                    System.out.println("UserGPXHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+                    Socket userGPXSocket = userServerSocket.accept();
+                    System.out.println("UserGPXHandler: Connection received from " + userGPXSocket.getInetAddress().getHostName());
 
                     /* Handle the request */
-                    UserGPXBroker broker = new UserGPXBroker(providerSocket);
+                    UserGPXThread broker = new UserGPXThread(userGPXSocket);
                     broker.start();
                 }
             } catch (IOException ioException) {
@@ -254,11 +253,11 @@ class Master {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
-                    Socket providerSocket = userServerSocket.accept();
-                    System.out.println("UserStatisticsHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
+                    Socket userStatisticsSocket = userServerSocket.accept();
+                    System.out.println("UserStatisticsHandler: Connection received from " + userStatisticsSocket.getInetAddress().getHostName());
 
                     /* Handle the request */
-                    UserStatisticsBroker broker = new UserStatisticsBroker(providerSocket);
+                    UserStatisticsThread broker = new UserStatisticsThread(userStatisticsSocket);
                     broker.start();
                 }
             } catch (IOException ioException) {
@@ -415,14 +414,14 @@ class Master {
         }
     }
 
-    private class UserStatisticsBroker extends Thread{
-        private final Socket providerSocket;
+    private class UserStatisticsThread extends Thread{
+        private final Socket userStatisticsSocket;
         private ObjectOutputStream out;
         private ObjectInputStream in;
         private User user;
 
-        UserStatisticsBroker(Socket providerSocket) {
-            this.providerSocket = providerSocket;
+        UserStatisticsThread(Socket providerSocket) {
+            this.userStatisticsSocket = providerSocket;
             this.out = null;
             this.in = null;
         }
@@ -430,8 +429,8 @@ class Master {
         @Override
         public void run(){
             try {
-                out = new ObjectOutputStream(providerSocket.getOutputStream());
-                in = new ObjectInputStream(providerSocket.getInputStream());
+                out = new ObjectOutputStream(userStatisticsSocket.getOutputStream());
+                in = new ObjectInputStream(userStatisticsSocket.getInputStream());
 
                 // DummyUser registration
                 int userID = (int) in.readObject();
@@ -475,7 +474,7 @@ class Master {
 
         public void addIntermediateResults(IntermediateChunk data){
             synchronized (activeGPXUsers){
-                activeGPXUsers.get(data.getGPXID()).addIntermediateResult(data);
+                activeGPXUsers.get(data.getUserID()).addIntermediateResult(data);
             }
         }
 
