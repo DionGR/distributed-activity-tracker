@@ -1,5 +1,4 @@
-import java.sql.Date;
-import java.sql.Time;
+import java.util.Date;
 import java.util.ArrayList;
 
 
@@ -31,12 +30,11 @@ public class GPXParser {
             String[] timeSplit2 = timeSplit[1].split("Z");
             String[] timeSplit3 = timeSplit2[0].split(":");
 
-            // Convert the date and time into the correct format
-            Date date = new Date(Integer.parseInt(dateSplit[0]) - 1900, Integer.parseInt(dateSplit[1]) - 1, Integer.parseInt(dateSplit[2]));
-            Time timeObj = new Time(Integer.parseInt(timeSplit3[0]), Integer.parseInt(timeSplit3[1]), Integer.parseInt(timeSplit3[2]));
+            // Convert the date and time into the correct format\
+            Date date = new Date(Integer.parseInt(dateSplit[0]) - 1900, Integer.parseInt(dateSplit[1]) - 1, Integer.parseInt(dateSplit[2]), Integer.parseInt(timeSplit3[0]), Integer.parseInt(timeSplit3[1]), Integer.parseInt(timeSplit3[2]));
 
             // Create a new Waypoint object and add it to the list of waypoints
-            waypoints.add(new Waypoint(id, latitude, longitude, elevation, date, timeObj));
+            waypoints.add(new Waypoint(id, latitude, longitude, elevation, date));
             id++;
         }
 

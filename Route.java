@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public class Route {
@@ -7,10 +8,12 @@ public class Route {
     private final double meanVelocity;
     private final double totalElevation;
     private final long totalTime;
+    private final Date date;
     private final ArrayList<Waypoint> waypoints;
 
-    public Route(int routeID, ArrayList<Waypoint> waypoints, double totalDistance, long totalTime, double meanVelocity, double totalElevation) {
+    public Route(int routeID, Date date, ArrayList<Waypoint> waypoints, double totalDistance, long totalTime, double meanVelocity, double totalElevation) {
         this.routeID = routeID;
+        this.date = date;
         this.waypoints = waypoints;
         this.totalDistance = totalDistance;
         this.meanVelocity = meanVelocity;
@@ -20,6 +23,10 @@ public class Route {
 
     public int getRouteID() {
         return routeID;
+    }
+
+    public Date getDate() {
+        return date;
     }
 
     public double getTotalDistance() {
@@ -44,6 +51,6 @@ public class Route {
 
     @Override
     public String toString() {
-        return String.format("Route #%s: Total Distance: %05.2f km | Total Time: %05.2f min | Mean Velocity: %05.2f km/h | Total Elevation: %05.2f m", routeID, totalDistance, (double)totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
+        return String.format("[Route #%d][%s] Total Distance: %05.2f km | Total Time: %05.2f min | Mean Velocity: %05.2f km/h | Total Elevation: %05.2f m", routeID, date, totalDistance, (double)totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
     }
 }

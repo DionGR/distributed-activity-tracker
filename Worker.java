@@ -91,12 +91,12 @@ public class Worker extends Thread{
 
                     totalDistance += distance(curr.getLatitude(), prev.getLatitude(), curr.getLongitude(), prev.getLongitude());
                     totalElevation += Math.max(0, curr.getElevation() - prev.getElevation());
-                    totalTime += curr.getTime().getTime() - prev.getTime().getTime();
+                    totalTime += curr.getDate().getTime() - prev.getDate().getTime();
                 }
 
                 double meanVelocity = totalDistance / totalTime;  // v = delta_x / delta_t
 
-                IntermediateChunk result = new IntermediateChunk(chunk.getGPXID(), chunk.getChunkID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime);
+                IntermediateChunk result = new IntermediateChunk(chunk.getUserID(), chunk.getTotalChunks(), totalDistance, meanVelocity, totalElevation, totalTime, waypoints.get(0).getDate());
 
                 this.out.writeObject(result);
                 this.out.flush();

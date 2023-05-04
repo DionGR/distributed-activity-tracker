@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -10,7 +9,6 @@ public class Database {
         users = new HashMap<>();
         totalData = new Statistics();
     }
-
 
     public User initUser(int id){
         if (users.containsKey(id)) return users.get(id);
@@ -27,7 +25,6 @@ public class Database {
         /* Add route and update statistics */
         user.addRoute(route);
         totalData.update(flag, route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
-
     }
 
     public Statistics getTotalData() {

@@ -2,7 +2,6 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -170,7 +169,7 @@ public class DummyUser extends Thread{
                 try { if (bw != null) bw.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing results file: " + ioException.getMessage()); };
 
                 /* Print the received result from server */
-                System.out.println("\nDummyUser #" + id + " received GPX result for " + result + "\n");
+                System.out.println("\nDummyUser #" + id + " received GPX result: " + result + "\n");
 
             }catch (UnknownHostException unknownHostException) {
                 System.err.println("DummyUser #" + id + " - GPXThread: you are trying to connect to an unknown host!");

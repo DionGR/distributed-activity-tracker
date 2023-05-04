@@ -1,32 +1,31 @@
 import java.io.Serializable;
+import java.util.Date;
 
 
 public class IntermediateChunk implements Serializable {
-    private final int gpxID;
-    private final int segmentID;
-    private final int totalSegments;
+    private final int userID;
+    private final int totalChunks;
     private final double totalDistance;
     private final double meanVelocity;
     private final double totalElevation;
     private final long totalTime;
+    private final Date date;
 
-    public IntermediateChunk(int gpxID, int segmentID, int totalSegments, double totalDistance, double meanVelocity, double totalElevation, long totalTime){
-        this.gpxID = gpxID;
-        this.segmentID = segmentID;
-        this.totalSegments = totalSegments;
+    public IntermediateChunk(int userID, int totalChunks, double totalDistance, double meanVelocity, double totalElevation, long totalTime, Date date){
+        this.userID = userID;
+        this.totalChunks = totalChunks;
         this.totalDistance = totalDistance;
         this.meanVelocity = meanVelocity;
         this.totalElevation = totalElevation;
         this.totalTime = totalTime;
+        this.date = date;
     }
 
-    public int getGPXID() {
-        return gpxID;
+    public int getUserID() {
+        return userID;
     }
 
-    public int getSegmentID() { return segmentID; }
-
-    public int getTotalSegments() { return totalSegments; }
+    public int getTotalChunks() { return totalChunks; }
 
     public double getTotalDistance() {
         return totalDistance;
@@ -44,10 +43,13 @@ public class IntermediateChunk implements Serializable {
         return totalTime;
     }
 
+    public Date getDate() {
+        return date;
+    }
 
     @Override
     public String toString(){
-        return String.format("GPX #%d: Total Distance: %5.2f km | Total Time: %5.2f min | Mean Velocity: %5.2f km/h | Total Elevation: %5.2f m", gpxID, totalDistance, (double) totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
+        return String.format("[User #%d][%s] Total Distance: %5.2f km | Total Time: %5.2f min | Mean Velocity: %5.2f km/h | Total Elevation: %5.2f m", userID, date, totalDistance, (double) totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
     }
 }
 

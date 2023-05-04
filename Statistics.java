@@ -13,8 +13,7 @@ public class Statistics implements Serializable {
 
 
     public void update(boolean flag, double distance, double time, double elevation){
-        if(flag)
-            submissions++;
+        if(flag) submissions++;
         totalDistance += distance;
         totalTime += time;
         totalElevation += elevation;
