@@ -5,24 +5,23 @@ import java.util.ArrayList;
 public class Worker extends Thread{
     private Socket connectSocket;
     private ObjectInputStream in;
-    private final String host;
+    private String host;
     private final int id;
-    private final int serverConnectPort, serverRequestPort;
+    private int masterConnectionPort, masterOutDataPort;
 
 
-    Worker (int id, String host, int serverConnectPort, int serverRequestPort) {
-        this.serverConnectPort = serverConnectPort;
-        this.serverRequestPort = serverRequestPort;
-        this.host = host;
-        this.in = null;
+    Worker (int id) {
         this.id = id;
+        this.in = null;
     }
 
     @Override
     public void run(){
         try {
+            initDefaults();
+
             /* Connect to server and receive data */
-            connectSocket = new Socket(host, serverConnectPort);
+            connectSocket = new Socket(host, masterConnectionPort);
 
             System.out.println("Worker #" + id + " with worker port: " + connectSocket.getLocalPort() + " connected to Master" );
 
@@ -34,7 +33,7 @@ public class Worker extends Thread{
                 Chunk data = (Chunk) in.readObject();
 
                 /* New socket for each task; To send mapped data to master */
-                Socket requestSocket = new Socket(host, serverRequestPort);
+                Socket requestSocket = new Socket(host, masterOutDataPort);
 
                 WorkerThread workerThread = new WorkerThread(requestSocket, data);
                 workerThread.start();
@@ -44,15 +43,12 @@ public class Worker extends Thread{
 
         } catch (UnknownHostException unknownHostException) {
             System.err.println("Worker #" + id + " - UnknownHostERROR: " + unknownHostException.getMessage());
-            // Retry connecting to host
         } catch (IOException ioException) {
             System.err.println("Worker #" + id + " - IOERROR: " + ioException.getMessage());
-            // Retry opening streams
         } catch (ClassNotFoundException classNotFoundException) {
             System.err.println("Worker #" + id + " - CASTERROR: " + classNotFoundException.getMessage());
         } catch (Exception e) {
             System.err.println("Worker #" + id + " - ERROR: " + e.getMessage());
-            throw new RuntimeException(e); // !!!
         }finally {
             try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Worker #" + id + " - IOERROR while closing input stream: " + ioException.getMessage()); }
             try { if (connectSocket != null) connectSocket.close(); } catch (IOException ioException) { System.err.println("Worker #" + id + " - IOERROR while closing connection socket: " + ioException.getMessage()); }
@@ -68,13 +64,12 @@ public class Worker extends Thread{
 
         WorkerThread(Socket requestSocket, Chunk chunk){
             this.requestSocket = requestSocket;
-            this.out = null;
             this.chunk = chunk;
+            this.out = null;
         }
 
         @Override
         public void run() {
-
             try {
                 this.out = new ObjectOutputStream(requestSocket.getOutputStream());
 
@@ -115,15 +110,17 @@ public class Worker extends Thread{
         }
 
         private double distance(double lat1, double lat2, double lon1, double lon2) {
-            final int R = 6371;
+            final int RADIUS = 6371;
+
             double latDistance = Math.toRadians(lat2 - lat1);
             double lonDistance = Math.toRadians(lon2 - lon1);
-            double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
-                    Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                            Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-            return R * c;
+            double haversine = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
+                       Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                       Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+            double angularDistance = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+
+            return RADIUS * angularDistance;
         }
     }
 
