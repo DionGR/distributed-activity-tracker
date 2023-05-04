@@ -88,7 +88,6 @@ class Master {
             System.err.println("Master | [PORT] User GPX: " + userGPXPort);
             System.err.println("Master | [PORT] User Statistics: " + userStatisticsPort);
 
-
             System.err.println("Master | Initialization complete |");
         }
         catch (IOException ioException) {
@@ -98,11 +97,7 @@ class Master {
             System.err.println("Master - initDefaults - ERROR while initializing defaults: " + e.getMessage());
             throw new RuntimeException("initDefaults - ERROR: " + e.getMessage());
         }finally{
-            try{
-                reader.close();
-            }catch (IOException e) {
-                System.err.println("Master - initDefaults - IOERROR while closing reader: " + e.getMessage());
-            }
+            try { if (reader != null) reader.close(); } catch (IOException ioException) { System.err.println("Master - initDefaults - IOERROR while closing config file: " + ioException.getMessage()); }
         }
     }
 
@@ -177,19 +172,16 @@ class Master {
                 System.err.println("WorkerHandler ERROR: " + e.getMessage());
                 throw new RuntimeException("WorkerHandler ERROR: " + e.getMessage());
             } finally {
-                try {
-                    System.err.println("WorkerHandler - Shutting down...");
-                    serverSocket.close();
-                } catch (IOException ioException) {
-                    System.err.println("WorkerHandler - IOERROR while shutting down: " + ioException.getMessage());
-                }
+                try { if (serverSocket != null) serverSocket.close(); } catch (IOException ioException) { System.err.println("WorkerHandler - IOERROR while closing master's worker serverSocket: " + ioException.getMessage()); }
+                System.err.println("WorkerHandler - Shutting down...");
             }
         }
 
         public void workerConnectionHandler() {
+            Socket providerSocket = null;
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    Socket providerSocket = serverSocket.accept();
+                    providerSocket = serverSocket.accept();
                     System.out.println("WorkerConnectionHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
                     ObjectOutputStream out = new ObjectOutputStream(providerSocket.getOutputStream());
@@ -201,15 +193,13 @@ class Master {
                 }
 
             } catch (IOException ioException) {
-                System.err.println("WorkerConnectionHandler - IOERROR: " + ioException.getMessage());
+                System.err.println("WorkerHandler - workerConnectionHandler - IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                System.err.println("WorkerConnectionHandler - ERROR: " + e.getMessage());
+                System.err.println("WorkerHandler - workerConnectionHandler - ERROR: " + e.getMessage());
             }finally {
-                try {
-                    for (ObjectOutputStream out: workerOutStreams) out.close();
-                } catch (IOException ioException) {
-                    System.err.println("WorkerConnectionHandler - IOERROR while shutting down... " + ioException.getMessage());
-                }
+                for (ObjectOutputStream out : workerOutStreams)
+                    try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's output stream: " + ioException.getMessage()); }
+                //try { if (providerSocket != null) providerSocket.close(); } catch (IOException ioException) {System.err.println("WorkerConnectionHandler - IOERROR while closing master's worker providerSocket: " + ioException.getMessage()); }
             }
         }
 
@@ -250,12 +240,8 @@ class Master {
                 System.err.println("UserHandler ERROR: " + e.getMessage());
                 throw new RuntimeException("UserHandler ERROR: " + e.getMessage());
             } finally {
-                try {
-                    System.err.println("UserHandler - Shutting down...");
-                    usersSocketToHandle.close();
-                } catch (IOException ioException) {
-                    System.err.println("UserHandler IOERROR while shutting down... " + ioException.getMessage());
-                }
+                try { if (usersSocketToHandle != null) usersSocketToHandle.close(); } catch (IOException ioException) { System.err.println("UserHandler - IOERROR while closing master's user serverSocket: " + ioException.getMessage()); }
+                System.err.println("UserHandler - Shutting down...");
             }
         }
 
@@ -271,9 +257,9 @@ class Master {
                     broker.start();
                 }
             } catch (IOException ioException) {
-                System.err.println("UserGPXHandler IOERROR: " + ioException.getMessage());
+                System.err.println("UserHandler - userGPXHandler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                System.err.println("UserGPXHandler ERROR: " + e.getMessage());
+                System.err.println("UserHandler - userGPXHandler ERROR: " + e.getMessage());
             }
         }
 
@@ -290,9 +276,9 @@ class Master {
                     broker.start();
                 }
             } catch (IOException ioException) {
-                System.err.println("UserStatisticsHandler IOERROR: " + ioException.getMessage());
+                System.err.println("UserHandler - userStatisticsHandler IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                System.err.println("UserStatisticsHandler ERROR: " + e.getMessage());
+                System.err.println("UserHandler - userStatisticsHandler ERROR: " + e.getMessage());
             }
         }
     }
@@ -412,17 +398,13 @@ class Master {
                 System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
                 //throw new RuntimeException(e); // !!!
             } finally {
-                try {
-                    in.close();
-                    out.close();
-                    providerSocket.close();
-                    synchronized (activeGPXUsers){
-                        activeGPXUsers.remove(user.getID());
-                    }
-                    System.out.println("UserGPXBroker for DummyUser #" + user.getID() + " shutting down...");
-                } catch (IOException ioException) {
-                    System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - IOERROR while shutting down: " + ioException.getMessage());
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (providerSocket != null) providerSocket.close(); } catch (IOException ioException) { System.err.println("UserGPXBroker for DummyUser #" + user.getID() + " - ERROR while closing providerSocket: " + ioException.getMessage()); }
+                synchronized (activeGPXUsers){
+                    activeGPXUsers.remove(user.getID());
                 }
+                System.out.println("UserGPXBroker for DummyUser #" + user.getID() + " shutting down...");
             }
         }
 
@@ -494,13 +476,10 @@ class Master {
                     System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
                     throw new RuntimeException(e); // !!!
             }finally {
-                try {
-                    out.close(); in.close();
-                    providerSocket.close();
-                    System.out.println("UserStatisticsBroker for DummyUser #" + user.getID() + " shutting down...");
-                } catch (IOException ioException) {
-                    System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR while shutting down: " + ioException.getMessage());
-                }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
+                try { if (providerSocket != null) providerSocket.close(); } catch (IOException ioException) { System.err.println("UserStatisticsBroker for DummyUser #" + user.getID() + " - IOERROR while closing providerSocket: " + ioException.getMessage());}
+                System.out.println("UserStatisticsBroker for DummyUser #" + user.getID() + " shutting down...");
             }
         }
     }
@@ -542,12 +521,8 @@ class Master {
                 System.err.println("Worker port: "+ workerPort + " - ERROR: " + e.getMessage());
                 e.printStackTrace();
             }finally {
-                try {
-                    in.close();
-                    workerSocket.close();
-                } catch (IOException ioException) {
-                    System.err.println("Worker port: "+ workerPort + " - IOERROR while shutting down... " + ioException.getMessage());
-                }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerPort + " - IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (workerSocket != null) workerSocket.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerPort + " - IOERROR while closing worker's socket: " + ioException.getMessage()); }
             }
         }
 

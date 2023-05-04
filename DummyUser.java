@@ -152,6 +152,8 @@ public class DummyUser extends Thread{
                 while((line = br.readLine()) != null) {
                     buffer.append(line);
                 }
+                // Close gpx file
+                try { if (br != null) br.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing gpx file: " + ioException.getMessage()); }
 
                 /* Send the file to the server */
                 out.writeObject(buffer);
@@ -164,7 +166,8 @@ public class DummyUser extends Thread{
                 File resultFile = new File(userPath + "\\results.txt");
                 BufferedWriter bw = new BufferedWriter(new FileWriter(resultFile, true));
                 bw.append(result.toString()).append("\n");
-                bw.close();
+                // Close results file
+                try { if (bw != null) bw.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing results file: " + ioException.getMessage()); };
 
                 /* Print the received result from server */
                 System.out.println("\nDummyUser #" + id + " received GPX result for " + result + "\n");
@@ -177,14 +180,11 @@ public class DummyUser extends Thread{
                 System.err.println("DummyUser #" + id + " - GPXThread CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
                 System.err.println("DummyUser #" + id + " - GPXThread ERROR: " + e.getMessage());
-            }//finally {
-//                try {
-//                    in.close(); out.close();
-//                    gpxSocket.close();
-//                } catch (IOException e) {
-//                    System.err.println("DummyUser #" + id + " - GPXThread IOERROR while finishing GPX request: " + e.getMessage());
-//                }
-//            }
+            }finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (gpxSocket != null) gpxSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing socket: " + ioException.getMessage()); }
+            }
         }
     }
 
@@ -236,14 +236,11 @@ public class DummyUser extends Thread{
                 System.err.println("DummyUser #" + id + " - StatisticsThread CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
                 System.err.println("DummyUser #" + id + " - StatisticsThread ERROR: " + e.getMessage());
-            }//finally {
-//                try {
-//                    in.close(); out.close();
-//                    statsSocket.close();
-//                } catch (IOException e) {
-//                    System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while finishing Statistics request: " + e.getMessage());
-//                }
-//            }
+            }finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (statsSocket != null) statsSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while closing socket: " + ioException.getMessage()); }
+            }
         }
     }
 
@@ -259,6 +256,8 @@ public class DummyUser extends Thread{
             this.gpxRequestPort = Integer.parseInt(properties.getProperty("gpxRequestPort"));
             this.statsRequestPort = Integer.parseInt(properties.getProperty("statsRequestPort"));
             this.autorun = Boolean.parseBoolean(properties.getProperty("autorun"));
+
+            try { if (cfgReader != null) cfgReader.close(); } catch(IOException ioException) { System.err.println("DummyUser #" + id + " - login - IOERROR while closing config file: " + ioException.getMessage());}// Close the reader
 
             /* Ask if new or existing user */
             int answer;

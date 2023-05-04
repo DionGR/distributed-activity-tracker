@@ -21,15 +21,19 @@ public class Worker extends Thread{
     @Override
     public void run(){
         try {
+            /* Connect to server and receive data */
             connectSocket = new Socket(host, serverConnectPort);
 
             System.out.println("Worker #" + id + " with worker port: " + connectSocket.getLocalPort() + " connected to Master" );
 
+            /* Create the stream that receives data from server */
             in = new ObjectInputStream(connectSocket.getInputStream());
 
             /* Create the streams to send and receive data from server */
             while(true) {
                 Chunk data = (Chunk) in.readObject();
+
+                /* New socket for each task; To send mapped data to master */
                 Socket requestSocket = new Socket(host, serverRequestPort);
 
                 WorkerThread workerThread = new WorkerThread(requestSocket, data);
@@ -50,13 +54,9 @@ public class Worker extends Thread{
             System.err.println("Worker #" + id + " - ERROR: " + e.getMessage());
             throw new RuntimeException(e); // !!!
         }finally {
-            try {
-                in.close();
-                connectSocket.close();
-                System.err.println("Worker #" + id + " shutting down...");
-            } catch (IOException ioException) {
-                System.err.println("Worker #" + id + " - IOERROR while shutting down: " + ioException.getMessage());
-            }
+            try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Worker #" + id + " - IOERROR while closing input stream: " + ioException.getMessage()); }
+            try { if (connectSocket != null) connectSocket.close(); } catch (IOException ioException) { System.err.println("Worker #" + id + " - IOERROR while closing connection socket: " + ioException.getMessage()); }
+            System.err.println("Worker #" + id + " shutting down...");
         }
     }
 
@@ -109,12 +109,8 @@ public class Worker extends Thread{
                 System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
                 throw new RuntimeException(e); // !!!
             }finally{
-                try {
-                    this.out.close();
-                    requestSocket.close();
-                } catch (IOException ioException) {
-                    System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage());
-                }
+                try { if (this.out != null) this.out.close(); } catch (IOException ioException) { System.err.println("WorkerThread #" + id + " - IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (requestSocket != null) requestSocket.close(); } catch (IOException ioException) { System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage()); }
             }
         }
 
