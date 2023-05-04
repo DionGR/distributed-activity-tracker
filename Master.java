@@ -2,34 +2,21 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import static java.util.Collections.indexOfSubList;
-
 
 class Master {
     private int MIN_WORKERS;
-    private int userGPXPort, userStatisticsPort, workerConnectionPort, workerDataPort;
-
-    private final ArrayList<UserGPXBroker> connectedUsers;
-    //private final ArrayList<Worker> connectedWorkers;
-    private final ArrayList<ObjectOutputStream> workerOutStreams;
-    private final ArrayList<ObjectInputStream> workerInStreams;
-
-
-    private final ArrayList<Chunk[]> dataForProcessing;
-    //private final HashMap<Integer, ArrayList<IntermediateChunk>> intermediateResults;
-    private final HashMap<Integer, UserGPXBroker> activeGPXUsers;
+    private int userGPXPort, userStatisticsPort, workerConnectionPort, workerInDataPort;
 
     private final Database database;
+    private final ArrayList<Chunk[]> dataForProcessing;
+    private final ArrayList<ObjectOutputStream> workerConnectionOuts;
+    private final HashMap<Integer, UserGPXBroker> activeGPXUsers;
 
     Master(){
-        this.connectedUsers = new ArrayList<>();
-        //this.connectedWorkers = new ArrayList<>();
-        this.workerOutStreams = new ArrayList<>();
-        this.workerInStreams = new ArrayList<>();
-        this.dataForProcessing = new ArrayList<>();
-        //this.intermediateResults = new HashMap<>();
-        this.activeGPXUsers = new HashMap<>();
         this.database = new Database();
+        this.dataForProcessing = new ArrayList<>();
+        this.workerConnectionOuts = new ArrayList<>();
+        this.activeGPXUsers = new HashMap<>();
     }
 
     public void bootServer() {
@@ -38,7 +25,7 @@ class Master {
             initDefaults();
             Scheduler scheduler = new Scheduler();
             WorkerHandler workerConnectionHandler = new WorkerHandler(workerConnectionPort);
-            WorkerHandler workerDataHandler = new WorkerHandler(workerDataPort);
+            WorkerHandler workerDataHandler = new WorkerHandler(workerInDataPort);
             UserHandler userGPXHandler = new UserHandler(userGPXPort);
             UserHandler userStatisticsHandler = new UserHandler(userStatisticsPort);
 
@@ -46,10 +33,10 @@ class Master {
             workerDataHandler.start();
 
             /* Wait for workers to connect */
-            synchronized (workerOutStreams){
-                while (workerOutStreams.size() < MIN_WORKERS){
+            synchronized (workerConnectionOuts){
+                while (workerConnectionOuts.size() < MIN_WORKERS){
                     System.err.println("Master | Waiting for workers to connect...");
-                    workerOutStreams.wait();
+                    workerConnectionOuts.wait();
                 }
                 System.err.println("Master | All workers connected!");
             }
@@ -58,13 +45,12 @@ class Master {
             scheduler.start();
             userGPXHandler.start();
             userStatisticsHandler.start();
-        }catch (InterruptedException interruptedException) {
+        } catch (InterruptedException interruptedException) {
             System.err.println("Master - bootServer - InterruptedERROR while booting: " + interruptedException.getMessage());
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("Master - bootServer - ERROR while booting: " + e.getMessage());
         }
     }
-
     private void initDefaults() {
         FileReader reader = null;
         try {
@@ -74,38 +60,33 @@ class Master {
             properties.load(reader);
 
             workerConnectionPort = Integer.parseInt(properties.getProperty("workerConnectionPort"));
-            workerDataPort = Integer.parseInt(properties.getProperty("workerDataPort"));
+            workerInDataPort = Integer.parseInt(properties.getProperty("workerDataPort"));
 
             userGPXPort = Integer.parseInt(properties.getProperty("userGPXPort"));
             userStatisticsPort = Integer.parseInt(properties.getProperty("userStatisticsPort"));
 
             MIN_WORKERS = Integer.parseInt(properties.getProperty("minWorkers"));
-
-            System.err.println("Master | Initializing Configuration |");
-            System.err.println("Master | [VALUE] Min. workers: " + MIN_WORKERS);
-            System.err.println("Master | [PORT] Worker Connection: " + workerConnectionPort);
-            System.err.println("Master | [PORT] Worker Data: " + workerDataPort);
-            System.err.println("Master | [PORT] User GPX: " + userGPXPort);
-            System.err.println("Master | [PORT] User Statistics: " + userStatisticsPort);
-
-            System.err.println("Master | Initialization complete |");
-        }
-        catch (IOException ioException) {
+        }catch (IOException ioException) {
             System.err.println("Master - initDefaults - IOERROR while initializing defaults: " + ioException.getMessage());
             throw new RuntimeException("initDefaults - IOERROR: " + ioException.getMessage());
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("Master - initDefaults - ERROR while initializing defaults: " + e.getMessage());
             throw new RuntimeException("initDefaults - ERROR: " + e.getMessage());
-        }finally{
-            try { if (reader != null) reader.close(); } catch (IOException ioException) { System.err.println("Master - initDefaults - IOERROR while closing config file: " + ioException.getMessage()); }
+        } finally {
+            try { if (reader != null) reader.close(); } catch (IOException ioException) { System.err.println("Master - initDefaults - IOERROR while closing config file: " + ioException.getMessage()); throw new RuntimeException("initDefaults - ERROR: " + ioException.getMessage());  }
         }
+
+        System.err.println("Master | Initializing Configuration |");
+        System.err.println("Master | [VALUE] Min. workers: " + MIN_WORKERS);
+        System.err.println("Master | [PORT] Worker Connection: " + workerConnectionPort);
+        System.err.println("Master | [PORT] Worker Data: " + workerInDataPort);
+        System.err.println("Master | [PORT] User GPX: " + userGPXPort);
+        System.err.println("Master | [PORT] User Statistics: " + userStatisticsPort);
+        System.err.println("Master | Initialization complete |");
     }
-
     private class Scheduler extends Thread{
-
         @Override
         public void run(){
-
             int nextWorker = 0;
 
             try {
@@ -115,15 +96,14 @@ class Master {
                         Chunk[] chunks;
 
                         synchronized (dataForProcessing) {
-                            chunks = dataForProcessing.get(0);
-                            dataForProcessing.remove(0);
+                            chunks = dataForProcessing.remove(0);
                         }
 
-                        for (Chunk c : chunks) {
+                        for (Chunk c: chunks) {
                             ObjectOutputStream out;
 
-                            synchronized (workerOutStreams) {
-                                out = workerOutStreams.get(nextWorker);
+                            synchronized (workerConnectionOuts) {
+                                out = workerConnectionOuts.get(nextWorker);
                             }
 
                             System.out.println("Assigning data to worker: " + nextWorker);
@@ -133,15 +113,14 @@ class Master {
 
                             System.out.println("Data assigned to worker: " + c.toString());
 
-                            nextWorker = (++nextWorker) % workerOutStreams.size();
+                            nextWorker = (++nextWorker) % workerConnectionOuts.size();
                         }
                     }
                 }
-                /* TODO: Handle thread crash, worker disconnects etc */
-            }catch(IOException ioException){
-                System.err.println("Scheduler IOERROR: " + ioException.getMessage());
+            } catch(IOException ioException) {
+                System.err.println("Scheduler - IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                System.err.println("Scheduler ERROR: " + e.getMessage());
+                System.err.println("Scheduler - ERROR: " + e.getMessage());
             } finally {
                 System.err.println("Scheduler - Shutting down...");
             }
@@ -149,7 +128,7 @@ class Master {
     }
     private class WorkerHandler extends Thread {
         private final int port;
-        private ServerSocket serverSocket;
+        private ServerSocket workerServerSocket;
 
         WorkerHandler(int port) {
             this.port = port;
@@ -158,12 +137,12 @@ class Master {
         @Override
         public void run() {
             try{
-                serverSocket = new ServerSocket(port, 100);
+                workerServerSocket = new ServerSocket(port, 100);
 
-                if (serverSocket.getLocalPort() == workerConnectionPort)
+                if (workerServerSocket.getLocalPort() == workerConnectionPort)
                     workerConnectionHandler();
-                else if (serverSocket.getLocalPort() == workerDataPort)
-                    workerDataHandler();
+                else if (workerServerSocket.getLocalPort() == workerInDataPort)
+                    workerInDataHandler();
 
             } catch (IOException ioException) {
                 System.err.println("WorkerHandler IOERROR: " + ioException.getMessage());
@@ -172,23 +151,24 @@ class Master {
                 System.err.println("WorkerHandler ERROR: " + e.getMessage());
                 throw new RuntimeException("WorkerHandler ERROR: " + e.getMessage());
             } finally {
-                try { if (serverSocket != null) serverSocket.close(); } catch (IOException ioException) { System.err.println("WorkerHandler - IOERROR while closing master's worker serverSocket: " + ioException.getMessage()); }
+                try { if (workerServerSocket != null) workerServerSocket.close(); } catch (IOException ioException) { System.err.println("WorkerHandler - IOERROR while closing master's worker serverSocket: " + ioException.getMessage()); }
                 System.err.println("WorkerHandler - Shutting down...");
             }
         }
 
         public void workerConnectionHandler() {
             Socket providerSocket = null;
+            ArrayList<Socket> workerConnectionSockets = new ArrayList<>();
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    providerSocket = serverSocket.accept();
+                    providerSocket = workerServerSocket.accept();
                     System.out.println("WorkerConnectionHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
+                    workerConnectionSockets.add(providerSocket);
                     ObjectOutputStream out = new ObjectOutputStream(providerSocket.getOutputStream());
-
-                    synchronized (workerOutStreams) {
-                        workerOutStreams.add(out);
-                        if (workerOutStreams.size() >= MIN_WORKERS) workerOutStreams.notifyAll();
+                    synchronized (workerConnectionOuts) {
+                        workerConnectionOuts.add(out);
+                        if (workerConnectionOuts.size() >= MIN_WORKERS) workerConnectionOuts.notifyAll();
                     }
                 }
 
@@ -196,17 +176,18 @@ class Master {
                 System.err.println("WorkerHandler - workerConnectionHandler - IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
                 System.err.println("WorkerHandler - workerConnectionHandler - ERROR: " + e.getMessage());
-            }finally {
-                for (ObjectOutputStream out : workerOutStreams)
-                    try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's output stream: " + ioException.getMessage()); }
-                //try { if (providerSocket != null) providerSocket.close(); } catch (IOException ioException) {System.err.println("WorkerConnectionHandler - IOERROR while closing master's worker providerSocket: " + ioException.getMessage()); }
+            } finally {
+                for (ObjectOutputStream out: workerConnectionOuts)
+                    try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's connection output stream: " + ioException.getMessage()); }
+                for (Socket socket: workerConnectionSockets)
+                    try { if (socket != null) socket.close(); } catch (IOException ioException) { System.err.println("WorkerConnectionHandler - IOERROR while closing a worker's connection socket: " + ioException.getMessage()); }
             }
         }
 
-        public void workerDataHandler() {
+        public void workerInDataHandler() {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
-                    Socket providerSocket = serverSocket.accept();
+                    Socket providerSocket = workerServerSocket.accept();
                     System.out.println("WorkerDataHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
                     new Worker(providerSocket).start();
                 }
@@ -219,7 +200,7 @@ class Master {
     }
     private class UserHandler extends Thread {
         private final int port;
-        private ServerSocket usersSocketToHandle;
+        private ServerSocket userServerSocket;
 
         UserHandler(int port) {
             this.port = port;
@@ -228,19 +209,19 @@ class Master {
         @Override
         public void run() {
             try {
-                usersSocketToHandle = new ServerSocket(port, 1000);
-                if (usersSocketToHandle.getLocalPort() == userGPXPort)
-                    userGPXHandler();
-                else if (usersSocketToHandle.getLocalPort() == userStatisticsPort)
-                    userStatisticsHandler();
+                userServerSocket = new ServerSocket(port, 1000);
 
+                if (userServerSocket.getLocalPort() == userGPXPort)
+                    userGPXHandler();
+                else if (userServerSocket.getLocalPort() == userStatisticsPort)
+                    userStatisticsHandler();
 
             /* TODO: Handle thread crash, user disconnects etc */
             } catch (Exception e) {
-                System.err.println("UserHandler ERROR: " + e.getMessage());
-                throw new RuntimeException("UserHandler ERROR: " + e.getMessage());
+                System.err.println("UserHandler - ERROR: " + e.getMessage());
+                throw new RuntimeException("UserHandler - ERROR: " + e.getMessage());
             } finally {
-                try { if (usersSocketToHandle != null) usersSocketToHandle.close(); } catch (IOException ioException) { System.err.println("UserHandler - IOERROR while closing master's user serverSocket: " + ioException.getMessage()); }
+                try { if (userServerSocket != null) userServerSocket.close(); } catch (IOException ioException) { System.err.println("UserHandler - IOERROR while closing master's user serverSocket: " + ioException.getMessage()); }
                 System.err.println("UserHandler - Shutting down...");
             }
         }
@@ -249,7 +230,7 @@ class Master {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
-                    Socket providerSocket = usersSocketToHandle.accept();
+                    Socket providerSocket = userServerSocket.accept();
                     System.out.println("UserGPXHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
                     /* Handle the request */
@@ -262,17 +243,15 @@ class Master {
                 System.err.println("UserHandler - userGPXHandler ERROR: " + e.getMessage());
             }
         }
-
         private void userStatisticsHandler() {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
-                    Socket providerSocket = usersSocketToHandle.accept();
+                    Socket providerSocket = userServerSocket.accept();
                     System.out.println("UserStatisticsHandler: Connection received from " + providerSocket.getInetAddress().getHostName());
 
                     /* Handle the request */
                     UserStatisticsBroker broker = new UserStatisticsBroker(providerSocket);
-//                    connectedUsers.add(broker);
                     broker.start();
                 }
             } catch (IOException ioException) {
@@ -484,17 +463,15 @@ class Master {
         }
     }
 
-
     private class Worker extends Thread {
         Socket workerSocket;
         ObjectInputStream in;
-        int workerPort;
+        Inet4Address workerAddress;
 
         // TODO: What should we keep??????????????
         public Worker(Socket workerSocket){
             this.workerSocket = workerSocket;
-            this.workerPort = workerSocket.getPort();
-            System.out.println("Worker port: " + workerPort); // TODO: replace ports with something unique
+            this.workerAddress = (Inet4Address) workerSocket.getInetAddress();
             this.in = null;
         }
 
@@ -510,19 +487,18 @@ class Master {
                 in = new ObjectInputStream(workerSocket.getInputStream());
 
                 IntermediateChunk data = (IntermediateChunk) in.readObject();
-                System.out.println("Worker port: "+ workerPort + " received data for GPX: " + data.getGPXID());
+                System.out.println("Worker port: " + workerAddress.getAddress() + " received data for GPX: " + data.getGPXID());
                 addIntermediateResults(data);
-
             }catch (IOException ioException) {
-                System.err.println("Worker port: "+ workerPort + " - IOERROR: " + ioException.getMessage());
+                System.err.println("Worker port: " + workerAddress.getAddress() + " - IOERROR: " + ioException.getMessage());
             }catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Worker port: "+ workerPort + " - CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("Worker port: " + workerAddress.getAddress() + " - CASTERROR: " + classNotFoundException.getMessage());
             }catch (Exception e) {
-                System.err.println("Worker port: "+ workerPort + " - ERROR: " + e.getMessage());
+                System.err.println("Worker port: " + workerAddress.getAddress() + " - ERROR: " + e.getMessage());
                 e.printStackTrace();
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerPort + " - IOERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (workerSocket != null) workerSocket.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerPort + " - IOERROR while closing worker's socket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerAddress.getAddress() + " - IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (workerSocket != null) workerSocket.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerAddress.getAddress() + " - IOERROR while closing worker's socket: " + ioException.getMessage()); }
             }
         }
 
@@ -530,8 +506,8 @@ class Master {
             return workerSocket;
         }
 
-        public int getWorkerPort(){
-            return workerPort;
+        public Inet4Address getWorkerPort(){
+            return workerAddress;
         }
 
         public ObjectInputStream getInputStream(){
