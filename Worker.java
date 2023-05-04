@@ -1,6 +1,7 @@
 import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Properties;
 
 public class Worker extends Thread{
     private Socket connectSocket;
@@ -99,10 +100,10 @@ public class Worker extends Thread{
                 System.out.println("WorkerThread #" + id + " sent intermediate result: " + result);
             } catch (IOException ioException) {
                 System.err.println("WorkerThread #" + id + " - IOERROR while sending intermediate result: " + ioException.getMessage());
-                throw new RuntimeException(ioException); // !!!
+                throw new RuntimeException(ioException);
             }catch (Exception e) {
                 System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
-                throw new RuntimeException(e); // !!!
+                throw new RuntimeException(e);
             }finally{
                 try { if (this.out != null) this.out.close(); } catch (IOException ioException) { System.err.println("WorkerThread #" + id + " - IOERROR while closing output stream: " + ioException.getMessage()); }
                 try { if (requestSocket != null) requestSocket.close(); } catch (IOException ioException) { System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage()); }
@@ -125,12 +126,9 @@ public class Worker extends Thread{
     }
 
     public static void main(String[] args) {
-        String host = "localhost";
-        int serverConnectPort = 13325;
-        int serverRequestPort = 23436;
 
         for (int i = 1; i <= 2; i++) {
-            Worker worker = new Worker(i, host, serverConnectPort, serverRequestPort);
+            Worker worker = new Worker(i);
             worker.start();
         }
     }
