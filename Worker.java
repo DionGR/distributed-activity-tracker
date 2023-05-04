@@ -125,6 +125,27 @@ public class Worker extends Thread{
         }
     }
 
+    private void initDefaults() {
+        FileReader cfgReader = null;
+        try {
+            cfgReader = new FileReader(System.getProperty("user.dir") + "\\data\\workerCFG");
+            Properties properties = new Properties();
+            properties.load(cfgReader);
+
+            this.host = properties.getProperty("host");
+            this.masterConnectionPort = Integer.parseInt(properties.getProperty("masterConnectionPort"));
+            this.masterOutDataPort = Integer.parseInt(properties.getProperty("masterOutDataPort"));
+        }catch (IOException ioException) {
+            System.err.println("Worker - initDefaults - IOERROR while initializing defaults: " + ioException.getMessage());
+            throw new RuntimeException("initDefaults - IOERROR: " + ioException.getMessage());
+        } catch (Exception e) {
+            System.err.println("Worker - initDefaults - ERROR while initializing defaults: " + e.getMessage());
+            throw new RuntimeException("initDefaults - ERROR: " + e.getMessage());
+        } finally {
+            try { if (cfgReader != null) cfgReader.close(); } catch (IOException ioException) { System.err.println("Worker - initDefaults - IOERROR while closing config file: " + ioException.getMessage()); throw new RuntimeException("initDefaults - ERROR: " + ioException.getMessage());  }
+        }
+    }
+
     public static void main(String[] args) {
 
         for (int i = 1; i <= 2; i++) {

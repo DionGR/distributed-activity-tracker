@@ -294,7 +294,7 @@ public class DummyUser extends Thread{
             File unprocessedDir = new File(userPath + "unprocessed\\");
             if (!unprocessedDir.exists()) unprocessedDir.mkdir();
 
-            /* Move all files from processed to unprocessed */
+            /* Create processed folder if it does not exist */
             File processedDir = new File(userPath + "processed\\");
             if (!processedDir.exists()) processedDir.mkdir();
 

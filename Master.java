@@ -63,7 +63,7 @@ class Master {
             properties.load(reader);
 
             workerConnectionPort = Integer.parseInt(properties.getProperty("workerConnectionPort"));
-            workerInDataPort = Integer.parseInt(properties.getProperty("workerDataPort"));
+            workerInDataPort = Integer.parseInt(properties.getProperty("workerInDataPort"));
 
             userGPXPort = Integer.parseInt(properties.getProperty("userGPXPort"));
             userStatisticsPort = Integer.parseInt(properties.getProperty("userStatisticsPort"));
