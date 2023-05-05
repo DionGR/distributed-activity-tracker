@@ -479,12 +479,12 @@ class Master {
     private class Worker extends Thread {
         Socket workerInDataSocket;
         ObjectInputStream in;
-        Inet4Address workerInDataAddress;
+        SocketAddress workerInDataAddress;
 
 
         public Worker(Socket workerInDataSocket){
             this.workerInDataSocket = workerInDataSocket;
-            this.workerInDataAddress = (Inet4Address) workerInDataSocket.getInetAddress();
+            this.workerInDataAddress = workerInDataSocket.getRemoteSocketAddress();
             this.in = null;
         }
 
@@ -511,7 +511,7 @@ class Master {
                 e.printStackTrace();
             }finally {
                 try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerInDataAddress + " - IOERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (workerInDataAddress != null) workerInDataSocket.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerInDataAddress + " - IOERROR while closing workerInDataSocket: " + ioException.getMessage()); }
+                try { if (workerInDataSocket != null) workerInDataSocket.close(); } catch (IOException ioException) { System.err.println("Worker port: "+ workerInDataAddress + " - IOERROR while closing workerInDataSocket: " + ioException.getMessage()); }
             }
         }
     }
