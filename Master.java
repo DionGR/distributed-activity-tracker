@@ -94,8 +94,24 @@ class Master {
             int nextWorker = 0;
 
             try {
+                Random r = new Random();
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Assign data to workers using round-robin */
+//                    synchronized (workerConnectionOuts) {
+//                        for (ObjectOutputStream out : workerConnectionOuts) {
+//                            if (r.nextDouble() <= 0.99) continue;
+//                            try {
+//
+//                                System.out.println("BEFORE");
+//                                out.write(1);
+//                                System.out.println("AFTER");
+//                                //out.flush();
+//                                //out.reset();
+//                            } catch (IOException ioException) {
+//                                throw new RuntimeException("Scheduler - ERROR: " + ioException.getMessage());
+//                            }
+//                        }
+//                    }
                     while (dataForProcessing.size() > 0) {
                         Chunk[] chunks;
 
@@ -169,7 +185,7 @@ class Master {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     workerConnectionSocket = workerServerSocket.accept();
-                    System.out.println("WorkerConnectionHandler: Connection received from " + workerConnectionSocket.getInetAddress().getHostName());
+                    System.out.println("WorkerConnectionHandler: Connection received from " + workerConnectionSocket.getRemoteSocketAddress());
 
                     workerConnectionSockets.add(workerConnectionSocket);
                     ObjectOutputStream out = new ObjectOutputStream(workerConnectionSocket.getOutputStream());
@@ -194,7 +210,7 @@ class Master {
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     Socket workerInDataSocket = workerServerSocket.accept();
-                    System.out.println("WorkerDataHandler: Connection received from " + workerInDataSocket.getInetAddress().getHostName());
+                    System.out.println("WorkerDataHandler: Connection received from " + workerInDataSocket.getRemoteSocketAddress());
                     new Worker(workerInDataSocket).start();
                 }
             } catch (IOException ioException) {
@@ -237,7 +253,7 @@ class Master {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
                     Socket userGPXSocket = userServerSocket.accept();
-                    System.out.println("UserGPXHandler: Connection received from " + userGPXSocket.getInetAddress().getHostName());
+                    System.out.println("UserGPXHandler: Connection received from " + userGPXSocket.getRemoteSocketAddress());
 
                     /* Handle the request */
                     UserGPXThread broker = new UserGPXThread(userGPXSocket);
@@ -254,7 +270,7 @@ class Master {
                 while (!Thread.currentThread().isInterrupted()) {
                     /* Accept the connection */
                     Socket userStatisticsSocket = userServerSocket.accept();
-                    System.out.println("UserStatisticsHandler: Connection received from " + userStatisticsSocket.getInetAddress().getHostName());
+                    System.out.println("UserStatisticsHandler: Connection received from " + userStatisticsSocket.getRemoteSocketAddress());
 
                     /* Handle the request */
                     UserStatisticsThread broker = new UserStatisticsThread(userStatisticsSocket);
