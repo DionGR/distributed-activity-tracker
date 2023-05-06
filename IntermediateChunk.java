@@ -1,6 +1,14 @@
 import java.io.Serializable;
 import java.util.Date;
 
+/* IntermediateChunk Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class represents an intermediate chunk of data, used to store the data of a part of the route after Mapping.
+ */
+
 
 public class IntermediateChunk implements Serializable {
     private final int userID;

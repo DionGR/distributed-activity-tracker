@@ -1,5 +1,14 @@
 import java.util.ArrayList;
 
+/* User Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class is used to store a user's data.
+ */
+
+
 public class User {
     private final int id;
     private final Statistics statistics;

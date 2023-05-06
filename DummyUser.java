@@ -5,6 +5,13 @@ import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.Scanner;
 
+/* DummyUser Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class is used to simulate a user.
+ */
 
 public class DummyUser extends Thread{
     String host, userPath;
@@ -243,6 +250,7 @@ public class DummyUser extends Thread{
         }
     }
 
+    /* Initialize the user */
     private void login(){
         try {
             // TODO: Move this under after autorun is removed
@@ -285,6 +293,8 @@ public class DummyUser extends Thread{
             System.err.println("DummyUser #" + id + " - login ERROR: " + e.getMessage());
         }
     }
+
+    /* Initialize the default folders and files */
     private void initDefaults() {
         try {
             /* Delete results file if it exists */
@@ -309,6 +319,8 @@ public class DummyUser extends Thread{
             System.err.println("DummyUser #" + id + " - initDefaults ERROR: " + e.getMessage());
         }
     }
+
+    /* Safely gets input from user */
     private int getInput(){
         Scanner input = new Scanner(System.in);
 
@@ -341,6 +353,7 @@ public class DummyUser extends Thread{
             try {
                 dummyUsers[i-1].join();
             } catch (InterruptedException e) {
+                System.err.println("DummyUser #" + i + " - main ERROR: " + e.getMessage());
                 e.printStackTrace();
             }
         }

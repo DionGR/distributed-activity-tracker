@@ -1,13 +1,19 @@
 import java.util.ArrayList;
 import java.util.Date;
 
+/* Route Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class is used to store a route and its statistics.
+ */
+
 
 public class Route {
     private final int routeID;
-    private final double totalDistance;
+    private final Statistics routeStatistics;
     private final double meanVelocity;
-    private final double totalElevation;
-    private final long totalTime;
     private final Date date;
     private final ArrayList<Waypoint> waypoints;
 
@@ -15,10 +21,8 @@ public class Route {
         this.routeID = routeID;
         this.date = date;
         this.waypoints = waypoints;
-        this.totalDistance = totalDistance;
+        this.routeStatistics = new Statistics(totalDistance, totalTime, totalElevation);
         this.meanVelocity = meanVelocity;
-        this.totalElevation = totalElevation;
-        this.totalTime = totalTime;
     }
 
     public int getRouteID() {
@@ -30,7 +34,7 @@ public class Route {
     }
 
     public double getTotalDistance() {
-        return totalDistance;
+        return routeStatistics.getTotalDistance();
     }
 
     public double getMeanVelocity() {
@@ -38,19 +42,19 @@ public class Route {
     }
 
     public double getTotalElevation() {
-        return totalElevation;
+        return routeStatistics.getTotalElevation();
     }
 
-    public long getTotalTime() {
-        return totalTime;
+    public Date getDate() {
+        return date;
     }
 
-    public ArrayList<Waypoint> getRoute() {
+    public ArrayList<Waypoint> getWaypoints() {
         return waypoints;
     }
 
     @Override
     public String toString() {
-        return String.format("[Route #%d][%s] Total Distance: %05.2f km | Total Time: %05.2f min | Mean Velocity: %05.2f km/h | Total Elevation: %05.2f m", routeID, date, totalDistance, (double)totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
+        return String.format("[Route #%d][%s] Total Distance: %05.2f km | Total Time: %05.2f min | Mean Velocity: %05.2f km/h | Total Elevation: %05.2f m", routeID, date, getTotalDistance(), (double) getTotalTime()/1000/60, meanVelocity, getTotalElevation());
     }
 }

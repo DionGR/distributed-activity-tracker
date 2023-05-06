@@ -1,5 +1,12 @@
 import java.util.HashMap;
 
+/* Database Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class is used to store all the data of the users.
+ */
 
 public class Database {
     private final HashMap<Integer, User> users;
@@ -24,7 +31,7 @@ public class Database {
 
         /* Add route and update statistics */
         user.addRoute(route);
-        totalData.update(flag, route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
+        totalData.update(hasSubmissions, route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
     public Statistics getTotalData() {

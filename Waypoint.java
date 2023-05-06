@@ -1,6 +1,15 @@
 import java.io.Serializable;
 import java.util.Date;
 
+/* Waypoint Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class represents a Waypoint object - each marker on the map is a Waypoint.
+ */
+
+
 public class Waypoint implements Serializable {
     private final int id;
     private final double latitude;
@@ -14,15 +23,6 @@ public class Waypoint implements Serializable {
         this.longitude = longitude;
         this.elevation = elevation;
         this.date = date;
-    }
-
-
-    public Waypoint(Waypoint waypoint) {
-        this.id = waypoint.id;
-        this.latitude = waypoint.latitude;
-        this.longitude = waypoint.longitude;
-        this.elevation = waypoint.elevation;
-        this.date = waypoint.date;
     }
 
     public int getID() {

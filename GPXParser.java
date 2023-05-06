@@ -1,6 +1,13 @@
 import java.util.Date;
 import java.util.ArrayList;
 
+/* GPXParser Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class is used to parse a GPX file and extract the waypoints from it.
+ */
 
 public class GPXParser {
 

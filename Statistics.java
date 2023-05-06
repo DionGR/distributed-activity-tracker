@@ -1,16 +1,31 @@
 import java.io.Serializable;
 
+/* Statistics Class
+ *
+ * @authors: P3200098, P3200150, P3200262
+ * @info: Made for the course of Distributed Systems @ Spring/Summer AUEB 2022-2023
+ *
+ * This class represents a statistics object which can be used as a record or be updatable if needed.
+ */
+
 public class Statistics implements Serializable {
-    public double totalDistance, totalTime, totalElevation;
+    private double totalDistance, totalElevation;
+    private long totalTime;
     private int submissions;
 
     public Statistics(){
-        this.totalDistance = 0;
         this.totalTime = 0;
+        this.totalDistance = 0;
         this.totalElevation = 0;
         this.submissions = 0;
     }
 
+    public Statistics(double totalDistance, long totalTime, double totalElevation){
+        this.totalDistance = totalDistance;
+        this.totalTime = totalTime;
+        this.totalElevation = totalElevation;
+        this.submissions = 0;
+    }
 
     public void update(boolean flag, double distance, double time, double elevation){
         if(flag) submissions++;
@@ -22,7 +37,7 @@ public class Statistics implements Serializable {
     public double getAvgDistance() { return totalDistance / submissions; }
 
     public double getAvgTime(){
-        return totalTime / submissions;
+        return (double) totalTime / submissions;
     }
 
     public double getAvgElevation(){
@@ -33,7 +48,7 @@ public class Statistics implements Serializable {
         return totalDistance;
     }
 
-    public double getTotalTime(){
+    public long getTotalTime(){
         return totalTime;
     }
 
