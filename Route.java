@@ -29,10 +29,6 @@ public class Route {
         return routeID;
     }
 
-    public Date getDate() {
-        return date;
-    }
-
     public double getTotalDistance() {
         return routeStatistics.getTotalDistance();
     }

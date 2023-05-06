@@ -12,10 +12,10 @@ import java.util.Properties;
  */
 
 public class Worker extends Thread{
+    private final int id;
     private Socket connectSocket;
     private ObjectInputStream in;
     private String host;
-    private final int id;
     private int masterConnectionPort, masterOutDataPort;
 
 
@@ -41,10 +41,7 @@ public class Worker extends Thread{
             while(!Thread.currentThread().isInterrupted()) {
                 Chunk data = (Chunk) in.readObject();
 
-                /* New socket for each task; To send mapped data to master */
-                Socket requestSocket = new Socket(host, masterOutDataPort);
-
-                WorkerThread workerThread = new WorkerThread(requestSocket, data);
+                WorkerThread workerThread = new WorkerThread(data);
                 workerThread.start();
 
                 System.out.println("Worker #" + id + " assigned data: " + data);
@@ -67,13 +64,12 @@ public class Worker extends Thread{
 
 
     private class WorkerThread extends Thread {
-        private final Socket requestSocket;
+        private Socket requestSocket;
         private ObjectOutputStream out;
         private final Chunk chunk;
 
 
-        WorkerThread(Socket requestSocket, Chunk chunk){
-            this.requestSocket = requestSocket;
+        WorkerThread(Chunk chunk){
             this.chunk = chunk;
             this.out = null;
         }
@@ -81,6 +77,9 @@ public class Worker extends Thread{
         @Override
         public void run() {
             try {
+                /* New socket for each task; To send mapped data to master */
+                requestSocket = new Socket(host, masterOutDataPort);
+
                 this.out = new ObjectOutputStream(requestSocket.getOutputStream());
 
                 // Mapping
@@ -106,19 +105,22 @@ public class Worker extends Thread{
                 this.out.writeObject(result);
                 this.out.flush();
 
-                System.out.println("WorkerThread #" + id + " sent intermediate result: " + result);
+                System.out.println("Worker - WorkerThread #" + id + " sent intermediate result: " + result);
+            } catch (UnknownHostException unknownHostException) {
+                System.err.println("Worker - WorkerThread #" + id + " - UnknownHostERROR: " + unknownHostException.getMessage());
             } catch (IOException ioException) {
-                System.err.println("WorkerThread #" + id + " - IOERROR while sending intermediate result: " + ioException.getMessage());
-                throw new RuntimeException(ioException);
+                System.err.println("Worker - WorkerThread #" + id + " - IOERROR while sending intermediate result: " + ioException.getMessage());
+                throw new RuntimeException("workerThread - IOERROR: " + ioException.getMessage());
             }catch (Exception e) {
-                System.err.println("WorkerThread #" + id + " - ERROR: " + e.getMessage());
-                throw new RuntimeException(e);
+                System.err.println("Worker - WorkerThread #" + id + " - ERROR: " + e.getMessage());
+                throw new RuntimeException("workerThread - ERROR: " + e.getMessage());
             }finally{
-                try { if (this.out != null) this.out.close(); } catch (IOException ioException) { System.err.println("WorkerThread #" + id + " - IOERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (requestSocket != null) requestSocket.close(); } catch (IOException ioException) { System.err.println("WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage()); }
+                try { if (this.out != null) this.out.close(); } catch (IOException ioException) { System.err.println("Worker - WorkerThread #" + id + " - IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (requestSocket != null) requestSocket.close(); } catch (IOException ioException) { System.err.println("Worker - WorkerThread #" + id + " - IOERROR while closing request socket: " + ioException.getMessage()); }
             }
         }
 
+        /* Calculates distance between two coordinates */
         private double distance(double lat1, double lat2, double lon1, double lon2) {
             final int RADIUS = 6371;
 

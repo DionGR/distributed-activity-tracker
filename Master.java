@@ -40,6 +40,7 @@ class Master {
             UserHandler userGPXHandler = new UserHandler(userGPXPort);
             UserHandler userStatisticsHandler = new UserHandler(userStatisticsPort);
 
+            /* Start worker handlers */
             workerConnectionHandler.start();
             workerDataHandler.start();
 
@@ -107,7 +108,6 @@ class Master {
             int nextWorker = 0;
 
             try {
-                Random r = new Random();
                 while (!Thread.currentThread().isInterrupted()) {
                     /* While there is data to be processed */
                     while (dataForProcessing.size() > 0) {
