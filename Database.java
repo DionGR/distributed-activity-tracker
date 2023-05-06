@@ -27,7 +27,8 @@ public class Database {
         /* Find the relevant user */
         User user = users.get(userID);
 
-        boolean flag = user.getStatistics().getSubmissions() == 0;
+        /* If this is the user's first GPX submission then the number of users (denominator of average statistics) is increased*/
+        boolean hasSubmissions = user.getStatistics().getSubmissions() == 0;
 
         /* Add route and update statistics */
         user.addRoute(route);

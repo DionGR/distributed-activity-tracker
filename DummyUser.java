@@ -14,12 +14,11 @@ import java.util.Scanner;
  */
 
 public class DummyUser extends Thread{
-    String host, userPath;
-    int id;
-    int gpxRequestPort, statsRequestPort;
-    boolean autorun;
-    boolean autorunNoMoreGPX = false;
-    boolean finishAutorun = false;
+    private String host;
+    private final String userPath;
+    private final int id;
+    private int gpxRequestPort, statsRequestPort;
+    private boolean autorun, autorunNoMoreGPX = false, finishAutorun = false;
 
     DummyUser(int id){
         this.id = id;

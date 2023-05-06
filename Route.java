@@ -37,6 +37,10 @@ public class Route {
         return routeStatistics.getTotalDistance();
     }
 
+    public long getTotalTime() {
+        return routeStatistics.getTotalTime();
+    }
+
     public double getMeanVelocity() {
         return meanVelocity;
     }
