@@ -37,6 +37,15 @@ public class Database {
         totalData.update(hasSubmissions, route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
+    public void addSegment(Segment segment, int userID) {
+        /* Find the relevant user */
+        User user = users.get(userID);
+
+        /* Add segment to database and user */
+        segments.add(segment);
+        user.addSegment(segment);
+    }
+
     public Statistics getTotalData() {
             return totalData;
     }
