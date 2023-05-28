@@ -6,7 +6,7 @@ import java.util.TreeSet;
 public class Segment {
     private final int segmentID;
     private final ArrayList<Waypoint> waypoints;
-    private final TreeSet<SegmentScore> leaderboard;
+    private final TreeSet<IntermediateChunk> leaderboard;
 
     public Segment(ArrayList<Waypoint> waypoints){
         this.waypoints = waypoints;

@@ -12,7 +12,7 @@ import java.util.Date;
  */
 
 
-public class IntermediateChunk implements Serializable {
+public class IntermediateChunk implements Serializable, Comparable {
     private final int userID;
     private int segmentID;
     private final double totalDistance;
@@ -30,6 +30,19 @@ public class IntermediateChunk implements Serializable {
         this.totalTime = totalTime;
         this.date = date;
     }
+
+    @Override
+    public int compareTo(Object right){
+        IntermediateChunk rightChunk = (IntermediateChunk) right;
+        return (int) (this.totalTime - rightChunk.totalTime);
+    }
+
+//    @Override
+//    public boolean equals(Object obj){
+//        if (obj == this) return true;
+//        if (!(obj instanceof Waypoint)) return false;
+//
+//    }
 
     public int getUserID() {
         return userID;
