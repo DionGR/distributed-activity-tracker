@@ -1,9 +1,12 @@
 package master;
 import modules.*;
 
+import java.lang.reflect.Array;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+
+import static java.util.Collections.indexOfSubList;
 
 /* Master Class
 *
@@ -345,6 +348,107 @@ class Master {
 
     }
 
+    /* */
+    private class UserSegmentThread extends Thread{
+        private final Socket userSegmentSocket;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+        private User user;
+
+        public UserSegmentThread(Socket providerSocket){
+            this.userSegmentSocket = providerSocket;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+            try{
+                out = new ObjectOutputStream(userSegmentSocket.getOutputStream());
+                in = new ObjectInputStream(userSegmentSocket.getInputStream());
+
+                int userID = (int) in.readObject();
+
+                synchronized (database) {
+                    user = database.initUser(userID);
+                }
+
+                /* Take GPX from User */
+                StringBuilder buffer;
+                buffer = (StringBuilder) in.readObject();
+                System.out.println("Master - UserSegmentThread for User #" + userID + " - Segment received.");
+
+                /* Convert the Segment file into a list of Waypoints */
+                ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
+
+                /* Create and store segment into the Database */
+                Segment segment = new Segment(waypoints);
+
+                synchronized (database) {
+                    database.addSegment(segment, user.getID());
+                }
+            }catch (IOException ioException) {
+                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+            } catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e) {
+                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+            } finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (userSegmentSocket != null) userSegmentSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
+//                synchronized (activeGPXUsers){
+//                    activeGPXUsers.remove(user.getID());
+//                }
+                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " shutting down...");
+            }
+        }
+    }
+
+    /* */
+    private class UserSegStatisticsThread extends Thread{
+        private final Socket userSegStatisticsSocket;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+        private User user;
+
+        UserSegStatisticsThread(Socket providerSocket) {
+            this.userSegStatisticsSocket = providerSocket;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+            try {
+                out = new ObjectOutputStream(userSegStatisticsSocket.getOutputStream());
+                in = new ObjectInputStream(userSegStatisticsSocket.getInputStream());
+
+
+                int userID = (int) in.readObject();
+
+                synchronized (database) {
+                    user = database.initUser(userID);
+                }
+
+                Segment[] segments = user.getSegments(); // get users segments
+
+                out.writeObject(segments);
+                out.flush();
+            }catch (IOException ioException) {
+                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+            }catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+            }catch (Exception e) {
+                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+            }finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
+                try { if (userSegStatisticsSocket != null) userSegStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
+                System.out.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
+            }
+        }
+    }
 
     /* Takes a GPX file from a user and splits it into chunks, which are then sent for mapping, and then reduces it */
     private class UserGPXThread extends Thread {
@@ -353,7 +457,9 @@ class Master {
         private ObjectInputStream in;
         private User user;
         private Date date;
-        private int totalChunks;
+        private int expectedChunks;
+        private ArrayList<Waypoint> waypoints;
+        private ArrayList<Segment> segments;
         private final ArrayList<IntermediateChunk> intermediateResults;
 
         UserGPXThread(Socket userGPXSocket) {
@@ -361,7 +467,7 @@ class Master {
             this.out = null;
             this.in = null;
             this.intermediateResults = new ArrayList<>();
-            this.totalChunks = 0;
+            this.expectedChunks = 0;
             this.date = new Date();
         }
 
@@ -380,6 +486,7 @@ class Master {
 
                 synchronized (database) {
                     user = database.initUser(userID);
+                    segments = database.getSegments();
                 }
 
                 /* Take GPX from DummyUser */
@@ -388,25 +495,41 @@ class Master {
                 System.out.println("Master - UserGPXThread for User #" + userID + " - GPX received.");
 
                 /* Convert the GPX file into a list of Waypoints */
-                ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
+                this.waypoints = GPXParser.parse(buffer);
                 this.date = waypoints.get(0).getDate();
+                expectedChunks += segments.size();
+
+
+                /* Find segments */
+                new SegmentFinder().start();
 
                 /* Split the waypoints into chunks and send them for Mapping */
                 addDataForProcessing(splitData(waypoints));
                 System.out.println("Master - UserGPXThread for DummyUser #" + userID + " waiting for data from worker...");
 
                 synchronized (intermediateResults) {
-                    while (intermediateResults.size() < totalChunks) {
+                    while (intermediateResults.size() < expectedChunks) {
                         intermediateResults.wait();
                     }
                 }
 
+                /* Get intermediate results */
+                ArrayList<IntermediateChunk> returnedSegments = new ArrayList<>();
+                ArrayList<IntermediateChunk> returnedChunks  = new ArrayList<>();
+                for(IntermediateChunk c: intermediateResults){
+                    if(c.getSegmentID() > 0){
+                        returnedSegments.add(c);
+                    }else{
+                        returnedChunks.add(c);
+                    }
+                }
+
                 /* Reduce the results */
-                IntermediateChunk result = reduce();
+                IntermediateChunk result = reduce(returnedChunks);
+                result.setSegmentID(returnedSegments.size());
 
                 /* Save the result in the database */
                 Route route = new Route(user.getStatistics().getSubmissions() + 1, this.date, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
-
                 synchronized (database) {
                     database.addRoute(route, user.getID());
                 }
@@ -436,7 +559,7 @@ class Master {
         private Chunk[] splitData(ArrayList<Waypoint> waypoints) {
             int numChunks = (int) ((waypoints.size() / 10) + 0.5);
             int chunkSize = waypoints.size() / (numChunks) + 1;
-            this.totalChunks = numChunks;
+            this.expectedChunks += numChunks;
 
             Chunk[] chunks = new Chunk[numChunks];
 
@@ -453,7 +576,7 @@ class Master {
                 if (!waypoints.isEmpty())
                     chunkWaypoints.add(waypoints.get(0));
 
-                chunks[--numChunks] = new Chunk(user.getID(), numChunks, chunks.length, chunkWaypoints);
+                chunks[--numChunks] = new Chunk(user.getID(), -1, chunkWaypoints);
             }
 
             return chunks;
@@ -468,13 +591,13 @@ class Master {
         private void addIntermediateResult(IntermediateChunk s) {
             synchronized (intermediateResults){
                 intermediateResults.add(s);
-                if (intermediateResults.size() == totalChunks)
+                if (intermediateResults.size() == expectedChunks)
                     intermediateResults.notifyAll();
             }
         }
 
         /* Reduces the intermediate results */
-        private IntermediateChunk reduce() {
+        private IntermediateChunk reduce(ArrayList<IntermediateChunk> returnedChunks) {
             System.out.println("UserGPXThread for DummyUser #" + user.getID()  + " reducing data for user...");
 
             double totalDistance = 0;
@@ -487,7 +610,42 @@ class Master {
                 totalTime += intermediateChunk.getTotalTime();            //ms
             }
 
-            return new IntermediateChunk(user.getID(), intermediateResults.size(), totalDistance, totalDistance / totalTime, totalElevation, totalTime, this.date);
+
+            return new IntermediateChunk(user.getID(), 0 ,totalDistance, totalDistance / totalTime, totalElevation, totalTime, this.date);
+        }
+
+        private class SegmentFinder extends Thread {
+            @Override
+            public void run() {
+                try{
+                    ArrayList<Waypoint> wps = new ArrayList<>(waypoints);
+                    ArrayList<Chunk> chunks = new ArrayList<>();
+                    int segmentsNotFound = 0;
+
+                    for (int i = 0; i < segments.size(); i++){
+                        ArrayList<Waypoint> segment = segments.get(i).getWaypoints();
+                        int segmentStartIndex = indexOfSubList(wps, segment);
+                        if (segmentStartIndex != -1) {
+                            ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
+                            if (foundSegment.equals(segment)) {
+                                System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
+                                chunks.add(new Chunk(user.getID(), i, foundSegment));
+                            }else {
+                                segmentsNotFound += 1;
+                            }
+                        } else {
+                            segmentsNotFound += 1;
+                        }
+                    }
+
+                    Chunk[] foundSegments = new Chunk[chunks.size()];
+                    chunks.toArray(foundSegments);
+                    addDataForProcessing(foundSegments);
+                    expectedChunks -= segmentsNotFound;
+                }catch (Exception e){
+                    System.err.println("SegmentFinder for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                }
+            }
         }
     }
 

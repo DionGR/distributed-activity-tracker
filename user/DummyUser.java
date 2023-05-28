@@ -21,7 +21,7 @@ public class DummyUser extends Thread{
     private String host;
     private final String userPath;
     private final int id;
-    private int gpxRequestPort, statsRequestPort;
+    private int gpxRequestPort, statsRequestPort, segRequestPort, segStatsRequestPort;
     private boolean autorun, autorunNoMoreGPX = false, finishAutorun = false;
 
     DummyUser(int id){
@@ -52,16 +52,16 @@ public class DummyUser extends Thread{
                         option = 3;
                         break;
                     }
-                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Receive Statistics, 3.Exit\n\t-> ");
+                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
                     option = getInput();
-                }while(option < 1 || option > 3);
+                }while(option < 1 || option > 5);
 
 
                 /* Start the thread for the chosen option */
                 // TODO: Remove joins when frontend is ready
                 switch (option) {
                     case 1: {
-                        gpxThread gt = new gpxThread();
+                        GPXThread gt = new GPXThread();
                         gt.start();
                         gt.join();
                         //  TODO: Remove this when frontend is ready
@@ -70,18 +70,28 @@ public class DummyUser extends Thread{
                         break;
                     }
                     case 2: {
-                        StatisticsThread st = new StatisticsThread();
+                        SegmentThread st = new SegmentThread();
                         st.start();
                         st.join();
+                        break;
+                    } case 3: {
+                        StatisticsThread statt = new StatisticsThread();
+                        statt.start();
+                        statt.join();
                         //  TODO: Remove this when frontend is ready
                         if (autorun && autorunNoMoreGPX)
                             finishAutorun = true;
                         break;
-                    } case 3: {
+                    } case 4:{
+                        SegmentStatisticsThread sstatt = new SegmentStatisticsThread();
+                        sstatt.start();
+                        sstatt.join();
+                        break;
+                    } case 5:{
                         break;
                     }
                 }
-            }while (option != 3);
+            }while (option != 5);
         }
         catch (Exception e) {
             System.err.println("DummyUser #" + this.id + " - ERROR: " + e.getMessage());
@@ -90,12 +100,12 @@ public class DummyUser extends Thread{
         }
     }
 
-    private class gpxThread extends Thread {
+    private class GPXThread extends Thread {
         private Socket gpxSocket;
         ObjectOutputStream out;
         ObjectInputStream in;
 
-        gpxThread() {
+        GPXThread() {
             this.gpxSocket = null;
             this.out = null;
             this.in = null;
@@ -253,6 +263,146 @@ public class DummyUser extends Thread{
         }
     }
 
+    private class SegmentThread extends Thread{
+        private Socket segmentSocket;
+        ObjectOutputStream out;
+        ObjectInputStream in;
+
+        SegmentThread(){
+            this.segmentSocket = null;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run() {
+            System.out.println();
+            try {
+                /* Find all available GPX files in the unprocessed folder */
+                File[] unprocessedFiles = new File(userPath + "unprocessedSeg\\").listFiles();
+                if (unprocessedFiles == null || unprocessedFiles.length == 0) {
+                    System.out.println("DummyUser #" + id + " - SegmentThread: no unprocessed Segment files found!\n");
+                    return;
+                }
+
+                /* Create socket for contacting the server on the specified port */
+                segmentSocket = new Socket(host, segRequestPort);
+
+                /* Create the streams to send and receive data to/from the server */
+                out = new ObjectOutputStream(segmentSocket.getOutputStream());
+                in = new ObjectInputStream(segmentSocket.getInputStream());
+
+                /* Send the ID of the user to the server */
+                out.writeObject(id);
+                out.flush();
+
+                // TODO: Remove if else when frontend is ready
+                String fileName;
+                if (!autorun) {
+                    /* Print all the available Segment files and let the user pick one */
+                    for (int i = 0; i < unprocessedFiles.length; i++)
+                        System.out.println("Segment #" + (i + 1) + ": " + unprocessedFiles[i].getName());
+                    System.out.println();
+
+                    int fileID = -1;
+                    do {
+                        System.out.print("Enter the segment # to process: ");
+                        fileID = getInput();
+                    } while (fileID < 0 || fileID > unprocessedFiles.length);
+                    fileName = unprocessedFiles[fileID - 1].getName();
+                } else{
+                    fileName = unprocessedFiles[0].getName();
+                }
+
+                /* Read the file */
+
+                // Move the file to the processed folder
+                Files.move(Paths.get(userPath + "unprocessedSeg\\" + fileName), Paths.get(userPath + "processedSeg\\" + fileName));
+
+                // Start reading the file
+                File segmentFile = new File(userPath + "processedSeg\\" + fileName);
+                BufferedReader br = new BufferedReader(new FileReader(segmentFile));
+                String line;
+                StringBuilder buffer = new StringBuilder();
+
+                // Add the route ID to the buffer TODO: ?????????
+                int routeID = Integer.parseInt(segmentFile.getName().replaceAll("[\\D]", ""));
+                buffer.append(routeID).append("!");
+
+                // Read the file line by line and add it to the buffer
+                while((line = br.readLine()) != null) {
+                    buffer.append(line);
+                }
+                // Close gpx file
+                try { if (br != null) br.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing gpx file: " + ioException.getMessage()); }
+
+                /* Send the file to the server */
+                out.writeObject(buffer);
+                out.flush();
+
+                int ack = (int) in.readObject();
+
+                System.out.println("\nDummyUser #" + id + " uploaded segment:!\n");
+            }catch (UnknownHostException unknownHostException) {
+                System.err.println("DummyUser #" + id + " - SegmentThread: you are trying to connect to an unknown host!");
+            } catch (IOException ioException) {
+                System.err.println("DummyUser #" + id + " - SegmentThread IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("DummyUser #" + id + " - SegmentThread ERROR: " + e.getMessage());
+            }finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (segmentSocket != null) segmentSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing socket: " + ioException.getMessage()); }
+            }
+        }
+    }
+
+    private class SegmentStatisticsThread extends Thread{
+        private Socket segStatsSocket;
+        ObjectOutputStream out;
+        ObjectInputStream in;
+
+        SegmentStatisticsThread() {
+            this.segStatsSocket = null;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+            System.out.println();
+            try {
+                /* Create socket for contacting the server */
+                segStatsSocket = new Socket(host, segStatsRequestPort);
+
+                /* Create the streams to send and receive data from server */
+                ObjectOutputStream out = new ObjectOutputStream(segStatsSocket.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(segStatsSocket.getInputStream());
+
+                /* Send the id of the user */
+                out.writeObject(id);
+                out.flush();
+
+                /* Request statistics TODO: ... */
+                Statistics userStatistics = (Statistics) in.readObject();
+                Statistics totalStatistics = (Statistics) in.readObject();
+
+            }catch (UnknownHostException unknownHostException) {
+                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread: you are trying to connect to an unknown host!");
+            } catch (IOException ioException) {
+                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR: " + ioException.getMessage());
+            } catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e) {
+                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread ERROR: " + e.getMessage());
+            }finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (segStatsSocket != null) segStatsSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR while closing socket: " + ioException.getMessage()); }
+            }
+        }
+    }
+
     /* Initialize the user */
     private void login(){
         try {
@@ -265,6 +415,8 @@ public class DummyUser extends Thread{
             this.host = properties.getProperty("host");
             this.gpxRequestPort = Integer.parseInt(properties.getProperty("gpxRequestPort"));
             this.statsRequestPort = Integer.parseInt(properties.getProperty("statsRequestPort"));
+            this.segRequestPort = Integer.parseInt(properties.getProperty("segRequestPort"));
+            this.segStatsRequestPort = Integer.parseInt(properties.getProperty("segStatsRequestPort"));
             this.autorun = Boolean.parseBoolean(properties.getProperty("autorun"));
 
             try { if (cfgReader != null) cfgReader.close(); } catch(IOException ioException) { System.err.println("DummyUser #" + id + " - login - IOERROR while closing config file: " + ioException.getMessage());}// Close the reader
@@ -303,19 +455,32 @@ public class DummyUser extends Thread{
             /* Delete results file if it exists */
             Files.deleteIfExists(Paths.get(userPath + "results.txt"));
 
-            /* Create unprocessed folder if it does not exist */
+            /* Create unprocessed GPX folder if it does not exist */
             File unprocessedDir = new File(userPath + "unprocessed\\");
             if (!unprocessedDir.exists()) unprocessedDir.mkdir();
 
-            /* Create processed folder if it does not exist */
+            /* Create processed GPX folder if it does not exist */
             File processedDir = new File(userPath + "processed\\");
             if (!processedDir.exists()) processedDir.mkdir();
+
+            /* Create unprocessed segment folder if it does not exist */
+            File unprocessedSegDir = new File(userPath + "unprocessedSeg\\");
+            if (!unprocessedSegDir.exists()) unprocessedSegDir.mkdir();
+
+            /* Create processed segment folder if it does not exist */
+            File processedSegDir = new File(userPath + "processedSeg\\");
+            if (!processedSegDir.exists()) processedSegDir.mkdir();
 
             /* Move all existing files from processed to unprocessed */
             File[] processedFiles = processedDir.listFiles();
             if (processedFiles == null) return;
             for (File pf: processedFiles)
                 Files.move(Paths.get(processedDir + "\\" + pf.getName()), Paths.get(unprocessedDir + "\\" + pf.getName()));
+
+            File[] processedSegs = processedSegDir.listFiles();
+            if (processedSegs == null) return;
+            for (File pf: processedSegs)
+                Files.move(Paths.get(processedSegDir + "\\" + pf.getName()), Paths.get(unprocessedSegDir + "\\" + pf.getName()));
         } catch (IOException e) {
             System.err.println("DummyUser #" + id + " - initDefaults IOERROR: " + e.getMessage());
         } catch (Exception e) {

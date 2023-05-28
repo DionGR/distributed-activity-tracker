@@ -1,4 +1,6 @@
 host=localhost
 gpxRequestPort=54322
 statsRequestPort=54325
+segRequestPort=43222
+segStatsRequestPort=22243
 autorun=true
