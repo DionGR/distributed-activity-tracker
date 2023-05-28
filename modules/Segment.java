@@ -1,6 +1,7 @@
 package modules;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class Segment {
@@ -10,7 +11,11 @@ public class Segment {
 
     public Segment(ArrayList<Waypoint> waypoints){
         this.waypoints = waypoints;
-        this.leaderboard = null;
+        this.leaderboard = new TreeMap<>()
+    }
+
+    public void addIntermediateChunk(IntermediateChunk chunk){
+        leaderboard.put(chunk.getUserID(), chunk);
     }
 
     public ArrayList<Waypoint> getWaypoints() {

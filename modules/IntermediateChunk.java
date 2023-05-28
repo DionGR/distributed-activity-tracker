@@ -44,7 +44,7 @@ public class IntermediateChunk implements Serializable, Comparable {
 //
 //    }
 
-    public int getUserID() {
+   public int getUserID() {
         return userID;
     }
 
@@ -80,5 +80,7 @@ public class IntermediateChunk implements Serializable, Comparable {
     public String toString(){
         return String.format("[User #%d][%s] Total Distance: %5.2f km | Total Time: %5.2f min | Mean Velocity: %5.2f km/h | Total Elevation: %5.2f m", userID, date, totalDistance, (double) totalTime/1000/60, meanVelocity*1000*60*60, totalElevation);
     }
+
+
 }
 

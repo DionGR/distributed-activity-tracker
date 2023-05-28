@@ -598,7 +598,7 @@ class Master {
 
         /* Reduces the intermediate results */
         private IntermediateChunk reduce(ArrayList<IntermediateChunk> returnedChunks) {
-            System.out.println("UserGPXThread for DummyUser #" + user.getID()  + " reducing data for user...");
+            System.out.println("Master - UserGPXThread for DummyUser #" + user.getID()  + " reducing data for user...");
 
             double totalDistance = 0;
             double totalElevation = 0;
@@ -628,7 +628,7 @@ class Master {
                         if (segmentStartIndex != -1) {
                             ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
                             if (foundSegment.equals(segment)) {
-                                System.out.println("UserGPXBroker " + this.getId() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
+                                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
                                 chunks.add(new Chunk(user.getID(), i, foundSegment));
                             }else {
                                 segmentsNotFound += 1;
@@ -643,7 +643,7 @@ class Master {
                     addDataForProcessing(foundSegments);
                     expectedChunks -= segmentsNotFound;
                 }catch (Exception e){
-                    System.err.println("SegmentFinder for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                    System.err.println("Master - SegmentFinder for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
                 }
             }
         }
