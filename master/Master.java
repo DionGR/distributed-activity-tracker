@@ -17,7 +17,7 @@ import java.util.*;
 
 class Master {
     private int MIN_WORKERS;
-    private int userGPXPort, userStatisticsPort, workerConnectionPort, workerInDataPort;
+    private int userGPXPort, userStatisticsPort, userSegmentPort, userSegStatisticsPort, workerConnectionPort, workerInDataPort;
 
     private final Database database;
     private final ArrayList<Chunk[]> dataForProcessing;
@@ -83,6 +83,8 @@ class Master {
 
             userGPXPort = Integer.parseInt(properties.getProperty("userGPXPort"));
             userStatisticsPort = Integer.parseInt(properties.getProperty("userStatisticsPort"));
+            userSegmentPort = Integer.parseInt(properties.getProperty("userSegmentPort"));
+            userSegStatisticsPort = Integer.parseInt(properties.getProperty("userSegStatisticsPort"));
 
             MIN_WORKERS = Integer.parseInt(properties.getProperty("minWorkers"));
         }catch (IOException ioException) {
@@ -248,6 +250,10 @@ class Master {
                     userGPXHandler();
                 else if (port == userStatisticsPort)
                     userStatisticsHandler();
+                else if (port == userSegmentPort)
+                    userSegmentHandler();
+                else if (port == userSegStatisticsPort)
+                    userSegStatisticsHandler();
 
             } catch (Exception e) {
                 System.err.println("Master - UserHandler - ERROR: " + e.getMessage());
@@ -266,8 +272,8 @@ class Master {
                     System.out.println("Master - UserHandler - UserGPXHandler: Connection received from " + userGPXSocket.getRemoteSocketAddress());
 
                     /* Handle the request */
-                    UserGPXThread broker = new UserGPXThread(userGPXSocket);
-                    broker.start();
+                    UserGPXThread userGPXThread = new UserGPXThread(userGPXSocket);
+                    userGPXThread.start();
                 }
             } catch (IOException ioException) {
                 System.err.println("Master - UserHandler - userGPXHandler - IOERROR: " + ioException.getMessage());
@@ -286,8 +292,8 @@ class Master {
                     System.out.println("Master - UserHandler - UserStatisticsHandler: Connection received from " + userStatisticsSocket.getRemoteSocketAddress());
 
                     /* Handle the request */
-                    UserStatisticsThread broker = new UserStatisticsThread(userStatisticsSocket);
-                    broker.start();
+                    UserStatisticsThread userStatisticsThread = new UserStatisticsThread(userStatisticsSocket);
+                    userStatisticsThread.start();
                 }
             } catch (IOException ioException) {
                 System.err.println("Master - UserHandler - userStatisticsHandler - IOERROR: " + ioException.getMessage());
@@ -296,6 +302,47 @@ class Master {
                 System.err.println("Master - UserHandler - userStatisticsHandler - Shutting down...");
             }
         }
+
+        /* */
+        private void userSegmentHandler() {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    /* Accept the connection */
+                    Socket userSegmentSocket = userServerSocket.accept();
+                    System.out.println("Master - UserHandler - UserSegmentHandler: Connection received from " + userSegmentSocket.getRemoteSocketAddress());
+
+                    /* Handle the request */
+                    UserSegmentThread userSegmentThread = new UserSegmentThread(userSegmentSocket);
+                    userSegmentThread.start();
+                }
+            } catch (IOException ioException) {
+                System.err.println("Master - UserHandler - userSegmentHandler - IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("Master - UserHandler - userSegmentHandler - ERROR: " + e.getMessage());
+                System.err.println("Master - UserHandler - userSegmentHandler - Shutting down...");
+            }
+        }
+
+
+        private void userSegStatisticsHandler() {
+            try {
+                while (!Thread.currentThread().isInterrupted()) {
+                    /* Accept the connection */
+                    Socket userSegStatisticsSocket = userServerSocket.accept();
+                    System.out.println("Master - UserHandler - UserSegStatisticsHandler: Connection received from " + userSegStatisticsSocket.getRemoteSocketAddress());
+
+                    /* Handle the request */
+                    UserSegStatisticsThread userSegStatisticsThread = new UserSegStatisticsThread(userSegStatisticsSocket);
+                    userSegStatisticsThread.start();
+                }
+            } catch (IOException ioException) {
+                System.err.println("Master - UserHandler - userSegStatisticsHandler - IOERROR: " + ioException.getMessage());
+            } catch (Exception e) {
+                System.err.println("Master - UserHandler - userSegStatisticsHandler - ERROR: " + e.getMessage());
+                System.err.println("Master - UserHandler - userSegStatisticsHandler - Shutting down...");
+            }
+        }
+
     }
 
 
@@ -434,7 +481,7 @@ class Master {
             double totalElevation = 0;
             long totalTime = 0;
 
-            for (IntermediateChunk intermediateChunk: intermediateResults) {
+            for (IntermediateChunk intermediateChunk: returnedChunks) {
                 totalDistance += intermediateChunk.getTotalDistance();    //km
                 totalElevation += intermediateChunk.getTotalElevation();  //m
                 totalTime += intermediateChunk.getTotalTime();            //ms

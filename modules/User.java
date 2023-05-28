@@ -15,17 +15,23 @@ public class User {
     private final int id;
     private final Statistics statistics;
     private final ArrayList<Route> routes;
+    private final ArrayList<Segment> segments;
 
 
     public User(int id){
         this.id = id;
         this.statistics = new Statistics();
         this.routes = new ArrayList<>();
+        this.segments = new ArrayList<>();
     }
 
     public void addRoute(Route route){
         routes.add(route);
         updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
+    }
+
+    public void addSegment(Segment segment) {
+        segments.add(segment);
     }
 
     public void updateUserStatistics(double distance, double time, double elevation){
@@ -39,6 +45,8 @@ public class User {
     public ArrayList<Route> getRoutes(){
         return routes;
     }
+
+    public ArrayList<Segment> getSegments() { return segments; }
 
     public Statistics getStatistics(){
         return statistics;

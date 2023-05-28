@@ -1,5 +1,6 @@
 package modules;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /* Database Class
@@ -13,10 +14,12 @@ import java.util.HashMap;
 public class Database {
     private final HashMap<Integer, User> users;
     private final Statistics totalData;
+    private final ArrayList<Segment> segments;
 
     public Database(){
         users = new HashMap<>();
         totalData = new Statistics();
+        segments = new ArrayList<>();
     }
 
     public User initUser(int id){
@@ -47,7 +50,12 @@ public class Database {
     }
 
     public Statistics getTotalData() {
-            return totalData;
+        return totalData;
     }
+
+    public ArrayList<Segment> getSegments() {
+        return segments;
+    }
+
 }
 
