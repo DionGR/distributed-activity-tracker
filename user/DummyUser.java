@@ -57,13 +57,13 @@ public class DummyUser extends Thread{
                     } else if (autorun && autorunNoMoreGPX && addedSegments && gotNormalStatistics && !gotSegmentStatistics) {
                         option = 4;
                         break;
-                    }else {
+                    }else if (autorun && autorunNoMoreGPX && addedSegments && gotNormalStatistics && gotSegmentStatistics) {
                         option = 5;
                         break;
                     }
 
-//                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
-//                    option = getInput();
+                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
+                    option = getInput();
                 }while(option < 1 || option > 5);
 
 
@@ -534,7 +534,7 @@ public class DummyUser extends Thread{
     }
 
     public static void main(String[] args) {
-        int numUsers = 3;
+        int numUsers = 1;
 
         long startTime = System.currentTimeMillis();
 

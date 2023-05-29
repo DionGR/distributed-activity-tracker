@@ -50,12 +50,10 @@ public class User {
             segmentID = segment.getSegmentID();
             ArrayList<IntermediateChunk> segmentHistory = segmentStatistics.get(segmentID);
             if(segmentHistory != null){
-                segmentHistory.add(segment); //i.e. User is interested in this segment (segment history exists for this segment)
+                segmentStatistics.get(segmentID).add(segment); //i.e. User is interested in this segment (segment history exists for this segment)
                 System.err.println("ADDED +1");
             }
-            System.err.println("HISTORY SIZE: "+segmentHistory.size());
         }
-
     }
 
     public HashMap<Integer, ArrayList<IntermediateChunk>> getSegmentsStatistics(){

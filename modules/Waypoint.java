@@ -52,7 +52,7 @@ public class Waypoint implements Serializable {
         if (obj == this) return true;
         if (!(obj instanceof Waypoint)) return false;
         Waypoint waypoint = (Waypoint) obj;
-        return distance(latitude, waypoint.latitude, longitude, waypoint.longitude) < 0.015;
+        return distance(latitude, waypoint.latitude, longitude, waypoint.longitude) <= 0.015;
     }
 
     public static double distance(double lat1, double lat2, double lon1, double lon2) {

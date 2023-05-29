@@ -418,8 +418,9 @@ class Master {
                 /* Get intermediate results */
                 ArrayList<IntermediateChunk> returnedSegments = new ArrayList<>();
                 ArrayList<IntermediateChunk> returnedChunks  = new ArrayList<>();
+
                 for(IntermediateChunk c: intermediateResults){
-                    if(c.getSegmentID() > 0){
+                    if(c.getSegmentID() >= 0){
                         returnedSegments.add(c);
                     }else{
                         returnedChunks.add(c);
@@ -434,7 +435,7 @@ class Master {
                 Route route = new Route(user.getStatistics().getSubmissions() + 1, this.date, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
                 synchronized (database) {
                     database.addRoute(route, user.getID());
-                    database.addSegmentResults(returnedSegments, user.getID());
+                    if (returnedSegments.size() > 0) database.addSegmentResults(returnedSegments, user.getID());
                 }
 
                 /* Send the result to the user */
@@ -532,7 +533,7 @@ class Master {
                         if (segmentStartIndex != -1) {
                             ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
                             if (foundSegment.equals(segment)) {
-                                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
+                                System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
                                 chunks.add(new Chunk(user.getID(), i, foundSegment));
                             }else {
                                 segmentsNotFound += 1;
@@ -753,7 +754,6 @@ class Master {
             }
         }
     }
-
 
     public static void main(String[] args) {
         Master master = new Master();

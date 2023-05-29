@@ -3,4 +3,4 @@ gpxRequestPort=20189
 statsRequestPort=21189
 segRequestPort=20987
 segStatsRequestPort=21987
-autorun=true
+autorun=false

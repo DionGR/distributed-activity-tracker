@@ -1,5 +1,7 @@
 package modules;
 
+import org.omg.PortableServer.SERVANT_RETENTION_POLICY_ID;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -45,12 +47,16 @@ public class Database {
         /* Find the relevant user */
         User user = users.get(userID);
 
+
+
         /* Add results to each segment's leaderboard */
         for (IntermediateChunk foundSegment : foundSegments) {
             int id = foundSegment.getSegmentID();
             Segment segment = segments.get(id);
             segment.addIntermediateChunk(foundSegment);
         }
+
+
 
         /* Assign update of segment history to User class */
         user.updateSegmentHistory(foundSegments);
