@@ -401,6 +401,7 @@ public class DummyUser extends Thread{
 
                 for (HashMap<Integer, IntermediateChunk> segment: leaderboard) {
                     System.out.println("SEGMENT: ");
+                    System.err.println("keyyyset: "+segment.keySet().size());
                     for (Integer user: segment.keySet()) {
                         System.out.println("User: " + user + "| Time: " + segment.get(user).getTotalTime());
                     }
@@ -409,7 +410,7 @@ public class DummyUser extends Thread{
 
                 for (Integer segID: segmentsStatistics.keySet()) {
                     System.out.println("History of segment: "+segID);
-                    System.out.println("History: "+segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
+                    //System.out.println("History: "+segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
                     for (IntermediateChunk route: segmentsStatistics.get(segID)) {
                         System.out.println("Time: "+route.getTotalTime());
                     }

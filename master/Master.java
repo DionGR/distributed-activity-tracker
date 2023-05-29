@@ -426,6 +426,7 @@ class Master {
                         returnedChunks.add(c);
                     }
                 }
+                System.err.println("Size of returnedSeg: "+returnedSegments.size());
 
                 /* Reduce the results */
                 IntermediateChunk result = reduce(returnedChunks);
@@ -687,10 +688,10 @@ class Master {
 
                 // user's history of registered segments
                 HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = new HashMap<>(user.getSegmentsStatistics());
-                for (Integer segID: segmentsStatistics.keySet()) {
-                    System.out.println("History of segment: " + segID);
-                    System.err.println("History: " + segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
-                }
+//                for (Integer segID: segmentsStatistics.keySet()) {
+//                    System.out.println("History of segment: " + segID);
+//                    System.err.println("History: " + segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
+//                }
 
                 // List of HashMaps: each HashMap is a registered segment's leaderboard
                 ArrayList<HashMap<Integer, IntermediateChunk>> leaderboardSegments = new ArrayList<>();

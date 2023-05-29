@@ -1,6 +1,6 @@
 package modules;
 
-import org.omg.PortableServer.SERVANT_RETENTION_POLICY_ID;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +53,7 @@ public class Database {
         for (IntermediateChunk foundSegment : foundSegments) {
             int id = foundSegment.getSegmentID();
             Segment segment = segments.get(id);
+            System.err.println("IN DB SEGMENT ID: " + id+ " SEGMENT OBJ: " + segment);
             segment.addIntermediateChunk(foundSegment);
         }
 

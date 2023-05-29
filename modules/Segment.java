@@ -15,12 +15,19 @@ public class Segment {
         this.leaderboard = new HashMap<>();
     }
 
-    public void addIntermediateChunk(IntermediateChunk chunk){
+    public void addIntermediateChunk(IntermediateChunk chunk) {
         int userid = chunk.getUserID();
         IntermediateChunk previousResult = leaderboard.get(userid);
-        if(previousResult != null)
-            if(previousResult.compareTo(chunk) > 0) leaderboard.put(userid, chunk);
-        else leaderboard.put(userid,chunk);
+        if (previousResult != null){
+            if (previousResult.compareTo(chunk) > 0)
+                leaderboard.put(userid, chunk);
+
+        System.err.println("SEGMENT: if");
+        }
+        else {
+            leaderboard.put(userid,chunk);
+            System.err.println("SEGMENT: ADDED_else");
+        }
     }
 
     public ArrayList<Waypoint> getWaypoints() {
