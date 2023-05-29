@@ -1,1 +1,1 @@
-[User #3][Sun Mar 19 17:57:19 EET 2023] Total Distance:  4.85 km | Total Time: 19.65 min | Mean Velocity: 14.80 km/h | Total Elevation: 48.49 m
+[User #3][Sun Mar 19 17:57:19 EET 2023] Total Distance:  4.36 km | Total Time: 17.83 min | Mean Velocity: 14.68 km/h | Total Elevation: 47.19 m

@@ -198,6 +198,7 @@ public class DummyUser extends Thread{
 
                 /* Print the received result from server */
                 System.out.println("\nDummyUser #" + id + " received GPX result: " + result + "\n");
+                System.out.println("DummyUser #" + id + " - segments found in GPX file: " + result.getSegmentID() + "\n");
 
             }catch (UnknownHostException unknownHostException) {
                 System.err.println("DummyUser #" + id + " - GPXThread: you are trying to connect to an unknown host!");
@@ -534,7 +535,7 @@ public class DummyUser extends Thread{
     }
 
     public static void main(String[] args) {
-        int numUsers = 1;
+        int numUsers = 3;
 
         long startTime = System.currentTimeMillis();
 

@@ -406,7 +406,7 @@ class Master {
                 new SegmentFinder().start();
 
                 /* Split the waypoints into chunks and send them for Mapping */
-                addDataForProcessing(splitData(waypoints));
+                addDataForProcessing(splitData(new ArrayList<>(waypoints)));
                 System.out.println("Master - UserGPXThread for DummyUser #" + userID + " waiting for data from worker...");
 
                 synchronized (intermediateResults) {
@@ -522,8 +522,6 @@ class Master {
             @Override
             public void run() {
                 try{
-                    System.err.println("Segments stored" + segments.size());
-                    ArrayList<Waypoint> wps = new ArrayList<>(waypoints);
                     ArrayList<Chunk> chunks = new ArrayList<>();
                     int segmentsNotFound = 0;
 
@@ -533,9 +531,9 @@ class Master {
 
                         int segmentStartIndex = indexOfSubList(waypoints, segment);
                         if (segmentStartIndex != -1) {
-                            ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
+                            ArrayList<Waypoint> foundSegment = new ArrayList<>(waypoints.subList(segmentStartIndex, segmentStartIndex + segment.size()));
                             if (foundSegment.equals(segment)) {
-                                System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
+                                System.err.println("Master - UserGPXThread" + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
                                 chunks.add(new Chunk(user.getID(), i, foundSegment));
                             }else {
                                 segmentsNotFound += 1;
