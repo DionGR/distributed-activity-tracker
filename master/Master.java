@@ -631,6 +631,7 @@ class Master {
                 /* Convert the Segment file into a list of Waypoints */
                 ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
 
+
                 /* Create and store segment into the Database */
                 synchronized (database) {
                     database.initSegment(waypoints, user);
