@@ -49,10 +49,10 @@ public class Database {
             int id = foundSegment.getSegmentID();
             Segment segment = segments.get(id);
             segment.addIntermediateChunk(foundSegment);
-
         }
 
-
+        /* Assign update of segment history to User class */
+        user.updateSegmentHistory(foundSegments);
     }
 
     public void initSegment(ArrayList<Waypoint> waypoints, User user) {

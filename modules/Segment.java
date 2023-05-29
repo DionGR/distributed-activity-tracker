@@ -28,4 +28,6 @@ public class Segment {
     }
 
     public Integer getSegmentID() { return segmentID; }
+
+    public  HashMap<Integer, IntermediateChunk> getLeaderboard(){ return leaderboard; }
 }

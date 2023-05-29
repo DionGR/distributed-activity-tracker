@@ -45,6 +45,8 @@ class Master {
             WorkerHandler workerDataHandler = new WorkerHandler(workerInDataPort);
             UserHandler userGPXHandler = new UserHandler(userGPXPort);
             UserHandler userStatisticsHandler = new UserHandler(userStatisticsPort);
+            UserHandler userSegmentHandler = new UserHandler(userSegmentPort);
+            UserHandler userSegStatisticHandler = new UserHandler(userSegStatisticsPort);
 
             /* Start worker handlers */
             workerConnectionHandler.start();
