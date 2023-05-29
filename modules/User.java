@@ -58,6 +58,9 @@ public class User {
 
     }
 
+    public HashMap<Integer, ArrayList<IntermediateChunk>> getSegmentsStatistics(){
+        return segmentStatistics;
+    }
 
     public int getID(){
         return id;

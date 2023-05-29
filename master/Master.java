@@ -675,14 +675,29 @@ class Master {
 
                 int userID = (int) in.readObject();
 
+
+                ArrayList<Segment> leaderboards;
                 synchronized (database) {
                     user = database.initUser(userID);
+                    leaderboards = database.getSegments();
                 }
 
-//                Segment[] segments = user.getSegments(); // get users segments
+                // user's history of registered segments
+                HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = new HashMap<>(user.getSegmentsStatistics());
+                for (Integer segID: segmentsStatistics.keySet()) {
+                    System.out.println("History of segment: " + segID);
+                    System.err.println("History: " + segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
+                }
 
-//                out.writeObject(segments);
-//                out.flush();
+                // List of HashMaps: each HashMap is a registered segment's leaderboard
+                ArrayList<HashMap<Integer, IntermediateChunk>> leaderboardSegments = new ArrayList<>();
+                for (Integer segmentID: segmentsStatistics.keySet()) {
+                    leaderboardSegments.add(leaderboards.get(segmentID).getLeaderboard());
+                }
+
+                out.writeObject(leaderboardSegments);
+                out.writeObject(segmentsStatistics);
+                out.flush();
             }catch (IOException ioException) {
                 System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
             }catch (ClassNotFoundException classNotFoundException) {

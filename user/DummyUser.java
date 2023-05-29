@@ -1,11 +1,14 @@
 package user;
 import modules.IntermediateChunk;
+import modules.Segment;
 import modules.Statistics;
 
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -22,7 +25,7 @@ public class DummyUser extends Thread{
     private final String userPath;
     private final int id;
     private int gpxRequestPort, statsRequestPort, segRequestPort, segStatsRequestPort;
-    private boolean autorun, autorunNoMoreGPX = false, finishAutorun = false;
+    private boolean autorun, autorunNoMoreGPX, addedSegments, gotNormalStatistics, gotSegmentStatistics = false;
 
     DummyUser(int id){
         this.id = id;
@@ -42,18 +45,25 @@ public class DummyUser extends Thread{
                 /* Let the user choose what he wants to do */
                 do{
                     // TODO: Remove this when frontend is ready
-                    if (autorun && !autorunNoMoreGPX) {
-                        option = 1;
-                        break;
-                    }else if (autorun && autorunNoMoreGPX && !finishAutorun) {
+                    if (autorun && !autorunNoMoreGPX && !addedSegments && !gotNormalStatistics && !gotSegmentStatistics) {
                         option = 2;
                         break;
-                    } else if (finishAutorun) {
+                    }else if (autorun && !autorunNoMoreGPX && addedSegments && !gotNormalStatistics && !gotSegmentStatistics) {
+                        option = 1;
+                        break;
+                    }else if (autorun && autorunNoMoreGPX && addedSegments && !gotNormalStatistics && !gotSegmentStatistics) {
                         option = 3;
                         break;
+                    } else if (autorun && autorunNoMoreGPX && addedSegments && gotNormalStatistics && !gotSegmentStatistics) {
+                        option = 4;
+                        break;
+                    }else {
+                        option = 5;
+                        break;
                     }
-                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
-                    option = getInput();
+
+//                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
+//                    option = getInput();
                 }while(option < 1 || option > 5);
 
 
@@ -64,9 +74,6 @@ public class DummyUser extends Thread{
                         GPXThread gt = new GPXThread();
                         gt.start();
                         gt.join();
-                        //  TODO: Remove this when frontend is ready
-                        if (autorun && autorunNoMoreGPX)
-                            option = 2;
                         break;
                     }
                     case 2: {
@@ -78,14 +85,15 @@ public class DummyUser extends Thread{
                         StatisticsThread statt = new StatisticsThread();
                         statt.start();
                         statt.join();
-                        //  TODO: Remove this when frontend is ready
-                        if (autorun && autorunNoMoreGPX)
-                            finishAutorun = true;
+                        gotNormalStatistics = true;
                         break;
                     } case 4:{
                         SegmentStatisticsThread sstatt = new SegmentStatisticsThread();
                         sstatt.start();
                         sstatt.join();
+                        gotSegmentStatistics = true;
+                        if (autorun && autorunNoMoreGPX && addedSegments && gotNormalStatistics && gotSegmentStatistics)
+                            option = 5;
                         break;
                     } case 5:{
                         break;
@@ -278,10 +286,11 @@ public class DummyUser extends Thread{
         public void run() {
             System.out.println();
             try {
-                /* Find all available GPX files in the unprocessed folder */
+                /* Find all available Segment files in the unprocessed folder */
                 File[] unprocessedFiles = new File(userPath + "unprocessedSeg\\").listFiles();
                 if (unprocessedFiles == null || unprocessedFiles.length == 0) {
                     System.out.println("DummyUser #" + id + " - SegmentThread: no unprocessed Segment files found!\n");
+                    addedSegments = true;
                     return;
                 }
 
@@ -310,7 +319,7 @@ public class DummyUser extends Thread{
                         fileID = getInput();
                     } while (fileID < 0 || fileID > unprocessedFiles.length);
                     fileName = unprocessedFiles[fileID - 1].getName();
-                } else{
+                } else {
                     fileName = unprocessedFiles[0].getName();
                 }
 
@@ -340,9 +349,9 @@ public class DummyUser extends Thread{
                 out.writeObject(buffer);
                 out.flush();
 
-                int ack = (int) in.readObject();
+//                int ack = (int) in.readObject();
 
-                System.out.println("\nDummyUser #" + id + " uploaded segment:!\n");
+                System.out.println("\nDummyUser #" + id + " uploaded segment!\n");
             }catch (UnknownHostException unknownHostException) {
                 System.err.println("DummyUser #" + id + " - SegmentThread: you are trying to connect to an unknown host!");
             } catch (IOException ioException) {
@@ -384,8 +393,28 @@ public class DummyUser extends Thread{
                 out.flush();
 
                 /* Request statistics TODO: ... */
-                Statistics userStatistics = (Statistics) in.readObject();
-                Statistics totalStatistics = (Statistics) in.readObject();
+                ArrayList<HashMap<Integer, IntermediateChunk>> leaderboard = (ArrayList<HashMap<Integer, IntermediateChunk>>) in.readObject();
+                HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = (HashMap<Integer, ArrayList<IntermediateChunk>>) in.readObject();
+
+                System.out.println("\nDummyUser #" + id + " - SegmentStatisticsThread: received statistics!\n");
+
+                for (HashMap<Integer, IntermediateChunk> segment: leaderboard) {
+                    System.out.println("SEGMENT: ");
+                    for (Integer user: segment.keySet()) {
+                        System.out.println("User: " + user + "| Time: " + segment.get(user).getTotalTime());
+                    }
+                    System.out.println();
+                }
+
+                for (Integer segID: segmentsStatistics.keySet()) {
+                    System.out.println("History of segment: "+segID);
+                    System.out.println("History: "+segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
+                    for (IntermediateChunk route: segmentsStatistics.get(segID)) {
+                        System.out.println("Time: "+route.getTotalTime());
+                    }
+                    System.out.println();
+                }
+
 
             }catch (UnknownHostException unknownHostException) {
                 System.err.println("DummyUser #" + id + " - SegmentStatisticsThread: you are trying to connect to an unknown host!");

@@ -3,7 +3,6 @@ package modules;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeSet;
 
 public class Segment {
     private final int segmentID;

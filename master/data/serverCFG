@@ -1,7 +1,7 @@
-workerConnectionPort=13325
-workerInDataPort=23436
-userGPXPort=54322
-userStatisticsPort=54325
-userSegmentPort=43222
-userSegStatisticsPort=22243
+workerConnectionPort=45683
+workerInDataPort=45888
+userGPXPort=20189
+userStatisticsPort=21189
+userSegmentPort=20987
+userSegStatisticsPort=21987
 minWorkers=2

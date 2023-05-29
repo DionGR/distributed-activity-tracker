@@ -1,3 +1,3 @@
 host=localhost
-masterConnectionPort=13325
-masterOutDataPort=23436
+masterConnectionPort=45683
+masterOutDataPort=45888
