@@ -521,6 +521,7 @@ class Master {
             @Override
             public void run() {
                 try{
+                    System.err.println("Segments stored" + segments.size());
                     ArrayList<Waypoint> wps = new ArrayList<>(waypoints);
                     ArrayList<Chunk> chunks = new ArrayList<>();
                     int segmentsNotFound = 0;
@@ -623,7 +624,7 @@ class Master {
                     user = database.initUser(userID);
                 }
 
-                /* Take GPX from User */
+                /* Take Segment from User */
                 StringBuilder buffer;
                 buffer = (StringBuilder) in.readObject();
                 System.out.println("Master - UserSegmentThread for User #" + userID + " - Segment received.");
