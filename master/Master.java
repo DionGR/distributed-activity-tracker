@@ -348,108 +348,6 @@ class Master {
 
     }
 
-    /* */
-    private class UserSegmentThread extends Thread{
-        private final Socket userSegmentSocket;
-        private ObjectOutputStream out;
-        private ObjectInputStream in;
-        private User user;
-
-        public UserSegmentThread(Socket providerSocket){
-            this.userSegmentSocket = providerSocket;
-            this.out = null;
-            this.in = null;
-        }
-
-        @Override
-        public void run(){
-            try{
-                out = new ObjectOutputStream(userSegmentSocket.getOutputStream());
-                in = new ObjectInputStream(userSegmentSocket.getInputStream());
-
-                int userID = (int) in.readObject();
-
-                synchronized (database) {
-                    user = database.initUser(userID);
-                }
-
-                /* Take GPX from User */
-                StringBuilder buffer;
-                buffer = (StringBuilder) in.readObject();
-                System.out.println("Master - UserSegmentThread for User #" + userID + " - Segment received.");
-
-                /* Convert the Segment file into a list of Waypoints */
-                ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
-
-                /* Create and store segment into the Database */
-                Segment segment = new Segment(waypoints);
-
-                synchronized (database) {
-                    database.addSegment(segment, user.getID());
-                }
-            }catch (IOException ioException) {
-                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
-            } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
-            } catch (Exception e) {
-                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
-            } finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (userSegmentSocket != null) userSegmentSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
-//                synchronized (activeGPXUsers){
-//                    activeGPXUsers.remove(user.getID());
-//                }
-                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " shutting down...");
-            }
-        }
-    }
-
-    /* */
-    private class UserSegStatisticsThread extends Thread{
-        private final Socket userSegStatisticsSocket;
-        private ObjectOutputStream out;
-        private ObjectInputStream in;
-        private User user;
-
-        UserSegStatisticsThread(Socket providerSocket) {
-            this.userSegStatisticsSocket = providerSocket;
-            this.out = null;
-            this.in = null;
-        }
-
-        @Override
-        public void run(){
-            try {
-                out = new ObjectOutputStream(userSegStatisticsSocket.getOutputStream());
-                in = new ObjectInputStream(userSegStatisticsSocket.getInputStream());
-
-
-                int userID = (int) in.readObject();
-
-                synchronized (database) {
-                    user = database.initUser(userID);
-                }
-
-                Segment[] segments = user.getSegments(); // get users segments
-
-                out.writeObject(segments);
-                out.flush();
-            }catch (IOException ioException) {
-                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
-            }catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
-            }catch (Exception e) {
-                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
-            }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
-                try { if (userSegStatisticsSocket != null) userSegStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
-                System.out.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
-            }
-        }
-    }
-
     /* Takes a GPX file from a user and splits it into chunks, which are then sent for mapping, and then reduces it */
     private class UserGPXThread extends Thread {
         private final Socket userGPXSocket;
@@ -499,7 +397,6 @@ class Master {
                 this.date = waypoints.get(0).getDate();
                 expectedChunks += segments.size();
 
-
                 /* Find segments */
                 new SegmentFinder().start();
 
@@ -532,6 +429,7 @@ class Master {
                 Route route = new Route(user.getStatistics().getSubmissions() + 1, this.date, waypoints, result.getTotalDistance(), result.getTotalTime(), result.getMeanVelocity(), result.getTotalElevation());
                 synchronized (database) {
                     database.addRoute(route, user.getID());
+                    database.addSegmentResults(returnedSegments, user.getID());
                 }
 
                 /* Send the result to the user */
@@ -691,6 +589,106 @@ class Master {
                 try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
                 try { if (userStatisticsSocket != null) userStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
                 System.out.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
+            }
+        }
+    }
+
+    /* */
+    private class UserSegmentThread extends Thread{
+        private final Socket userSegmentSocket;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+        private User user;
+
+        public UserSegmentThread(Socket providerSocket){
+            this.userSegmentSocket = providerSocket;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+            try{
+                out = new ObjectOutputStream(userSegmentSocket.getOutputStream());
+                in = new ObjectInputStream(userSegmentSocket.getInputStream());
+
+                int userID = (int) in.readObject();
+
+                synchronized (database) {
+                    user = database.initUser(userID);
+                }
+
+                /* Take GPX from User */
+                StringBuilder buffer;
+                buffer = (StringBuilder) in.readObject();
+                System.out.println("Master - UserSegmentThread for User #" + userID + " - Segment received.");
+
+                /* Convert the Segment file into a list of Waypoints */
+                ArrayList<Waypoint> waypoints = GPXParser.parse(buffer);
+
+                /* Create and store segment into the Database */
+                synchronized (database) {
+                    database.initSegment(waypoints, user);
+                }
+            }catch (IOException ioException) {
+                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+            } catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+            } catch (Exception e) {
+                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+            } finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (userSegmentSocket != null) userSegmentSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
+//                synchronized (activeGPXUsers){
+//                    activeGPXUsers.remove(user.getID());
+//                }
+                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " shutting down...");
+            }
+        }
+    }
+
+    /* */
+    private class UserSegStatisticsThread extends Thread{
+        private final Socket userSegStatisticsSocket;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+        private User user;
+
+        UserSegStatisticsThread(Socket providerSocket) {
+            this.userSegStatisticsSocket = providerSocket;
+            this.out = null;
+            this.in = null;
+        }
+
+        @Override
+        public void run(){
+            try {
+                out = new ObjectOutputStream(userSegStatisticsSocket.getOutputStream());
+                in = new ObjectInputStream(userSegStatisticsSocket.getInputStream());
+
+
+                int userID = (int) in.readObject();
+
+                synchronized (database) {
+                    user = database.initUser(userID);
+                }
+
+//                Segment[] segments = user.getSegments(); // get users segments
+
+//                out.writeObject(segments);
+//                out.flush();
+            }catch (IOException ioException) {
+                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+            }catch (ClassNotFoundException classNotFoundException) {
+                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+            }catch (Exception e) {
+                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+            }finally {
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
+                try { if (userSegStatisticsSocket != null) userSegStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
+                System.out.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
             }
         }
     }

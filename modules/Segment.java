@@ -9,9 +9,10 @@ public class Segment {
     private final ArrayList<Waypoint> waypoints;
     private final HashMap<Integer, IntermediateChunk> leaderboard;
 
-    public Segment(ArrayList<Waypoint> waypoints){
+    public Segment(int segmentID, ArrayList<Waypoint> waypoints){
+        this.segmentID = segmentID;
         this.waypoints = waypoints;
-        this.leaderboard = new TreeMap<>()
+        this.leaderboard = new HashMap<>();
     }
 
     public void addIntermediateChunk(IntermediateChunk chunk){

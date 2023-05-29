@@ -1,6 +1,8 @@
 package modules;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+
 
 /* User Class
  *
@@ -15,14 +17,14 @@ public class User {
     private final int id;
     private final Statistics statistics;
     private final ArrayList<Route> routes;
-    private final ArrayList<Segment> segments;
+    private final HashMap<Integer, ArrayList<IntermediateChunk>> segmentStatistics;
 
 
     public User(int id){
         this.id = id;
         this.statistics = new Statistics();
         this.routes = new ArrayList<>();
-        this.segments = new ArrayList<>();
+        this.segmentStatistics = new HashMap<>();
     }
 
     public void addRoute(Route route){
@@ -30,13 +32,19 @@ public class User {
         updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
-    public void addSegment(Segment segment) {
-        segments.add(segment);
+    public void initSegment(Segment segment) {
+        segmentStatistics.put(segment.getSegmentID(), new ArrayList<>());
     }
 
     public void updateUserStatistics(double distance, double time, double elevation){
         statistics.update(true, distance, time, elevation);
     }
+
+    public void updateSegmentHistory(){
+        
+
+    }
+
 
     public int getID(){
         return id;
@@ -45,8 +53,6 @@ public class User {
     public ArrayList<Route> getRoutes(){
         return routes;
     }
-
-    public ArrayList<Segment> getSegments() { return segments; }
 
     public Statistics getStatistics(){
         return statistics;

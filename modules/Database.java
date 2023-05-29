@@ -40,13 +40,27 @@ public class Database {
         totalData.update(hasSubmissions, route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
-    public void addSegment(Segment segment, int userID) {
+    public void addSegmentResults(ArrayList<IntermediateChunk> foundSegments, int userID) {
         /* Find the relevant user */
         User user = users.get(userID);
 
+        /* Add results to user */
+        for (IntermediateChunk foundSegment : foundSegments) {
+            int id = foundSegment.getSegmentID();
+            Segment segment = segments.get(id);
+            segment.addIntermediateChunk(foundSegment);
+
+        }
+
+
+    }
+
+    public void initSegment(ArrayList<Waypoint> waypoints, User user) {
+        Segment segment = new Segment(segments.size(), waypoints);
+
         /* Add segment to database and user */
         segments.add(segment);
-        user.addSegment(segment);
+        user.initSegment(segment);
     }
 
     public Statistics getTotalData() {
