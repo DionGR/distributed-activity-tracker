@@ -40,8 +40,14 @@ public class User {
         statistics.update(true, distance, time, elevation);
     }
 
-    public void updateSegmentHistory(){
-        
+    public void updateSegmentHistory(ArrayList<IntermediateChunk> foundSegments){
+        int segmentID;
+        for(IntermediateChunk segment: foundSegments){
+            segmentID = segment.getSegmentID();
+            ArrayList<IntermediateChunk> segmentHistory = segmentStatistics.get(segmentID);
+            if(segmentHistory != null) segmentHistory.add(segment);
+        }
+
 
     }
 
