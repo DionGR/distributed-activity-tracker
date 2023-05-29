@@ -1,5 +1,6 @@
 package modules;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeSet;
@@ -7,7 +8,7 @@ import java.util.TreeSet;
 public class Segment {
     private final int segmentID;
     private final ArrayList<Waypoint> waypoints;
-    private final HashMap<Integer, IntermediateChunk> leaderboard;
+    private final HashMap<Integer, IntermediateChunk> leaderboard; //key: userID
 
     public Segment(int segmentID, ArrayList<Waypoint> waypoints){
         this.segmentID = segmentID;

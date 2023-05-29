@@ -40,6 +40,10 @@ public class User {
         statistics.update(true, distance, time, elevation);
     }
 
+    /*foundSegments: segments found in user's GPX file
+    * segmentStatistics: user's registered segments
+    * updates registered only segments in hashmap
+    * */
     public void updateSegmentHistory(ArrayList<IntermediateChunk> foundSegments){
         int segmentID;
         for(IntermediateChunk segment: foundSegments){

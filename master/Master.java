@@ -65,6 +65,9 @@ class Master {
             scheduler.start();
             userGPXHandler.start();
             userStatisticsHandler.start();
+            userSegmentHandler.start();
+            userSegStatisticHandler.start();
+
         } catch (InterruptedException interruptedException) {
             System.err.println("Master - bootServer - InterruptedERROR while booting: " + interruptedException.getMessage());
             throw new RuntimeException("Master - bootServer - InterruptedERROR: " + interruptedException.getMessage());

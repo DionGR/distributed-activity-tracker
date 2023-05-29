@@ -2,6 +2,7 @@ package modules;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 /* Database Class
  *
@@ -44,7 +45,7 @@ public class Database {
         /* Find the relevant user */
         User user = users.get(userID);
 
-        /* Add results to user */
+        /* Add results to each segment's leaderboard */
         for (IntermediateChunk foundSegment : foundSegments) {
             int id = foundSegment.getSegmentID();
             Segment segment = segments.get(id);
@@ -67,9 +68,9 @@ public class Database {
         return totalData;
     }
 
-    public ArrayList<Segment> getSegments() {
-        return segments;
-    }
+    public ArrayList<Segment> getSegments() { return segments; }
+
+
 
 }
 
