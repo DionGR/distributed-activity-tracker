@@ -529,7 +529,9 @@ class Master {
 
                     for (int i = 0; i < segments.size(); i++){
                         ArrayList<Waypoint> segment = segments.get(i).getWaypoints();
-                        int segmentStartIndex = indexOfSubList(wps, segment);
+                        System.err.println("Segment size " + segment.size() +"| Wps size "+ waypoints.size());
+
+                        int segmentStartIndex = indexOfSubList(waypoints, segment);
                         if (segmentStartIndex != -1) {
                             ArrayList<Waypoint> foundSegment = new ArrayList<>(wps.subList(segmentStartIndex, segmentStartIndex + segment.size()));
                             if (foundSegment.equals(segment)) {
