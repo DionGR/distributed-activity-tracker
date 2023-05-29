@@ -1,7 +1,7 @@
 package modules;
 
 import java.util.ArrayList;
-import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.TreeSet;
 
 public class Segment {
@@ -15,10 +15,16 @@ public class Segment {
     }
 
     public void addIntermediateChunk(IntermediateChunk chunk){
-        leaderboard.put(chunk.getUserID(), chunk);
+        int userid = chunk.getUserID();
+        IntermediateChunk previousResult = leaderboard.get(userid);
+        if(previousResult != null)
+            if(previousResult.compareTo(chunk) > 0) leaderboard.put(userid, chunk);
+        else leaderboard.put(userid,chunk);
     }
 
     public ArrayList<Waypoint> getWaypoints() {
         return waypoints;
     }
+
+    public Integer getSegmentID() { return segmentID; }
 }
