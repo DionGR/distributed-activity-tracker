@@ -1,6 +1,5 @@
 package modules;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -21,12 +20,9 @@ public class Segment {
         if (previousResult != null){
             if (previousResult.compareTo(chunk) > 0)
                 leaderboard.put(userid, chunk);
-
-        System.err.println("SEGMENT: if");
         }
         else {
             leaderboard.put(userid,chunk);
-            System.err.println("SEGMENT: ADDED_else");
         }
     }
 

@@ -426,7 +426,7 @@ class Master {
                         returnedChunks.add(c);
                     }
                 }
-                System.err.println("Size of returnedSeg: "+returnedSegments.size());
+                //System.err.println("Size of returnedSeg: "+returnedSegments.size());
 
                 /* Reduce the results */
                 IntermediateChunk result = reduce(returnedChunks);
@@ -443,6 +443,7 @@ class Master {
                 out.writeObject(result);
                 out.flush();
                 System.out.println("Master - UserGPXThread for DummyUser #" + userID + " sent final result to user.");
+
             } catch (IOException ioException) {
                 System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
             } catch (ClassNotFoundException classNotFoundException) {
@@ -528,7 +529,6 @@ class Master {
 
                     for (int i = 0; i < segments.size(); i++){
                         ArrayList<Waypoint> segment = segments.get(i).getWaypoints();
-                        System.err.println("Segment size " + segment.size() +"| Wps size "+ waypoints.size());
 
                         int segmentStartIndex = indexOfSubList(waypoints, segment);
                         if (segmentStartIndex != -1) {
@@ -688,20 +688,19 @@ class Master {
 
                 // user's history of registered segments
                 HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = new HashMap<>(user.getSegmentsStatistics());
-//                for (Integer segID: segmentsStatistics.keySet()) {
-//                    System.out.println("History of segment: " + segID);
-//                    System.err.println("History: " + segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
-//                }
 
                 // List of HashMaps: each HashMap is a registered segment's leaderboard
                 ArrayList<HashMap<Integer, IntermediateChunk>> leaderboardSegments = new ArrayList<>();
                 for (Integer segmentID: segmentsStatistics.keySet()) {
-                    leaderboardSegments.add(leaderboards.get(segmentID).getLeaderboard());
+                    //leaderboardSegments.add(leaderboards.get(segmentID).getLeaderboard());
+                    leaderboardSegments.add(sorter(leaderboards.get(segmentID).getLeaderboard()));
                 }
+
 
                 out.writeObject(leaderboardSegments);
                 out.writeObject(segmentsStatistics);
                 out.flush();
+
             }catch (IOException ioException) {
                 System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
             }catch (ClassNotFoundException classNotFoundException) {
@@ -714,6 +713,24 @@ class Master {
                 try { if (userSegStatisticsSocket != null) userSegStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
                 System.out.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
             }
+        }
+
+        private HashMap<Integer, IntermediateChunk> sorter(HashMap<Integer, IntermediateChunk> leaderboard) {
+            ArrayList<Map.Entry<Integer, IntermediateChunk>> listofEntries = new ArrayList<>(leaderboard.entrySet());
+            Collections.sort(listofEntries, new Comparator<Map.Entry<Integer, IntermediateChunk>>() {
+                @Override
+                public int compare(Map.Entry<Integer, IntermediateChunk> o1, Map.Entry<Integer, IntermediateChunk> o2) {
+                    return o1.getValue().compareTo(o2.getValue());
+                }
+            });
+
+            HashMap<Integer, IntermediateChunk> sortedMap = new LinkedHashMap<>(listofEntries.size());
+
+            for (Map.Entry<Integer, IntermediateChunk> entry : listofEntries) {
+                sortedMap.put(entry.getKey(), entry.getValue());
+            }
+
+            return sortedMap;
         }
     }
 

@@ -399,23 +399,34 @@ public class DummyUser extends Thread{
 
                 System.out.println("\nDummyUser #" + id + " - SegmentStatisticsThread: received statistics!\n");
 
+                // Print Leaderboard
+                StringBuilder s = new StringBuilder();
+                s.append("DummyUser #").append(id).append(" - Leaderboard\n");
                 for (HashMap<Integer, IntermediateChunk> segment: leaderboard) {
-                    System.out.println("SEGMENT: ");
-                    System.err.println("keyyyset: "+segment.keySet().size());
-                    for (Integer user: segment.keySet()) {
-                        System.out.println("User: " + user + "| Time: " + segment.get(user).getTotalTime());
+                    int segID;
+                    if (!segment.isEmpty()) {
+                        segID = segment.get(segment.keySet().iterator().next()).getSegmentID();
                     }
-                    System.out.println();
-                }
+                    else continue;
+                    s.append("\tSegment #").append(segID).append("\n");
 
-                for (Integer segID: segmentsStatistics.keySet()) {
-                    System.out.println("History of segment: "+segID);
-                    //System.out.println("History: "+segmentsStatistics.get(segID)); // !!!!!!!!!!!!!!!!!!!!
-                    for (IntermediateChunk route: segmentsStatistics.get(segID)) {
-                        System.out.println("Time: "+route.getTotalTime());
+                    for (Integer userID: segment.keySet()) {
+                        s.append("\t\tUser #").append(userID).append(String.format("| Time: %5.2f min\n", (double) segment.get(userID).getTotalTime()/1000/60));
                     }
-                    System.out.println();
+                    s.append("\n");
                 }
+                System.out.println(s);
+
+                // Print Segment Statistics
+                s = new StringBuilder();
+                for (Integer segID: segmentsStatistics.keySet()) {
+                    s.append("DummyUser #").append(id).append(" - History of segmentID #").append(segID).append("\n");
+                    for (IntermediateChunk route: segmentsStatistics.get(segID)) {
+                        s.append(String.format("\tTime: %5.2f min\n", (double)route.getTotalTime()/1000/60));
+                    }
+                    s.append("\n");
+                }
+                System.out.println(s);
 
 
             }catch (UnknownHostException unknownHostException) {

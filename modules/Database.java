@@ -47,17 +47,12 @@ public class Database {
         /* Find the relevant user */
         User user = users.get(userID);
 
-
-
         /* Add results to each segment's leaderboard */
         for (IntermediateChunk foundSegment : foundSegments) {
             int id = foundSegment.getSegmentID();
             Segment segment = segments.get(id);
-            System.err.println("IN DB SEGMENT ID: " + id+ " SEGMENT OBJ: " + segment);
             segment.addIntermediateChunk(foundSegment);
         }
-
-
 
         /* Assign update of segment history to User class */
         user.updateSegmentHistory(foundSegments);
@@ -76,8 +71,6 @@ public class Database {
     }
 
     public ArrayList<Segment> getSegments() { return segments; }
-
-
 
 }
 

@@ -51,7 +51,6 @@ public class User {
             ArrayList<IntermediateChunk> segmentHistory = segmentStatistics.get(segmentID);
             if(segmentHistory != null){
                 segmentStatistics.get(segmentID).add(segment); //i.e. User is interested in this segment (segment history exists for this segment)
-                System.err.println("ADDED +1");
             }
         }
     }
