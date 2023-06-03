@@ -1,5 +1,5 @@
-package master;
-import modules.*;
+package app.backend.master;
+import app.backend.modules.*;
 
 import java.lang.reflect.Array;
 import java.net.*;
@@ -82,7 +82,7 @@ class Master {
         FileReader reader = null;
         try {
             /* Set configurations */
-            reader = new FileReader(System.getProperty("user.dir") + "\\master\\data\\serverCFG");
+            reader = new FileReader(System.getProperty("user.dir") + "\\app\\backend\\master\\data\\serverCFG");
             Properties properties = new Properties();
             properties.load(reader);
 
@@ -111,6 +111,8 @@ class Master {
         System.err.println("Master | [PORT] Worker Data: " + workerInDataPort);
         System.err.println("Master | [PORT] User GPX: " + userGPXPort);
         System.err.println("Master | [PORT] User Statistics: " + userStatisticsPort);
+        System.err.println("Master | [PORT] User Segment: " + userSegmentPort);
+        System.err.println("Master | [PORT] User Segment's Statistics: " + userSegStatisticsPort);
         System.err.println("Master | Initialization complete |");
     }
 

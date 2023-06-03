@@ -1,7 +1,7 @@
-package worker;
-import modules.Chunk;
-import modules.IntermediateChunk;
-import modules.Waypoint;
+package app.backend.worker;
+import app.backend.modules.Chunk;
+import app.backend.modules.IntermediateChunk;
+import app.backend.modules.Waypoint;
 
 import java.net.*;
 import java.io.*;
@@ -145,7 +145,7 @@ public class Worker extends Thread{
     private void initDefaults() {
         FileReader cfgReader = null;
         try {
-            cfgReader = new FileReader(System.getProperty("user.dir") + "\\worker\\data\\workerCFG");
+            cfgReader = new FileReader(System.getProperty("user.dir") + "\\app\\backend\\worker\\data\\workerCFG");
             Properties properties = new Properties();
             properties.load(cfgReader);
 

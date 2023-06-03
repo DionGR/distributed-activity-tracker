@@ -1,7 +1,7 @@
-package user;
-import modules.IntermediateChunk;
-import modules.Segment;
-import modules.Statistics;
+package dummyuser;
+import app.backend.modules.IntermediateChunk;
+import app.backend.modules.Segment;
+import app.backend.modules.Statistics;
 
 import java.io.*;
 import java.net.*;
@@ -29,7 +29,7 @@ public class DummyUser extends Thread{
 
     DummyUser(int id){
         this.id = id;
-        this.userPath = System.getProperty("user.dir") + "\\user\\data\\user" + id + "\\";
+        this.userPath = System.getProperty("user.dir") + "\\dummyuser\\data\\user" + id + "\\";
     }
 
     @Override
@@ -450,7 +450,7 @@ public class DummyUser extends Thread{
         try {
             // TODO: Move this under after autorun is removed
             /* Read the host and port from the config file */
-            FileReader cfgReader = new FileReader(System.getProperty("user.dir") + "\\user\\data\\userCFG");
+            FileReader cfgReader = new FileReader(System.getProperty("user.dir") + "\\dummyuser\\data\\userCFG");
             Properties properties = new Properties();
             properties.load(cfgReader);
 

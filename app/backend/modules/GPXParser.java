@@ -1,4 +1,4 @@
-package modules;
+package app.backend.modules;
 
 import java.util.Date;
 import java.util.ArrayList;
