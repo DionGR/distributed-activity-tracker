@@ -23,11 +23,11 @@ import java.util.Scanner;
 public class DummyUser extends Thread{
     private String host;
     private final String userPath;
-    private final int id;
+    private final String id;
     private int gpxRequestPort, statsRequestPort, segRequestPort, segStatsRequestPort;
     private boolean autorun, autorunNoMoreGPX, addedSegments, gotNormalStatistics, gotSegmentStatistics = false;
 
-    DummyUser(int id){
+    DummyUser(String id){
         this.id = id;
         this.userPath = System.getProperty("user.dir") + "\\dummyuser\\data\\user" + id + "\\";
     }
@@ -554,7 +554,7 @@ public class DummyUser extends Thread{
         /* Create and start all users */
         DummyUser[] dummyUsers = new DummyUser[numUsers];
         for (int i = 1; i <= numUsers; i++) {
-            dummyUsers[i-1] = new DummyUser(i);
+            dummyUsers[i-1] = new DummyUser("user" + i);
             dummyUsers[i-1].start();
         }
 

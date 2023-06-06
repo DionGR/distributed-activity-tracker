@@ -14,13 +14,13 @@ import java.util.HashMap;
 
 
 public class User {
-    private final int id;
+    private final String id;
     private final Statistics statistics;
     private final ArrayList<Route> routes;
     private final HashMap<Integer, ArrayList<IntermediateChunk>> segmentStatistics;
 
 
-    public User(int id){
+    public User(String id){
         this.id = id;
         this.statistics = new Statistics();
         this.routes = new ArrayList<>();
@@ -59,7 +59,7 @@ public class User {
         return segmentStatistics;
     }
 
-    public int getID(){
+    public String getID(){
         return id;
     }
 
