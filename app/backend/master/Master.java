@@ -1,7 +1,6 @@
 package app.backend.master;
 import app.backend.modules.*;
 
-import java.lang.reflect.Array;
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -25,7 +24,7 @@ class Master {
     private final Database database;
     private final ArrayList<Chunk[]> dataForProcessing;
     private final ArrayList<ObjectOutputStream> workerConnectionOuts;
-    private final HashMap<Integer, UserGPXThread> activeGPXUsers;
+    private final HashMap<String, UserGPXThread> activeGPXUsers;
 
 
     Master(){
@@ -383,7 +382,7 @@ class Master {
                 in = new ObjectInputStream(userGPXSocket.getInputStream());
 
                 /* DummyUser registration */
-                int userID = (int) in.readObject();
+                String userID = (String) in.readObject();
 
                 synchronized (activeGPXUsers) {
                     activeGPXUsers.put(userID, this);
@@ -577,7 +576,7 @@ class Master {
                 in = new ObjectInputStream(userStatisticsSocket.getInputStream());
 
                 // DummyUser registration
-                int userID = (int) in.readObject();
+                String userID = (String) in.readObject();
 
                 Statistics totalData;
                 synchronized (database) {
@@ -622,7 +621,7 @@ class Master {
                 out = new ObjectOutputStream(userSegmentSocket.getOutputStream());
                 in = new ObjectInputStream(userSegmentSocket.getInputStream());
 
-                int userID = (int) in.readObject();
+                String userID = (String) in.readObject();
 
                 synchronized (database) {
                     user = database.initUser(userID);
@@ -679,27 +678,36 @@ class Master {
                 in = new ObjectInputStream(userSegStatisticsSocket.getInputStream());
 
 
-                int userID = (int) in.readObject();
+                String userID = (String) in.readObject();
 
 
-                ArrayList<Segment> leaderboards;
+                ArrayList<Segment> segments;
                 synchronized (database) {
                     user = database.initUser(userID);
-                    leaderboards = database.getSegments();
+                    segments = database.getSegments();
                 }
 
                 // user's history of registered segments
                 HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = new HashMap<>(user.getSegmentsStatistics());
 
-                // List of HashMaps: each HashMap is a registered segment's leaderboard
-                ArrayList<HashMap<Integer, IntermediateChunk>> leaderboardSegments = new ArrayList<>();
-                for (Integer segmentID: segmentsStatistics.keySet()) {
-                    //leaderboardSegments.add(leaderboards.get(segmentID).getLeaderboard());
-                    leaderboardSegments.add(sorter(leaderboards.get(segmentID).getLeaderboard()));
+                // Get the leaderboard for each segment in the user's history
+                ArrayList<HashMap<String, IntermediateChunk>> leaderboard = new ArrayList<>();
+                for (Segment segment : segments) {
+                    leaderboard.add(segment.getLeaderboard());
+                }
+
+                // Sort the leaderboard for each segment based on intermediatechunk time and save it
+                for (HashMap<String, IntermediateChunk> segmentLeaderboard : leaderboard) {
+                    ArrayList<IntermediateChunk> sortedLeaderboard = new ArrayList<>(segmentLeaderboard.values());
+                    Collections.sort(sortedLeaderboard);
+                    segmentLeaderboard.clear();
+                    for (IntermediateChunk intermediateChunk : sortedLeaderboard) {
+                        segmentLeaderboard.put(intermediateChunk.getUserID(), intermediateChunk);
+                    }
                 }
 
 
-                out.writeObject(leaderboardSegments);
+                out.writeObject(leaderboard);
                 out.writeObject(segmentsStatistics);
                 out.flush();
 

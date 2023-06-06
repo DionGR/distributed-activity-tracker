@@ -13,16 +13,17 @@ import java.util.ArrayList;
 
 
 public class Chunk implements Serializable {
-    private final int userID, segmentID;
+    private final String userID;
+    private final int segmentID;
     private final ArrayList<Waypoint> data;
 
-    public Chunk(int userID, int segmentID, ArrayList<Waypoint> data){
+    public Chunk(String userID, int segmentID, ArrayList<Waypoint> data){
         this.userID = userID;
         this.segmentID = segmentID;
         this.data = data;
     }
 
-    public int getUserID() {
+    public String getUserID() {
         return userID;
     }
 

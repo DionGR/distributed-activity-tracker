@@ -15,7 +15,7 @@ import java.util.Set;
  */
 
 public class Database {
-    private final HashMap<Integer, User> users;
+    private final HashMap<String, User> users;
     private final Statistics totalData;
     private final ArrayList<Segment> segments;
 
@@ -25,13 +25,13 @@ public class Database {
         segments = new ArrayList<>();
     }
 
-    public User initUser(int id){
+    public User initUser(String id){
         if (users.containsKey(id)) return users.get(id);
         users.put(id, new User(id));
         return users.get(id);
     }
 
-    public void addRoute(Route route, int userID){
+    public void addRoute(Route route, String userID){
         /* Find the relevant user */
         User user = users.get(userID);
 
@@ -43,7 +43,7 @@ public class Database {
         totalData.update(hasSubmissions, route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
-    public void addSegmentResults(ArrayList<IntermediateChunk> foundSegments, int userID) {
+    public void addSegmentResults(ArrayList<IntermediateChunk> foundSegments, String userID) {
         /* Find the relevant user */
         User user = users.get(userID);
 
@@ -60,6 +60,15 @@ public class Database {
 
     public void initSegment(ArrayList<Waypoint> waypoints, User user) {
         Segment segment = new Segment(segments.size(), waypoints);
+
+        /* Check if segment already exists */
+        for (Segment existingSegment: segments) {
+            if (existingSegment.equals(segment)) {
+                if (user.getSegmentsStatistics().containsKey(existingSegment.getSegmentID())) return;
+                user.initSegment(existingSegment);
+                return;
+            }
+        }
 
         /* Add segment to database and user */
         segments.add(segment);

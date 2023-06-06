@@ -13,7 +13,7 @@ import java.util.Date;
 
 
 public class IntermediateChunk implements Serializable, Comparable {
-    private final int userID;
+    private final String userID;
     private int segmentID;
     private final double totalDistance;
     private final double meanVelocity;
@@ -21,7 +21,7 @@ public class IntermediateChunk implements Serializable, Comparable {
     private final long totalTime;
     private final Date date;
 
-    public IntermediateChunk(int userID, int segmentID, double totalDistance, double meanVelocity, double totalElevation, long totalTime, Date date){
+    public IntermediateChunk(String userID, int segmentID, double totalDistance, double meanVelocity, double totalElevation, long totalTime, Date date){
         this.userID = userID;
         this.segmentID = segmentID;
         this.totalDistance = totalDistance;
@@ -44,7 +44,7 @@ public class IntermediateChunk implements Serializable, Comparable {
 //
 //    }
 
-   public int getUserID() {
+   public String getUserID() {
         return userID;
     }
 
