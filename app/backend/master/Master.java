@@ -408,7 +408,7 @@ class Master {
 
                 /* Split the waypoints into chunks and send them for Mapping */
                 addDataForProcessing(splitData(new ArrayList<>(waypoints)));
-                System.out.println("Master - UserGPXThread for DummyUser #" + userID + " waiting for data from worker...");
+                System.out.println("Master - UserGPXThread for DummyUser " + userID + " waiting for data from worker...");
 
                 synchronized (intermediateResults) {
                     while (intermediateResults.size() < expectedChunks) {
@@ -443,22 +443,22 @@ class Master {
                 /* Send the result to the user */
                 out.writeObject(result);
                 out.flush();
-                System.out.println("Master - UserGPXThread for DummyUser #" + userID + " sent final result to user.");
+                System.out.println("Master - UserGPXThread for DummyUser " + userID + " sent final result to user.");
 
             } catch (IOException ioException) {
-                System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+                System.err.println("Master - UserGPXThread for DummyUser " + user.getID() + " - IOERROR: " + ioException.getMessage());
             } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("Master - UserGPXThread for DummyUser " + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
-                System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                System.err.println("Master - UserGPXThread for DummyUser " + user.getID() + " - ERROR: " + e.getMessage());
             } finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (userGPXSocket != null) userGPXSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserGPXThread for DummyUser #" + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserGPXThread for DummyUser " + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserGPXThread for DummyUser " + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (userGPXSocket != null) userGPXSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserGPXThread for DummyUser " + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
                 synchronized (activeGPXUsers){
                     activeGPXUsers.remove(user.getID());
                 }
-                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " shutting down...");
+                System.out.println("Master - UserGPXThread for DummyUser " + user.getID() + " shutting down...");
             }
         }
 
@@ -505,7 +505,7 @@ class Master {
 
         /* Reduces the intermediate results */
         private IntermediateChunk reduce(ArrayList<IntermediateChunk> returnedChunks) {
-            System.out.println("Master - UserGPXThread for DummyUser #" + user.getID()  + " reducing data for user...");
+            System.out.println("Master - UserGPXThread for DummyUser " + user.getID()  + " reducing data for user...");
 
             double totalDistance = 0;
             double totalElevation = 0;
@@ -535,7 +535,7 @@ class Master {
                         if (segmentStartIndex != -1) {
                             ArrayList<Waypoint> foundSegment = new ArrayList<>(waypoints.subList(segmentStartIndex, segmentStartIndex + segment.size()));
                             if (foundSegment.equals(segment)) {
-                                System.err.println("Master - UserGPXThread" + " for DummyUser #" + user.getID() + " found segment #" + i + " in user's GPX.");
+                                System.err.println("Master - UserGPXThread" + " for DummyUser " + user.getID() + " found segment #" + i + " in user's GPX.");
                                 chunks.add(new Chunk(user.getID(), i, foundSegment));
                             }else {
                                 segmentsNotFound += 1;
@@ -550,7 +550,7 @@ class Master {
                     addDataForProcessing(foundSegments);
                     expectedChunks -= segmentsNotFound;
                 }catch (Exception e){
-                    System.err.println("Master - SegmentFinder for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                    System.err.println("Master - SegmentFinder for DummyUser " + user.getID() + " - ERROR: " + e.getMessage());
                 }
             }
         }
@@ -588,16 +588,16 @@ class Master {
                 out.writeObject(totalData);            // Send the total statistics from all users
                 out.flush();
             }catch (IOException ioException) {
-                    System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+                    System.err.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " - IOERROR: " + ioException.getMessage());
             }catch (ClassNotFoundException classNotFoundException) {
-                    System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+                    System.err.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
             }catch (Exception e) {
-                    System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                    System.err.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " - ERROR: " + e.getMessage());
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
-                try { if (userStatisticsSocket != null) userStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
-                System.out.println("Master - UserStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
+                try { if (userStatisticsSocket != null) userStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
+                System.out.println("Master - UserStatisticsThread for DummyUser " + user.getID() + " shutting down...");
             }
         }
     }
@@ -641,19 +641,19 @@ class Master {
                     database.initSegment(waypoints, user);
                 }
             }catch (IOException ioException) {
-                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+                System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - IOERROR: " + ioException.getMessage());
             } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
-                System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR: " + e.getMessage());
             } finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (userSegmentSocket != null) userSegmentSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser #" + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (userSegmentSocket != null) userSegmentSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
 //                synchronized (activeGPXUsers){
 //                    activeGPXUsers.remove(user.getID());
 //                }
-                System.out.println("Master - UserGPXThread for DummyUser #" + user.getID() + " shutting down...");
+                System.out.println("Master - UserGPXThread for DummyUser " + user.getID() + " shutting down...");
             }
         }
     }
@@ -691,52 +691,43 @@ class Master {
                 HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = new HashMap<>(user.getSegmentsStatistics());
 
                 // Get the leaderboard for each segment in the user's history
-                ArrayList<HashMap<String, IntermediateChunk>> leaderboard = new ArrayList<>();
-                for (Segment segment : segments) {
-                    leaderboard.add(segment.getLeaderboard());
-                }
-
-                // Sort the leaderboard for each segment based on intermediatechunk time and save it
-                for (HashMap<String, IntermediateChunk> segmentLeaderboard : leaderboard) {
-                    ArrayList<IntermediateChunk> sortedLeaderboard = new ArrayList<>(segmentLeaderboard.values());
-                    Collections.sort(sortedLeaderboard);
-                    segmentLeaderboard.clear();
-                    for (IntermediateChunk intermediateChunk : sortedLeaderboard) {
-                        segmentLeaderboard.put(intermediateChunk.getUserID(), intermediateChunk);
-                    }
+                ArrayList<HashMap<String, IntermediateChunk>> leaderboardSegments = new ArrayList<>();
+                for (Integer segmentID: segmentsStatistics.keySet()) {
+                    //leaderboardSegments.add(leaderboards.get(segmentID).getLeaderboard());
+                    leaderboardSegments.add(sorter(segments.get(segmentID).getLeaderboard()));
                 }
 
 
-                out.writeObject(leaderboard);
+                out.writeObject(leaderboardSegments);
                 out.writeObject(segmentsStatistics);
                 out.flush();
 
             }catch (IOException ioException) {
-                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR: " + ioException.getMessage());
+                System.err.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " - IOERROR: " + ioException.getMessage());
             }catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " - CASTERROR: " + classNotFoundException.getMessage());
             }catch (Exception e) {
-                System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - ERROR: " + e.getMessage());
+                System.err.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " - ERROR: " + e.getMessage());
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
-                try { if (userSegStatisticsSocket != null) userSegStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
-                System.out.println("Master - UserSegStatisticsThread for DummyUser #" + user.getID() + " shutting down...");
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " - IOERROR while closing input stream: " + ioException.getMessage());}
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " - IOERROR while closing output stream: " + ioException.getMessage());}
+                try { if (userSegStatisticsSocket != null) userSegStatisticsSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " - IOERROR while closing userStatisticsSocket: " + ioException.getMessage());}
+                System.out.println("Master - UserSegStatisticsThread for DummyUser " + user.getID() + " shutting down...");
             }
         }
 
-        private HashMap<Integer, IntermediateChunk> sorter(HashMap<Integer, IntermediateChunk> leaderboard) {
-            ArrayList<Map.Entry<Integer, IntermediateChunk>> listofEntries = new ArrayList<>(leaderboard.entrySet());
-            Collections.sort(listofEntries, new Comparator<Map.Entry<Integer, IntermediateChunk>>() {
+        private HashMap<String, IntermediateChunk> sorter(HashMap<String, IntermediateChunk> leaderboard) {
+            ArrayList<Map.Entry<String, IntermediateChunk>> listofEntries = new ArrayList<>(leaderboard.entrySet());
+            Collections.sort(listofEntries, new Comparator<Map.Entry<String, IntermediateChunk>>() {
                 @Override
-                public int compare(Map.Entry<Integer, IntermediateChunk> o1, Map.Entry<Integer, IntermediateChunk> o2) {
+                public int compare(Map.Entry<String, IntermediateChunk> o1, Map.Entry<String, IntermediateChunk> o2) {
                     return o1.getValue().compareTo(o2.getValue());
                 }
             });
 
-            HashMap<Integer, IntermediateChunk> sortedMap = new LinkedHashMap<>(listofEntries.size());
+            HashMap<String, IntermediateChunk> sortedMap = new LinkedHashMap<>(listofEntries.size());
 
-            for (Map.Entry<Integer, IntermediateChunk> entry : listofEntries) {
+            for (Map.Entry<String, IntermediateChunk> entry : listofEntries) {
                 sortedMap.put(entry.getKey(), entry.getValue());
             }
 

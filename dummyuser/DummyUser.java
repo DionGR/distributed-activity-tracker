@@ -29,7 +29,7 @@ public class DummyUser extends Thread{
 
     DummyUser(String id){
         this.id = id;
-        this.userPath = System.getProperty("user.dir") + "\\dummyuser\\data\\user" + id + "\\";
+        this.userPath = System.getProperty("user.dir") + "\\dummyuser\\data\\" + id + "\\";
     }
 
     @Override
@@ -62,7 +62,7 @@ public class DummyUser extends Thread{
                         break;
                     }
 
-                    System.out.print("DummyUser #" + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
+                    System.out.print("DummyUser " + id + ": 1.Send GPX, 2.Send Segment, 3.Request General Statistics, 4. Request Segment Statistics\n\t-> ");
                     option = getInput();
                 }while(option < 1 || option > 5);
 
@@ -102,9 +102,9 @@ public class DummyUser extends Thread{
             }while (option != 5);
         }
         catch (Exception e) {
-            System.err.println("DummyUser #" + this.id + " - ERROR: " + e.getMessage());
+            System.err.println("DummyUser " + this.id + " - ERROR: " + e.getMessage());
         }finally {
-            System.err.println("DummyUser #" + this.id + " - exiting...");
+            System.err.println("DummyUser " + this.id + " - exiting...");
         }
     }
 
@@ -126,7 +126,7 @@ public class DummyUser extends Thread{
                 /* Find all available GPX files in the unprocessed folder */
                 File[] unprocessedFiles = new File(userPath + "unprocessed\\").listFiles();
                 if (unprocessedFiles == null || unprocessedFiles.length == 0) {
-                    System.out.println("DummyUser #" + id + " - GPXThread: no unprocessed GPX files found!\n");
+                    System.out.println("DummyUser " + id + " - GPXThread: no unprocessed GPX files found!\n");
                     autorunNoMoreGPX = true; // TODO: Remove this when frontend is ready
                     return;
                 }
@@ -180,7 +180,7 @@ public class DummyUser extends Thread{
                     buffer.append(line);
                 }
                 // Close gpx file
-                try { if (br != null) br.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing gpx file: " + ioException.getMessage()); }
+                try { if (br != null) br.close(); } catch (IOException ioException) {System.err.println("DummyUser " + id + " - GPXThread IOERROR while closing gpx file: " + ioException.getMessage()); }
 
                 /* Send the file to the server */
                 out.writeObject(buffer);
@@ -194,24 +194,24 @@ public class DummyUser extends Thread{
                 BufferedWriter bw = new BufferedWriter(new FileWriter(resultFile, true));
                 bw.append(result.toString()).append("\n");
                 // Close results file
-                try { if (bw != null) bw.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing results file: " + ioException.getMessage()); };
+                try { if (bw != null) bw.close(); } catch (IOException ioException) {System.err.println("DummyUser " + id + " - GPXThread IOERROR while closing results file: " + ioException.getMessage()); };
 
                 /* Print the received result from server */
-                System.out.println("\nDummyUser #" + id + " received GPX result: " + result + "\n");
-                System.out.println("DummyUser #" + id + " - segments found in GPX file: " + result.getSegmentID() + "\n");
+                System.out.println("\nDummyUser " + id + " received GPX result: " + result + "\n");
+                System.out.println("DummyUser " + id + " - segments found in GPX file: " + result.getSegmentID() + "\n");
 
             }catch (UnknownHostException unknownHostException) {
-                System.err.println("DummyUser #" + id + " - GPXThread: you are trying to connect to an unknown host!");
+                System.err.println("DummyUser " + id + " - GPXThread: you are trying to connect to an unknown host!");
             } catch (IOException ioException) {
-                System.err.println("DummyUser #" + id + " - GPXThread IOERROR: " + ioException.getMessage());
+                System.err.println("DummyUser " + id + " - GPXThread IOERROR: " + ioException.getMessage());
             } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("DummyUser #" + id + " - GPXThread CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("DummyUser " + id + " - GPXThread CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
-                System.err.println("DummyUser #" + id + " - GPXThread ERROR: " + e.getMessage());
+                System.err.println("DummyUser " + id + " - GPXThread ERROR: " + e.getMessage());
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (gpxSocket != null) gpxSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - GPXThread IOERROR while closing socket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - GPXThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - GPXThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (gpxSocket != null) gpxSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - GPXThread IOERROR while closing socket: " + ioException.getMessage()); }
             }
         }
     }
@@ -251,23 +251,23 @@ public class DummyUser extends Thread{
                 double eleDiff = userStatistics.getTotalElevation() * 100 / totalStatistics.getAvgElevation() - 100;
 
                 /* GUI - Print received statistics from server */
-                System.out.println("DummyUser #" + id + " received statistics: " + userStatistics);
-                System.out.println("DummyUser #" + id + " received total statistics: " + totalStatistics);
-                System.out.println("DummyUser #" + id + " compared to all users: Time Difference " + String.format("%.2f", timeDiff) + "%" + " | Distance Difference: " + String.format("%.2f", distDiff) + "%" + " | Elevation Difference: " + String.format("%.2f", eleDiff) + "%");
+                System.out.println("DummyUser " + id + " received statistics: " + userStatistics);
+                System.out.println("DummyUser " + id + " received total statistics: " + totalStatistics);
+                System.out.println("DummyUser " + id + " compared to all users: Time Difference " + String.format("%.2f", timeDiff) + "%" + " | Distance Difference: " + String.format("%.2f", distDiff) + "%" + " | Elevation Difference: " + String.format("%.2f", eleDiff) + "%");
                 System.out.println();
 
             }catch (UnknownHostException unknownHostException) {
-                System.err.println("DummyUser #" + id + " - StatisticsThread: you are trying to connect to an unknown host!");
+                System.err.println("DummyUser " + id + " - StatisticsThread: you are trying to connect to an unknown host!");
             } catch (IOException ioException) {
-                System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR: " + ioException.getMessage());
+                System.err.println("DummyUser " + id + " - StatisticsThread IOERROR: " + ioException.getMessage());
             } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("DummyUser #" + id + " - StatisticsThread CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("DummyUser " + id + " - StatisticsThread CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
-                System.err.println("DummyUser #" + id + " - StatisticsThread ERROR: " + e.getMessage());
+                System.err.println("DummyUser " + id + " - StatisticsThread ERROR: " + e.getMessage());
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (statsSocket != null) statsSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - StatisticsThread IOERROR while closing socket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - StatisticsThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - StatisticsThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (statsSocket != null) statsSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - StatisticsThread IOERROR while closing socket: " + ioException.getMessage()); }
             }
         }
     }
@@ -290,7 +290,7 @@ public class DummyUser extends Thread{
                 /* Find all available Segment files in the unprocessed folder */
                 File[] unprocessedFiles = new File(userPath + "unprocessedSeg\\").listFiles();
                 if (unprocessedFiles == null || unprocessedFiles.length == 0) {
-                    System.out.println("DummyUser #" + id + " - SegmentThread: no unprocessed Segment files found!\n");
+                    System.out.println("DummyUser " + id + " - SegmentThread: no unprocessed Segment files found!\n");
                     addedSegments = true;
                     return;
                 }
@@ -335,16 +335,12 @@ public class DummyUser extends Thread{
                 String line;
                 StringBuilder buffer = new StringBuilder();
 
-                // Add the route ID to the buffer TODO: ?????????
-                int routeID = Integer.parseInt(segmentFile.getName().replaceAll("[\\D]", ""));
-                buffer.append(routeID).append("!");
-
                 // Read the file line by line and add it to the buffer
                 while((line = br.readLine()) != null) {
                     buffer.append(line);
                 }
                 // Close gpx file
-                try { if (br != null) br.close(); } catch (IOException ioException) {System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing gpx file: " + ioException.getMessage()); }
+                try { if (br != null) br.close(); } catch (IOException ioException) {System.err.println("DummyUser " + id + " - SegmentThread IOERROR while closing gpx file: " + ioException.getMessage()); }
 
                 /* Send the file to the server */
                 out.writeObject(buffer);
@@ -352,17 +348,17 @@ public class DummyUser extends Thread{
 
 //                int ack = (int) in.readObject();
 
-                System.out.println("\nDummyUser #" + id + " uploaded segment!\n");
+                System.out.println("\nDummyUser " + id + " uploaded segment!\n");
             }catch (UnknownHostException unknownHostException) {
-                System.err.println("DummyUser #" + id + " - SegmentThread: you are trying to connect to an unknown host!");
+                System.err.println("DummyUser " + id + " - SegmentThread: you are trying to connect to an unknown host!");
             } catch (IOException ioException) {
-                System.err.println("DummyUser #" + id + " - SegmentThread IOERROR: " + ioException.getMessage());
+                System.err.println("DummyUser " + id + " - SegmentThread IOERROR: " + ioException.getMessage());
             } catch (Exception e) {
-                System.err.println("DummyUser #" + id + " - SegmentThread ERROR: " + e.getMessage());
+                System.err.println("DummyUser " + id + " - SegmentThread ERROR: " + e.getMessage());
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (segmentSocket != null) segmentSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentThread IOERROR while closing socket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - SegmentThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - SegmentThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (segmentSocket != null) segmentSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - SegmentThread IOERROR while closing socket: " + ioException.getMessage()); }
             }
         }
     }
@@ -394,15 +390,15 @@ public class DummyUser extends Thread{
                 out.flush();
 
                 /* Request statistics TODO: ... */
-                ArrayList<HashMap<Integer, IntermediateChunk>> leaderboard = (ArrayList<HashMap<Integer, IntermediateChunk>>) in.readObject();
+                ArrayList<HashMap<String, IntermediateChunk>> leaderboard = (ArrayList<HashMap<String, IntermediateChunk>>) in.readObject();
                 HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = (HashMap<Integer, ArrayList<IntermediateChunk>>) in.readObject();
 
-                System.out.println("\nDummyUser #" + id + " - SegmentStatisticsThread: received statistics!\n");
+                System.out.println("\nDummyUser " + id + " - SegmentStatisticsThread: received statistics!\n");
 
                 // Print Leaderboard
                 StringBuilder s = new StringBuilder();
-                s.append("DummyUser #").append(id).append(" - Leaderboard\n");
-                for (HashMap<Integer, IntermediateChunk> segment: leaderboard) {
+                s.append("DummyUser ").append(id).append(" - Leaderboard\n");
+                for (HashMap<String, IntermediateChunk> segment: leaderboard) {
                     int segID;
                     if (!segment.isEmpty()) {
                         segID = segment.get(segment.keySet().iterator().next()).getSegmentID();
@@ -410,7 +406,7 @@ public class DummyUser extends Thread{
                     else continue;
                     s.append("\tSegment #").append(segID).append("\n");
 
-                    for (Integer userID: segment.keySet()) {
+                    for (String userID: segment.keySet()) {
                         s.append("\t\tUser #").append(userID).append(String.format("| Time: %5.2f min\n", (double) segment.get(userID).getTotalTime()/1000/60));
                     }
                     s.append("\n");
@@ -420,7 +416,7 @@ public class DummyUser extends Thread{
                 // Print Segment Statistics
                 s = new StringBuilder();
                 for (Integer segID: segmentsStatistics.keySet()) {
-                    s.append("DummyUser #").append(id).append(" - History of segmentID #").append(segID).append("\n");
+                    s.append("DummyUser ").append(id).append(" - History of segmentID #").append(segID).append("\n");
                     for (IntermediateChunk route: segmentsStatistics.get(segID)) {
                         s.append(String.format("\tTime: %5.2f min\n", (double)route.getTotalTime()/1000/60));
                     }
@@ -430,17 +426,17 @@ public class DummyUser extends Thread{
 
 
             }catch (UnknownHostException unknownHostException) {
-                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread: you are trying to connect to an unknown host!");
+                System.err.println("DummyUser " + id + " - SegmentStatisticsThread: you are trying to connect to an unknown host!");
             } catch (IOException ioException) {
-                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR: " + ioException.getMessage());
+                System.err.println("DummyUser " + id + " - SegmentStatisticsThread IOERROR: " + ioException.getMessage());
             } catch (ClassNotFoundException classNotFoundException) {
-                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread CASTERROR: " + classNotFoundException.getMessage());
+                System.err.println("DummyUser " + id + " - SegmentStatisticsThread CASTERROR: " + classNotFoundException.getMessage());
             } catch (Exception e) {
-                System.err.println("DummyUser #" + id + " - SegmentStatisticsThread ERROR: " + e.getMessage());
+                System.err.println("DummyUser " + id + " - SegmentStatisticsThread ERROR: " + e.getMessage());
             }finally {
-                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR while closing input stream: " + ioException.getMessage()); }
-                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR while closing output stream: " + ioException.getMessage()); }
-                try { if (segStatsSocket != null) segStatsSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser #" + id + " - SegmentStatisticsThread IOERROR while closing socket: " + ioException.getMessage()); }
+                try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - SegmentStatisticsThread IOERROR while closing input stream: " + ioException.getMessage()); }
+                try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - SegmentStatisticsThread IOERROR while closing output stream: " + ioException.getMessage()); }
+                try { if (segStatsSocket != null) segStatsSocket.close(); } catch (IOException ioException) { System.err.println("DummyUser " + id + " - SegmentStatisticsThread IOERROR while closing socket: " + ioException.getMessage()); }
             }
         }
     }
@@ -461,7 +457,7 @@ public class DummyUser extends Thread{
             this.segStatsRequestPort = Integer.parseInt(properties.getProperty("segStatsRequestPort"));
             this.autorun = Boolean.parseBoolean(properties.getProperty("autorun"));
 
-            try { if (cfgReader != null) cfgReader.close(); } catch(IOException ioException) { System.err.println("DummyUser #" + id + " - login - IOERROR while closing config file: " + ioException.getMessage());}// Close the reader
+            try { if (cfgReader != null) cfgReader.close(); } catch(IOException ioException) { System.err.println("DummyUser " + id + " - login - IOERROR while closing config file: " + ioException.getMessage());}// Close the reader
 
             /* Ask if new or existing user */
             int answer;
@@ -471,23 +467,23 @@ public class DummyUser extends Thread{
                     answer = 1;
                     break;
                 }
-                System.out.print("DummyUser #" + id + ": 1.New User, 2.Existing User\n\t-> ");
+                System.out.print("DummyUser " + id + ": 1.New User, 2.Existing User\n\t-> ");
                 answer = getInput();
             } while (answer != 1 && answer != 2);
 
             switch (answer) {
                 case 1: {
                     initDefaults();
-                    System.out.println("DummyUser #" + id + " created new user!");
+                    System.out.println("DummyUser " + id + " created new user!");
                     break;
                 }
                 case 2: {
-                    System.out.println("DummyUser #" + id + " welcome back!");
+                    System.out.println("DummyUser " + id + " welcome back!");
                     break;
                 }
             }
         }catch (Exception e){
-            System.err.println("DummyUser #" + id + " - login ERROR: " + e.getMessage());
+            System.err.println("DummyUser " + id + " - login ERROR: " + e.getMessage());
         }
     }
 
@@ -524,9 +520,9 @@ public class DummyUser extends Thread{
             for (File pf: processedSegs)
                 Files.move(Paths.get(processedSegDir + "\\" + pf.getName()), Paths.get(unprocessedSegDir + "\\" + pf.getName()));
         } catch (IOException e) {
-            System.err.println("DummyUser #" + id + " - initDefaults IOERROR: " + e.getMessage());
+            System.err.println("DummyUser " + id + " - initDefaults IOERROR: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("DummyUser #" + id + " - initDefaults ERROR: " + e.getMessage());
+            System.err.println("DummyUser " + id + " - initDefaults ERROR: " + e.getMessage());
         }
     }
 
@@ -563,7 +559,7 @@ public class DummyUser extends Thread{
             try {
                 dummyUsers[i-1].join();
             } catch (InterruptedException e) {
-                System.err.println("DummyUser #" + i + " - main ERROR: " + e.getMessage());
+                System.err.println("DummyUser " + i + " - main ERROR: " + e.getMessage());
                 e.printStackTrace();
             }
         }
