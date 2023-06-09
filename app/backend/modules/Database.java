@@ -58,21 +58,21 @@ public class Database {
         user.updateSegmentHistory(foundSegments);
     }
 
-    public void initSegment(ArrayList<Waypoint> waypoints, User user) {
+    public void initSegment(ArrayList<Waypoint> waypoints, String segmentName, User user) {
         Segment segment = new Segment(segments.size(), waypoints);
 
         /* Check if segment already exists */
         for (Segment existingSegment: segments) {
             if (existingSegment.equals(segment)) {
                 if (user.getSegmentsStatistics().containsKey(existingSegment.getSegmentID())) return;
-                user.initSegment(existingSegment);
+                user.initSegment(existingSegment, segmentName);
                 return;
             }
         }
 
         /* Add segment to database and user */
         segments.add(segment);
-        user.initSegment(segment);
+        user.initSegment(segment, segmentName);
     }
 
     public Statistics getTotalData() {

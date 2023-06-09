@@ -18,13 +18,14 @@ public class User {
     private final Statistics statistics;
     private final ArrayList<Route> routes;
     private final HashMap<Integer, ArrayList<IntermediateChunk>> segmentStatistics;
-
+    private final HashMap<Integer, String> segmentNames;
 
     public User(String id){
         this.id = id;
         this.statistics = new Statistics();
         this.routes = new ArrayList<>();
         this.segmentStatistics = new HashMap<>();
+        this.segmentNames = new HashMap<>();
     }
 
     public void addRoute(Route route){
@@ -32,8 +33,9 @@ public class User {
         updateUserStatistics(route.getTotalDistance(), route.getTotalTime(), route.getTotalElevation());
     }
 
-    public void initSegment(Segment segment) {
+    public void initSegment(Segment segment, String segmentName) {
         segmentStatistics.put(segment.getSegmentID(), new ArrayList<>());
+        segmentNames.put(segment.getSegmentID(), segmentName);
     }
 
     public void updateUserStatistics(double distance, double time, double elevation){
@@ -59,6 +61,8 @@ public class User {
         return segmentStatistics;
     }
 
+    public HashMap<Integer, String> getSegmentNames() { return segmentNames; }
+
     public String getID(){
         return id;
     }
@@ -70,4 +74,6 @@ public class User {
     public Statistics getStatistics(){
         return statistics;
     }
+
+
 }

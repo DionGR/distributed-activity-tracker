@@ -628,6 +628,8 @@ class Master {
                 }
 
                 /* Take Segment from User */
+                String segmentName = (String) in.readObject();
+
                 StringBuilder buffer;
                 buffer = (StringBuilder) in.readObject();
                 System.out.println("Master - UserSegmentThread for User #" + userID + " - Segment received.");
@@ -638,7 +640,7 @@ class Master {
 
                 /* Create and store segment into the Database */
                 synchronized (database) {
-                    database.initSegment(waypoints, user);
+                    database.initSegment(waypoints, segmentName, user);
                 }
             }catch (IOException ioException) {
                 System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - IOERROR: " + ioException.getMessage());
@@ -689,17 +691,21 @@ class Master {
 
                 // user's history of registered segments
                 HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = new HashMap<>(user.getSegmentsStatistics());
+                // Get the segmentName
+                HashMap<Integer, String> segmentNames = new HashMap<>(user.getSegmentNames());
 
                 // Get the leaderboard for each segment in the user's history
                 ArrayList<HashMap<String, IntermediateChunk>> leaderboardSegments = new ArrayList<>();
+                ArrayList<String> leaderboardSegmentNames = new ArrayList<>();
                 for (Integer segmentID: segmentsStatistics.keySet()) {
                     //leaderboardSegments.add(leaderboards.get(segmentID).getLeaderboard());
                     leaderboardSegments.add(sorter(segments.get(segmentID).getLeaderboard()));
+                    leaderboardSegmentNames.add(segmentNames.get(segmentID));
                 }
 
-
+                out.writeObject(leaderboardSegmentNames);
                 out.writeObject(leaderboardSegments);
-                out.writeObject(segmentsStatistics);
+                //out.writeObject(segmentsStatistics);
                 out.flush();
 
             }catch (IOException ioException) {
