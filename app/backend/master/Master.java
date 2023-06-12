@@ -602,7 +602,7 @@ class Master {
         }
     }
 
-    /* */
+    /* Allows the user to upload a segment */
     private class UserSegmentThread extends Thread{
         private final Socket userSegmentSocket;
         private ObjectOutputStream out;
@@ -652,15 +652,12 @@ class Master {
                 try { if (in != null) in.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR while closing input stream: " + ioException.getMessage()); }
                 try { if (out != null) out.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR while closing output stream: " + ioException.getMessage()); }
                 try { if (userSegmentSocket != null) userSegmentSocket.close(); } catch (IOException ioException) { System.err.println("Master - UserSegmentThread for DummyUser " + user.getID() + " - ERROR while closing userGPXSocket: " + ioException.getMessage()); }
-//                synchronized (activeGPXUsers){
-//                    activeGPXUsers.remove(user.getID());
-//                }
                 System.out.println("Master - UserGPXThread for DummyUser " + user.getID() + " shutting down...");
             }
         }
     }
 
-    /* */
+    /* Returns segment leaderboards to the user */
     private class UserSegStatisticsThread extends Thread{
         private final Socket userSegStatisticsSocket;
         private ObjectOutputStream out;

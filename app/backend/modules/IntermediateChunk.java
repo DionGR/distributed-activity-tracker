@@ -37,13 +37,6 @@ public class IntermediateChunk implements Serializable, Comparable {
         return (int) (this.totalTime - rightChunk.totalTime);
     }
 
-//    @Override
-//    public boolean equals(Object obj){
-//        if (obj == this) return true;
-//        if (!(obj instanceof Waypoint)) return false;
-//
-//    }
-
    public String getUserID() {
         return userID;
     }

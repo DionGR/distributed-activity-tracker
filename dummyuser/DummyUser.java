@@ -413,16 +413,16 @@ public class DummyUser extends Thread{
                 }
                 System.out.println(s);
 
-                // Print Segment Statistics
-                s = new StringBuilder();
-                for (Integer segID: segmentsStatistics.keySet()) {
-                    s.append("DummyUser ").append(id).append(" - History of segmentID #").append(segID).append("\n");
-                    for (IntermediateChunk route: segmentsStatistics.get(segID)) {
-                        s.append(String.format("\tTime: %5.2f min\n", (double)route.getTotalTime()/1000/60));
-                    }
-                    s.append("\n");
-                }
-                System.out.println(s);
+//                // Print Segment Statistics
+//                s = new StringBuilder();
+//                for (Integer segID: segmentsStatistics.keySet()) {
+//                    s.append("DummyUser ").append(id).append(" - History of segmentID #").append(segID).append("\n");
+//                    for (IntermediateChunk route: segmentsStatistics.get(segID)) {
+//                        s.append(String.format("\tTime: %5.2f min\n", (double)route.getTotalTime()/1000/60));
+//                    }
+//                    s.append("\n");
+//                }
+//                System.out.println(s);
 
 
             }catch (UnknownHostException unknownHostException) {
