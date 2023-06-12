@@ -323,6 +323,8 @@ public class DummyUser extends Thread{
                 } else {
                     fileName = unprocessedFiles[0].getName();
                 }
+                out.writeObject(fileName);
+                out.flush();
 
                 /* Read the file */
 
@@ -390,8 +392,9 @@ public class DummyUser extends Thread{
                 out.flush();
 
                 /* Request statistics TODO: ... */
+                ArrayList<String> leaderboardSegmentNames = (ArrayList<String>) in.readObject();
                 ArrayList<HashMap<String, IntermediateChunk>> leaderboard = (ArrayList<HashMap<String, IntermediateChunk>>) in.readObject();
-                HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = (HashMap<Integer, ArrayList<IntermediateChunk>>) in.readObject();
+                //HashMap<Integer, ArrayList<IntermediateChunk>> segmentsStatistics = (HashMap<Integer, ArrayList<IntermediateChunk>>) in.readObject();
 
                 System.out.println("\nDummyUser " + id + " - SegmentStatisticsThread: received statistics!\n");
 
