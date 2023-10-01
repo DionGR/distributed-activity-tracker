@@ -8,14 +8,14 @@
 
 <p align="justify">Each user has a personal profile, where they can upload their activities. Furthermore, they can view their total statistics such as total distance, total activity time etc. </p>
 <div align="center">
-    <img src="../media/login.png" alt="Login screen" height="300">
-    <img src="../media/results.png" alt="GPX results screen" height="300">
+    <img src="/media/login.png" alt="Login screen" height="300">
+    <img src="/media/results.png" alt="GPX results screen" height="300">
 </div>
 
 <div align="center">
-    <img src="../media/statistics.png" alt="Statistics screen" height="300">
-    <img src="../media/segments.png" alt="Available segments"height="300">
-    <img src="../media/leaderboard.png" alt="Leaderboard"height="300">
+    <img src="/media/statistics.png" alt="Statistics screen" height="300">
+    <img src="/media/segments.png" alt="Available segments"height="300">
+    <img src="/media/leaderboard.png" alt="Leaderboard"height="300">
 </div>
 
 
@@ -117,23 +117,23 @@ The MapReduce framework is a programming model that enables the parallel process
 
 <details>
 <summary> <b>Descriptive slides 🖌️</b> </summary>
-<img src="../media/1st_Slide.png" alt="1st Slide">
+<img src="/media/1st_Slide.png" alt="1st Slide">
 
 ---
 
-<img src="../media/2nd_Slide.png" alt="2nd Slide">
+<img src="/media/2nd_Slide.png" alt="2nd Slide">
 
 ---
 
-<img src="../media/3rd_Slide.png" alt="3rd Slide">
+<img src="/media/3rd_Slide.png" alt="3rd Slide">
 
 ---
 
-<img src="../media/4th_Slide.png" alt="4th Slide">
+<img src="/media/4th_Slide.png" alt="4th Slide">
 
 ---
 
-<img src="../media/5th_Slide.png" alt="5th Slide">
+<img src="/media/5th_Slide.png" alt="5th Slide">
 
 ---
 </details>
