@@ -59,7 +59,7 @@ An activity is a sequence of GPS waypoints where each waypoint consists of:</p>
 - its elevation
 - the exact time it was recorded
 
-This sequence of waypoints is saved in a specific XML file called GPX like thισ:
+This sequence of waypoints is saved in a specific XML file called GPX like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
