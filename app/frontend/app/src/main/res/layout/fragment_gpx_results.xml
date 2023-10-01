@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".frontend.fragments.GpxResultsFragment">
+<!--    android:background="@drawable/route_photo">-->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/recents"
+        android:text="Recents"
+        android:drawableLeft="@drawable/baseline_access_time_24"
+        android:drawablePadding="5dp"
+        android:textSize="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="7dp"
+        android:layout_marginBottom="15dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recents"
+        android:id="@+id/gpxResultsRecyclerView"/>
+
+</RelativeLayout>

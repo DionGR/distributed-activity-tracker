@@ -1,0 +1,5 @@
+host=192.168.2.4
+gpxRequestPort=44444
+statsRequestPort=44443
+segRequestPort=44442
+segStatsRequestPort=44441

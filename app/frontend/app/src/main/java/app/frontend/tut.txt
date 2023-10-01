@@ -1,0 +1,162 @@
+/////////////////////////////////////////// MyThread
+package com.example.android_tut_2;
+
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+
+public class MyThread extends Thread{
+
+    String arg;
+    Handler handler;
+
+    public MyThread(String arg, Handler handler){
+        this.arg = arg;
+        this.handler = handler;
+    }
+
+    @Override
+    public void run() {
+        try {
+            sleep(500);
+            Message msg = new Message();
+            Bundle bundle = new Bundle();
+            bundle.putString("result","This is the result of: "+arg);
+            msg.setData(bundle);
+
+
+            handler.sendMessage(msg);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
+/////////////////////////////////////////// Main Activity
+Mesa stin onclick():
+
+ MyThread t1 = new MyThread(text, handler);
+//                t1.start();
+
+//                AsyncTask<String, Void, String> myAsync = new AsyncTask<String, Void, String>() {
+//                    @Override
+//                    protected String doInBackground(String... strings) {
+//                        try {
+//                            Socket s = new Socket("192.168.1.100", 8080);
+//                            ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+//                            ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+//
+//                            oos.writeUTF(strings[0]);
+//                            oos.flush();
+//
+//                            String result = ois.readUTF();
+//
+//                            return result;
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        try {
+//                            Thread.sleep(500);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                        return "You wrote: "+strings[0];
+//
+//                    }
+//
+//                    @Override
+//                    protected void onPostExecute(String s) {
+//                        label.setText(s);
+//                    }
+//                    //label.setText(text);
+//                };
+
+                //String txt = input.getText().toString();
+                //myAsync.execute(txt);
+
+
+Mesa stin onCreate(): handler gia to MyThread?!
+
+//        handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+//            @Override
+//            public boolean handleMessage(@NonNull Message message) {
+//                String result = message.getData().getString("result");
+//
+//                label.setText(result);
+//
+//                return true;
+//            }
+//        });
+
+
+
+
+//test
+//     private void readFiles() {
+//        String filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+//
+//        Log.e("EXTERNAL : ", filePath);
+//        File f = new File(filePath+"/route1.gpx");
+//
+//        StringBuilder s = new StringBuilder();
+//        try {
+//            BufferedReader br = new BufferedReader(new FileReader(f));
+//            String line;
+//            while ((line = br.readLine()) != null) {
+//                s.append(line);
+//            }
+//        } catch (FileNotFoundException e) {
+//            throw new RuntimeException(e);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        String s2 = s.toString().substring(1, 200);
+//        Log.e("EXTERNAL PATH",s2);
+//        Toast.makeText(MainActivity.this, s.toString().substring(1, 20), Toast.LENGTH_LONG).show();
+//    }
+
+
+///////////////// OLD LOGIN
+    /* Initialize the user */
+    private void login(){
+        try {
+            // TODO: Move this under after autorun is removed
+            /* Read the host and port from the config file */
+            FileReader cfgReader = new FileReader(System.getProperty("user.dir") + "\\user\\data\\userCFG");
+            Properties properties = new Properties();
+            properties.load(cfgReader);
+
+            this.host = properties.getProperty("host");
+            this.gpxRequestPort = Integer.parseInt(properties.getProperty("gpxRequestPort"));
+            this.statsRequestPort = Integer.parseInt(properties.getProperty("statsRequestPort"));
+            this.segRequestPort = Integer.parseInt(properties.getProperty("segRequestPort"));
+            this.segStatsRequestPort = Integer.parseInt(properties.getProperty("segStatsRequestPort"));
+
+            try { if (cfgReader != null) cfgReader.close(); } catch(IOException ioException) { System.err.println("DummyUser #" + id + " - login - IOERROR while closing config file: " + ioException.getMessage());}// Close the reader
+
+            /* Ask if new or existing user */
+            int answer;
+            do {
+                System.out.print("DummyUser #" + id + ": 1.New User, 2.Existing User\n\t-> ");
+                answer = getInput();
+            } while (answer != 1 && answer != 2);
+
+            switch (answer) {
+                case 1: {
+                    initDefaults();
+                    System.out.println("DummyUser #" + id + " created new user!");
+                    break;
+                }
+                case 2: {
+                    System.out.println("DummyUser #" + id + " welcome back!");
+                    break;
+                }
+            }
+        }catch (Exception e){
+            System.err.println("DummyUser #" + id + " - login ERROR: " + e.getMessage());
+        }
+    }

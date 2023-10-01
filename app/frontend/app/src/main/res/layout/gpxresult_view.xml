@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/gpxresult_view_uisettings"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="10dp">
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/itemImage"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="50dp"
+        android:layout_centerVertical="true"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/itemDate"
+        android:layout_toEndOf="@id/itemImage"
+        android:textColor="@color/purple"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:text="itemDate"/>
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/Distance"
+        android:layout_toEndOf="@id/itemImage"
+        android:layout_below="@id/itemDate"
+        android:textColor="@color/purple"
+        android:textSize="20sp"
+        android:text="Distance:"/>
+    <TextView
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/itemDistance"
+        android:layout_toEndOf="@id/Distance"
+        android:layout_below="@id/itemDate"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:text="itemDistance"/>
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/Time"
+        android:layout_toEndOf="@id/itemImage"
+        android:layout_below="@id/Distance"
+        android:textColor="@color/purple"
+        android:textSize="20sp"
+        android:text="Time:"/>
+    <TextView
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/itemTime"
+        android:layout_toEndOf="@id/Time"
+        android:layout_below="@id/itemDistance"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:text="itemTime"/>
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/Speed"
+        android:layout_toEndOf="@id/itemImage"
+        android:layout_below="@id/Time"
+        android:textColor="@color/purple"
+        android:textSize="20sp"
+        android:text="Speed:"/>
+    <TextView
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/itemSpeed"
+        android:layout_toEndOf="@id/Speed"
+        android:layout_below="@id/itemTime"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:text="itemTime"/>
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/Elevation"
+        android:layout_toEndOf="@id/itemImage"
+        android:layout_below="@id/Speed"
+        android:textColor="@color/purple"
+        android:textSize="20sp"
+        android:text="Elevation:"/>
+    <TextView
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/itemElevation"
+        android:layout_toEndOf="@id/Elevation"
+        android:layout_below="@id/itemSpeed"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:text="itemTime"/>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_below="@id/itemImage"
+        android:layout_marginTop="-9dp" />
+
+
+</RelativeLayout>

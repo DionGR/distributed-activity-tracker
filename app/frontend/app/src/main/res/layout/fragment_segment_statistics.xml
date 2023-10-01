@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".frontend.fragments.SegmentStatisticsFragment">
+
+    <Button
+        android:id="@+id/requestSegmentStatisticsBtn"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:layout_marginTop="20dp"
+        android:drawableLeft="@drawable/baseline_refresh_24"
+        android:drawableTint="@color/black"
+        android:text="Refresh"
+        android:textColor="@color/black"
+        android:layout_marginLeft="7dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/requestSegmentStatisticsBtn"
+        android:id="@+id/segmentStatisticsRecyclerView"/>
+
+
+</RelativeLayout>

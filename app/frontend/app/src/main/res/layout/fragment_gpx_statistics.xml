@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".frontend.fragments.GpxStatisticsFragment">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="-8dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="100dp"
+            android:contentDescription="scroll down">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/requestStatisticsBtn"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="20dp"
+                    android:drawableLeft="@drawable/baseline_refresh_24"
+                    android:drawableTint="@color/black"
+                    android:text="Refresh"
+                    android:textColor="@color/black"
+                    android:layout_marginLeft="2dp"/>
+
+                <TextView
+                    android:id="@+id/timeDiff"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="15sp"
+                    android:layout_marginTop="20dp" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/timeChart"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="230dp">
+                </com.github.mikephil.charting.charts.BarChart>
+
+                <TextView
+                    android:id="@+id/distanceDiff"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="15sp"
+                    android:layout_marginTop="20dp" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/distanceChart"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="230dp">
+
+                </com.github.mikephil.charting.charts.BarChart>
+
+                <TextView
+                    android:id="@+id/elevationDiff"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="15sp"
+                    android:layout_marginTop="20dp" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/elevationChart"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="230dp">
+                </com.github.mikephil.charting.charts.BarChart>
+
+            </LinearLayout>
+        </ScrollView>
+
+</RelativeLayout>
