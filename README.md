@@ -158,3 +158,9 @@ The MapReduce framework is a programming model that enables the parallel process
 - <p align="justify">Select a route segment (basically a GPX file deemed to be part of a route and thus referred to "segment") and upload it to the backend so that every time a user makes this route (as part of a longer route) their performance is recorded and their best performance (if many) appears on a leaderboard. <i>e.g.</i> If you have uploaded a segment A-B-C-D (declaring you are intersted in keeping track of your performance on that segment compared to others), then you will be able to view a leaderboard for that segment, featuring all users that have walked by A-B-C-D as well (but only their best attempt, if many)
     
     <u><i>Note</i></u>: GPS drift has been taken into account </p>
+
+
+### Contributors
+- Alviona Mancho [<a href="https://github.com/alvionaM">alvionaM</a>]
+- Dionisis Rigatos [<a href="https://github.com/DionGR">DionGR</a>]
+- Christos Patrinopoulos [<a href="https://github.com/techristosP">techristosP</a>]
