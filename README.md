@@ -145,7 +145,7 @@ The MapReduce framework is a programming model that enables the parallel process
 ⬆️Connection with backend:
 
 - <p align="justify">Master runs TCP Server to listen for requests coming from the Application and it is multithreaded so as to serve many users simultaneously and communicate with Workers in the same time.</p>
-- <p align="justify">Master communicates with the Application to receive requests and send results via TCP sockets.</p>
+- <p align="justify">Master communicates with the Application to receive requests and send results via TCP sockets</p>
 
 
 
